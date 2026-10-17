@@ -10,9 +10,15 @@ Last updated: 2026-10-17
 
 ## Working rules (from Ruichao)
 
-- Claude does the **coding**. For anything outside coding (installs, downloads,
-  account/cloud setup, forms, manual review), **ask Ruichao first** whether they
-  want to do it manually before proceeding.
+- **Updated 2026-10-17:** the repo is shared for planning and coding. Planning
+  happens on one machine; coding, testing, downloads, and training happen on
+  another, done by Ruichao. Plans must tag each task so it is clear what it needs:
+  - `[CODE]` pure coding: no internet, no real data, no GPU; testable with synthetic inputs.
+  - `[NET]` needs internet (downloads, installs, cloning, pushing).
+  - `[DATA]` needs the real dataset files.
+  - `[GPU]` needs a CUDA GPU.
+  - `[MANUAL]` human action (forms, accounts, visual review, decisions, report).
+- (Earlier rule, superseded: Claude does the coding and asks before non-coding tasks.)
 - Ruichao is not very familiar with AWS — keep cloud steps minimal and explained.
 - Manual data inspection is done by Ruichao, using a guide Claude provides
   (see "Manual label review guide" below).
@@ -72,7 +78,7 @@ The plans are sound; dataset facts were verified.
 
 ---
 
-## Proposed changes to the plans (status: PROPOSED, awaiting approval)
+## Proposed changes to the plans (status: APPROVED 2026-10-17, with change 1 replaced by AWS; written into plan v2)
 
 1. **Compute: local GPU first, AWS only as fallback.** Training set is ~1,400
    images; rough unmeasured guess is < 1 h per run on the 1070 Ti at batch 16.
@@ -129,32 +135,27 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
 - [x] Plans reviewed and verified (2026-10-17)
 - [x] **SkiTB access form submitted** (2026-10-17). Follow up if no reply by ~2026-10-24.
       Form: https://forms.office.com/Pages/ResponsePage.aspx?id=Fd5qbmwpJEKsWByOwv1TqGZ0FiFPXjFKh2JII46hSYhUMVQ2RE0yS0FMMEhFSVNWNUxNWks3M0hYSy4u
-- [ ] Option A vs B decision (deferred, see above)
-- [ ] Approval of proposed changes 1–5
+- [x] **Option A chosen** (2026-10-17): pose fine-tuning is the learning study; tracker stays fixed pretrained SiamFC. May revisit B later.
+- [x] **Compute: AWS** (2026-10-17). Ruichao has an AWS budget; training runs on an AWS GPU instance (not the local 1070 Ti). Proposed change 1 is replaced by this.
+- [x] Proposed changes approved; MMPose model-only (D3) and split rules (D4) settled (2026-10-17)
+- [x] **Plan v2 written** (2026-10-17): `skier_implementation_plan.md` and
+      `skier_step_1_guide.md` rewritten with `[CODE]/[NET]/[DATA]/[GPU]/[MANUAL]` tags,
+      AWS click-by-click setup, pinned stack, and per-step coding contracts + synthetic tests.
 - [ ] No code written yet; no data downloaded; no environment installed.
 
-## Next steps (pose part, agreed to start now)
+## Next steps
 
-Open questions Claude must ask Ruichao before proceeding:
+Follow `skier_step_1_guide.md`. In order:
 
-1. Ski 2DPose download (~0.9 GB: labels, JPG, videos, info, loader):
-   Claude scripts it (with checksums + provenance log), or Ruichao downloads manually?
-2. Python env setup (3.10 + pinned stack, ~3 GB): Claude installs, or
-   Claude provides exact commands for Ruichao to run?
-3. Repo/data location in the new environment (keep data outside any cloud-sync folder).
-4. Approve proposed changes 1–5, and whether to update the two plan files.
+1. `[MANUAL]` Today: AWS budget alert + GPU quota request (guide 1C.1–1C.3).
+2. `[CODE]` Offline: repo scaffold (1A) and all Step 1 scripts with synthetic tests (1B).
+3. `[MANUAL][NET]` Launch instance, install pinned stack (1C.4–1C.7).
+4. `[NET][DATA]` Downloads (1D), then audit, overlays + review, alignment, smoke tests (1E–1H).
+5. `[MANUAL]` Readiness decision (1I), then Step 2.
+6. `[MANUAL]` Chase SkiTB if no reply by 2026-10-24.
 
-Then Claude's coding tasks, in order:
-
-1. Repo scaffold (`docs/ configs/ scripts/ src/ tests/ data/manifests/ results/`),
-   `.gitignore` (data, weights, videos, venv), `docs/scope.md`, `docs/decisions.md`.
-2. `configs/ski24_schema.json` (names, groups, flip pairs).
-3. Label audit script + image inventory → `data/manifests/pose_inventory.csv`.
-4. Ground-truth overlay gallery (~30 images, indexed points, L/R colors,
-   hollow = occluded, dashed reference box) + contact sheet.
-5. Video-frame alignment check for 1–2 pilot segments + short GT clip.
-6. Env check script + pretrained COCO HRNet-W32 smoke test on one skier box.
-7. Draft `docs/step1_readiness.md`.
+Open decision for Step 2: follow-cam placement (default: force their videos into test
+and report separately, if the split's hard rules still hold).
 
 ## Manual label review guide (for Ruichao)
 
