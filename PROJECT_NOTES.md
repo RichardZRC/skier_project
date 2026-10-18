@@ -2,10 +2,11 @@
 
 Running record of decisions and open items for the CS230 skier project.
 Read this first when resuming work in a new environment.
-Companion docs: `skier_proposal.pdf`, `skier_implementation_plan.md`, `skier_step_1_guide.md`,
-`skier_step_1_code_spec.md`.
+Companion docs: `README.md` (setup and commands), `CLAUDE.md` (rules for Claude sessions),
+`skier_proposal.pdf`, `skier_implementation_plan.md` (status table at the top), `skier_step_1_guide.md`,
+`skier_step_1_code_spec.md`, `docs/decisions.md`.
 
-Last updated: 2026-10-17
+Last updated: 2026-10-18
 
 ---
 
@@ -184,6 +185,8 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
       dataset + optional crop cache, masked loss (numpy reference + torch), training loop + `train_pose.py`
       (`--overfit`, `--profile-steps`, `--resume`), `configs/pose/e1.yaml`. 204 tests pass; 6 `torch` + 2
       `stack` tests skip until AWS. Mutation check 5/5 caught. Real pilot samples checked visually.
+- [x] **README.md and CLAUDE.md written; plan status table added** (2026-10-18).
+- [x] **Deadline moved up to Fri 2026-11-20** (2026-10-18, D14): plan §4 rewritten as 5 weeks; fallbacks dated.
 - [ ] **First on AWS:** full `pytest` (torch + stack tests) → cross-check → (freeze split) → E0 →
       E1 tiny overfit → profile → full E1.
 

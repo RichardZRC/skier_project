@@ -1,11 +1,40 @@
 # Skier project: six-week implementation plan (v2)
 
 **Owner:** Ruichao Zhang — ruichaoz@stanford.edu
-**Plan version:** v2, October 17, 2026 (replaces v1; v1 is in git history)
-**Budget:** one person, six weeks, about 20 working hours per week (120 h total)
-**Companion:** [Step 1 guide](skier_step_1_guide.md) (setup, AWS, data checks), [Step 1 code spec](skier_step_1_code_spec.md) (module contracts and tests for 1A/1B) and [PROJECT_NOTES.md](PROJECT_NOTES.md) (discussion log)
+**Plan version:** v2, October 17, 2026 (replaces v1; v1 is in git history). Status updated 2026-10-18.
+**Budget:** one person, about 20 working hours per week. The original six weeks (120 h) are now **5 weeks, finishing Fri 2026-11-20** (D14; schedule in §4)
+**Companion:** [README](README.md) (setup and commands), [Step 1 guide](skier_step_1_guide.md) (setup, AWS, data checks), [Step 1 code spec](skier_step_1_code_spec.md) (module contracts and tests for 1A/1B), [PROJECT_NOTES.md](PROJECT_NOTES.md) (running notes), [docs/decisions.md](docs/decisions.md) (decision log), and [CLAUDE.md](CLAUDE.md) (working rules for Claude sessions)
 
-This is a plan. No data has been downloaded, no environment installed, and nothing has been trained or measured. Hyperparameters, runtimes and costs below are starting estimates, not measured values.
+Hyperparameters, runtimes and costs below are starting estimates, not measured values. Nothing has been trained or measured on a GPU yet.
+
+## Status and next actions (2026-10-18)
+
+**Deadline: Friday 2026-11-20** (D14). The week-by-week schedule is in §4.
+
+The **offline code for Steps 1–5 is written, tested and pushed**, ahead of the schedule in §4. That covers 204 unit tests; 8 more (`torch`, `stack`) run on AWS. Ski 2DPose is downloaded and audited on the Mac (0 problems; `docs/data_audit.md`). What's left needs the GPU, SkiTB, or Ruichao.
+
+| Step | Code | Still to run | Blocked on |
+| --- | --- | --- | --- |
+| 1 | Done | Overlay review (1F), alignment check (1G), GPU smoke tests (1H), readiness note (1I) | Ruichao (1F); AWS (1H) |
+| 2 | Done | **Freeze the split** after the overlay review; review `docs/evaluation_protocol.md` | Ruichao |
+| 3 | Done | MMPose cross-check, E0 on val, SiamFC on pilot segments / SkiTB val | AWS, frozen split, SkiTB |
+| 4 | Done | Replays of the pilot segments; τ/k grid on SkiTB val | Tracker output (AWS), SkiTB |
+| 5 | Done | Tiny overfit → 200-step profile → full E1 | AWS, frozen split |
+| 6–8 | Not started | — | Plan-mode plan first |
+
+**Possible now, on the Mac, no GPU:**
+1. Overlay review (pilot videos).
+2. Alignment check on 1–2 pilot segments.
+3. Freeze the split (`make_pose_split.py --set-aside followcam=auto`).
+4. Plan and code Step 6 (E2–E4 augmentations), then Step 7.
+
+**First AWS session, in this order:**
+1. Install the pinned stack (guide 1C.7); `check_env.py --strict`.
+2. **The full `pytest`.** All 212 tests must pass, including the `torch` and `stack` tests, before any training (D13).
+3. Get the data onto the instance: download again and compare the SHA-256 values with `docs/data_audit.md`, or `scp` it from the Mac.
+4. Download the COCO HRNet config and checkpoint (`mim download`) and the SiamFC fork and weights. Fill in `SiamFCTracker`'s `FILL IN` block (code spec §13).
+5. `smoke_pose.py`, `smoke_tracker.py` → **`crosscheck_mmpose.py` (must pass ≤ 2 px)**.
+6. E0 on val → E1 `--overfit 32` → `--profile-steps 200` → full E1.
 
 ---
 
@@ -74,6 +103,11 @@ Pose runs on the **original frame** through its own crop. The replay crop is app
 | D7 | Reported groups | Body (14) and ski (8) scored separately; poles (2) supplementary only | v1 |
 | D8 | Tracking split | SkiTB alpine (AL), official athlete-disjoint train/val/test, single-camera (SC) clips | v1 |
 | D9 | Manual annotation | None for the core | v1 |
+| D10 | Pilot videos | `5UHRvqx1iuQ`, `oKQFABiOTw8`, `zW1bF2PsB0M` (the larger video of each two-video race type; best achievable split); forced into train; the only videos studied before the freeze | 2026-10-17 |
+| D11 | Follow-cam placement | The 6 follow-cam videos (134 images) are a separate evaluation set: never trained on, outside the 70/15/15 split, reported as their own row | 2026-10-17 |
+| D12 | Heatmap convention | Sub-pixel Gaussian targets; MMPose's MSRA decoder copied verbatim; cross-check against MMPose with flip test off | 2026-10-17 |
+| D13 | Local machine | Nothing installed on the Mac beyond the light env. `torch`/`stack` tests run on AWS first, before any training | 2026-10-17 |
+| D14 | Deadline | Finish by **Fri 2026-11-20** (5 weeks from Oct 19); stretch goals only if Week 3 ends on track | 2026-10-18 |
 
 Pinned software stack (MMPose 1.3.2 needs mmcv ≥ 2.0.1 and < 2.2.0; prebuilt wheels exist for this exact combination on Linux and Windows):
 
@@ -118,37 +152,60 @@ SkiTB has no 24-point pose labels. Ski 2DPose landmarks are not tracking ground 
 
 ## 4. Schedule
 
-Assumes Week 1 starts Monday 2026-10-19. Thanksgiving is Thursday 2026-11-26 (Week 6); adjust to the actual CS230 deadlines.
+**Target: everything done by Friday 2026-11-20** (moved up from the original six-week plan, which ended Nov 29; D14).
+- Week 1 starts Monday 2026-10-19. Week 5 is short: Mon Nov 16 – Fri Nov 20.
+- Adjust if the CS230 deadline differs.
 
-| Step | Work | Hours | Week |
-| --- | --- | ---: | --- |
-| 1 | Setup: AWS, environment, data checks, smoke tests | 12 | 1 (Oct 19–25) |
-| 2 | Freeze splits, geometry and metrics | 8 | 1 |
-| 3 | Baselines: generic pose model, fixed tracker | 12 | 2 (Oct 26–Nov 1) |
-| 4 | Centered replay | 8 | 2 |
-| 5 | Train the 24-point model (E1) | 20 | 3 (Nov 2–8) |
-| 6 | Augmentation study (E2–E4) | 20 | 4 (Nov 9–15) |
-| 7 | Integration and tracking-to-pose error | 16 | 5 (Nov 16–22) |
-| 8 | Final evaluation, report, demo | 16 | 4 h in Week 5, 12 h in Week 6 (Nov 23–29) |
-| 9 | Reserve: debugging first, stretches second | 8 | As needed |
-| | **Total** | **120** | |
+Because the offline code for Steps 1–5 was written in advance (2026-10-17), what remains is mostly runs, reviews, coding Steps 6–8, and the report. The hours below are re-estimated for that remaining work, at about 20 h/week.
 
-**Critical path:** verified pose labels → correct geometry and metrics → baseline → E1 → augmentation comparison → final report. Tracking work runs in parallel as soon as SkiTB access arrives and never blocks pose work.
+| Week | Dates | Work | Hours |
+| --- | --- | --- | ---: |
+| 1 | Oct 19–25 | **Mac:** overlay review (1F), alignment check (1G), **freeze the split**; plan and code Step 6. **AWS** (as soon as the quota allows): install, full `pytest`, data and weights, smoke tests, MMPose cross-check, E0 on val, E1 tiny overfit and profile; start the full E1 | 20 |
+| 2 | Oct 26–Nov 1 | Finish and review E1; train E2–E4; tracker on the pilot segments (and SkiTB val if it has arrived); replays and their review; plan and code Step 7 | 20 |
+| 3 | Nov 2–8 | Step 6 evaluation (clean val, crop-error set, strata) and the recipe choice on val; extra seeds if the budget allows; Step 7 integration and propagation evaluation; the SkiTB τ/k grid if available | 20 |
+| 4 | Nov 9–15 | Plan and code Step 8 (tables, bootstrap, figures); freeze everything; **run test once**; failure analysis; report draft | 20 |
+| 5 | Nov 16–20 | Final report, demo clips (including one failure), final README; buffer | 12 |
+| | | **Capacity** | **92** |
+
+**Remaining work, estimated by step:**
+
+| Step | Remaining work | Hours |
+| --- | --- | ---: |
+| 1 | Leftovers (overlay review, alignment, AWS setup, smoke tests, readiness note) | 5–6 |
+| 2 | Split freeze | 1 |
+| 3 | Runs (cross-check, E0, tracker) | 5 |
+| 4 | Runs (replays, grid) | 3 |
+| 5 | Runs (overfit, profile, full E1) | 6 |
+| 6 | Code and runs | 10 |
+| 7 | Code and runs | 10 |
+| 8 | Code, test run, report and demo | 14 |
+| 9 | Reserve | about 8 |
+| | **Total** | **about 62–70** |
+
+That leaves roughly 20 hours of buffer.
+
+**Stretch goals** (amateur footage, 3D, coaching) happen only if Week 3 ends on track. Otherwise they are dropped, and the report says so.
+
+**Critical path:** verified pose labels → correct geometry and metrics → baseline → E1 → augmentation comparison → final report. Tracking work runs in parallel as soon as SkiTB access arrives and never blocks pose work. **The biggest schedule risk is the AWS start date:** every day of delay comes out of the buffer (see §15).
 
 End-of-week checkpoints:
 
-- **Week 1:** AWS instance running with a verified environment; label overlays reviewed; split frozen; metric tests pass.
-- **Week 2:** generic-pose baseline numbers; first centered replay; tracker baseline if SkiTB has arrived.
-- **Week 3:** E1 trained, predicting all 24 points.
-- **Week 4:** E1–E4 comparison table.
-- **Week 5:** integrated videos; reference-crop vs tracker-crop pose comparison.
-- **Week 6:** final tables, failure analysis, report, demo.
+- **Week 1 (Oct 25):**
+  - split frozen;
+  - AWS environment verified (all 212 tests pass);
+  - cross-check passes;
+  - E0 val numbers;
+  - E1 overfit passes.
+- **Week 2 (Nov 1):** E1 trained and predicting all 24 points; E2–E4 trained; first replays.
+- **Week 3 (Nov 8):** E1–E4 comparison table and the chosen recipe (on val); integrated videos; reference-crop vs. tracker-crop comparison.
+- **Week 4 (Nov 15):** test results (run once); failure analysis; report draft.
+- **Week 5 (Nov 20):** final report, demo and README. **Done.**
 
 ---
 
 ## 5. Repository layout and shared conventions
 
-Create these during implementation (none exist yet):
+Current layout (created 2026-10-17; the module map is in `CLAUDE.md`):
 
 | Path | Contents |
 | --- | --- |
@@ -161,6 +218,7 @@ Create these during implementation (none exist yet):
 | `scripts/` | Thin command-line entry points |
 | `tests/` | Unit tests and tiny synthetic fixtures |
 | `results/` | Small tables and figures (committed); large outputs stay under `$SKIER_RESULTS` |
+| `README.md`, `CLAUDE.md` | Setup and commands; working rules and conventions for Claude sessions |
 
 Conventions every module follows:
 
@@ -189,7 +247,11 @@ split
 
 ---
 
-## 6. Step 1 — Setup and feasibility (Week 1, 12 h)
+## 6. Step 1 — Setup and feasibility (Week 1; about 5–6 h left)
+
+> **Status, 2026-10-18:**
+> - **Done:** offline code (spec §2–§11); Ski 2DPose downloaded, checksummed and audited (0 problems); `IMAGE_PATH_TEMPLATE`, `info_for` and `locate_segment` filled in; pilots chosen (D10).
+> - **Open:** overlay review (1F), alignment (1G), AWS smoke tests (1H), readiness note (1I).
 
 Full instructions are in the [Step 1 guide](skier_step_1_guide.md). Module contracts and tests for the offline coding block are in the [Step 1 code spec](skier_step_1_code_spec.md). Summary:
 
@@ -216,7 +278,11 @@ Full instructions are in the [Step 1 guide](skier_step_1_guide.md). Module contr
 
 ---
 
-## 7. Step 2 — Freeze the experimental contract (Week 1, 8 h)
+## 7. Step 2 — Freeze the experimental contract (Week 1; about 1 h left)
+
+> **Status, 2026-10-18: code done.**
+> - A dry run with the D10 pilots and D11 gives 65/16/19 plus the follow-cam set; perfect-predictor PCK on val = 100%.
+> - **Not frozen yet:** the freeze waits for the overlay review. `docs/evaluation_protocol.md` is a draft to review together with the freeze.
 
 ### Offline coding block
 
@@ -305,7 +371,7 @@ Tests (synthetic numbers only):
 
 ---
 
-## 8. Step 3 — Baselines (Week 2, 12 h)
+## 8. Step 3 — Baselines (Weeks 1–2; about 5 h of runs)
 
 > **Status, 2026-10-17: offline code implemented and tested; the run block waits for AWS.**
 > - **Model seam:** the model enters only as a plain `heatmap_fn(np [N,3,256,192]) -> np [N,K,64,48]` (`skier.pose.infer`). The whole crop → decode → map-back path is tested without torch, and only `build_hrnet` needs mmpose (its tests are marked `stack`).
@@ -368,7 +434,7 @@ Tests (synthetic numbers only):
 
 ---
 
-## 9. Step 4 — Centered replay (Week 2, 8 h)
+## 9. Step 4 — Centered replay (Weeks 2–3; about 3 h of runs)
 
 > **Status, 2026-10-17: offline code implemented and tested; the real runs need SiamFC output (AWS).**
 > - `skier.replay.controller`, `.render`, `.run` (`scripts/make_replay.py`, including `--grid`); `skier.eval.replay_metrics`; defaults in `configs/replay/default.yaml`.
@@ -419,7 +485,7 @@ Provisional target, not a promise: at least 95% of visible ski endpoints kept on
 
 ---
 
-## 10. Step 5 — Train the 24-point model, E1 (Week 3, 20 h)
+## 10. Step 5 — Train the 24-point model, E1 (Weeks 1–2; about 6 h of runs)
 
 > **Status, 2026-10-17: offline code implemented.**
 > - `skier.pose.augment`, `.dataset` (with an optional `CropCache`), `.loss`, `.train` (`scripts/train_pose.py`, `configs/pose/e1.yaml`).
@@ -475,7 +541,7 @@ Provisional target, not a promise: at least 95% of visible ski endpoints kept on
 
 ---
 
-## 11. Step 6 — Augmentation study (Week 4, 20 h)
+## 11. Step 6 — Augmentation study (code in Week 1, runs in Weeks 2–3; about 10 h)
 
 **Research question:** does targeted augmentation improve ski landmarks and robustness to imperfect crops, without materially hurting body accuracy?
 
@@ -508,7 +574,7 @@ Provisional target, not a promise: at least 95% of visible ski endpoints kept on
 
 ---
 
-## 12. Step 7 — Integration and error propagation (Week 5, 16 h)
+## 12. Step 7 — Integration and error propagation (Weeks 2–3; about 10 h)
 
 ### Offline coding block
 - `[CODE]` `scripts/process_clip.py`: video + first-frame box → tracker → pose crop → pose model → replay → outputs. Writes a per-frame JSONL with:
@@ -547,7 +613,7 @@ If video alignment failed in Step 1, use the crop-error set as the quantitative 
 
 ---
 
-## 13. Step 8 — Final evaluation and report (Weeks 5–6, 16 h)
+## 13. Step 8 — Final evaluation and report (Weeks 4–5; about 14 h)
 
 ### Offline coding block
 - `[CODE]` `scripts/make_tables.py`: pose, tracking and replay tables from saved predictions, with point counts and per-video rows.
@@ -567,7 +633,7 @@ If video alignment failed in Step 1, use the crop-error set as the quantitative 
 
 ---
 
-## 14. Step 9 — Reserve (8 h)
+## 14. Step 9 — Reserve (about 8 h, inside the buffer)
 
 Spend on blockers first (environment, data access, geometry bugs, report), then:
 
@@ -583,14 +649,17 @@ Spend on blockers first (environment, data access, geometry bugs, report), then:
 
 | Risk | Trigger | Action |
 | --- | --- | --- |
-| AWS GPU quota delayed | No approved quota by mid-Week 1 | Do all `[CODE]` work, run `[DATA]` CPU tasks anywhere, and use the local GTX 1070 Ti (8 GB) for the tiny-overfit test and profiling with batch 8 |
+| AWS GPU quota delayed | No approved quota by Wed Oct 21 | Do all `[CODE]` work (Step 6 first), run `[DATA]` CPU tasks on the Mac, and use the Windows GTX 1070 Ti (8 GB) for the tiny-overfit test and profiling with batch 8 |
+| AWS still unavailable | Not running by Mon Oct 26 | Train E1 on the 1070 Ti (batch 8). Cut extra seeds first, then E2/E3 (keep E1 vs. E4); record the change |
 | SkiTB access delayed | No data by end of Week 1 | Continue pose; demo tracking on Ski 2DPose videos; mark the benchmark gap clearly |
+| SkiTB too late for the benchmark | No data by Fri Nov 6 | Drop the SkiTB tracking benchmark and the τ/k grid. Report tracking qualitatively, with replay metrics on Ski 2DPose segments, and say so |
 | Pinned install fails | More than 2–3 h without a working pose inference | Try the documented fixes in the Step 1 guide; if still blocked, load the official HRNet repo's pure-PyTorch model with the same contracts and record the change |
 | Tracker integration fails | More than 3–4 h after access | Fix the adapter narrowly; otherwise use another documented pretrained tracker and say so |
 | GPU time over budget | Measured runtimes don't fit | Cut epochs or runs uniformly; keep E1 vs. E4 |
 | Poor ski accuracy | Overfit passes, generalization poor | Audit crop resolution, labels, split before changing the architecture |
 | Thin held-out ski labels | Generator can't meet the hard rules | Lower N with a recorded reason before any training; never re-split after seeing scores |
 | Annotation too slow | Pilot exceeds reserve | Drop the amateur extension; keep the core complete |
+| Schedule slip | An end-of-week checkpoint (§4) missed by more than 2 days | Drop the stretch goals first, then the extra seeds, then E2/E3 (keep E1 vs. E4). Never relax the split or the test-once rule |
 
 Record every material change in `docs/decisions.md` and the final report.
 
@@ -601,7 +670,7 @@ Record every material change in `docs/decisions.md` and the final report.
 Details and click-by-click steps are in the Step 1 guide, section 1C.
 
 - Instance: **g5.xlarge** (NVIDIA A10G 24 GB, 4 vCPU, 16 GB RAM), about $1.0/h on demand; or **g4dn.xlarge** (T4 16 GB), about $0.53/h and slower. Prices are approximate; check the AWS pricing page for your region.
-- Rough budget, unmeasured: 60–100 instance-hours over six weeks plus about $8/month for 100 GB of disk, so roughly $70–$130 total on g5.xlarge.
+- Rough budget, unmeasured: 60–100 instance-hours over the 5 weeks to Nov 20, plus about $8/month for 100 GB of disk, so roughly $70–$130 total on g5.xlarge.
 - Rules:
   - **Stop the instance whenever you're not using it.** Billing is per second while it runs.
   - Set an AWS Budgets email alert.

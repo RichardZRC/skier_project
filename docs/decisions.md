@@ -78,3 +78,8 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
 - Choice: nothing more is installed on the Mac (no torch, no mmpose). Code that needs torch keeps its imports lazy. Its tests are marked `torch` (and mmpose ones `stack`); they skip locally and run on AWS. Logic is written to be testable with numpy/OpenCV where possible (for example, a numpy reference loss `masked_mse_np`).
 - Reason: Ruichao's instruction (2026-10-17).
 - Effect on evaluation: none on the metrics. **The first action on AWS, before any training, is a full `pytest`** that includes the `torch` and `stack` tests, so the training loop is verified before GPU time counts.
+
+## D14 — Deadline moved up to Fri 2026-11-20 (2026-10-18)
+- Choice: finish everything (final test run, report, demo) by **Friday 2026-11-20**, instead of the original six-week plan ending 2026-11-29. Week-by-week schedule: plan §4. Stretch goals (amateur footage, 3D, coaching) happen only if Week 3 ends on track.
+- Reason: Ruichao's target (2026-10-18). It's feasible because the offline code for Steps 1–5 is already written: about 62–70 h of estimated remaining work against about 92 h of capacity.
+- Effect on evaluation: none on the protocol. The split freeze, val-only tuning and the test-once rule are unchanged. If the schedule slips, cut in this order: stretch goals → extra seeds → E2/E3 (keep E1 vs. E4). See plan §15.
