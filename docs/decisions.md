@@ -57,3 +57,19 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
 - Choice: option (a). The 6 follow-cam videos (134 images, one segment each) are a separate `followcam` evaluation set: never trained on, outside the 70/15/15 split, reported as their own row. Implemented with `make_pose_split.py --set-aside followcam=auto`.
 - Reason: they are the closest stand-in for amateur footage. Forcing all six into test would make them most of the test set's videos, and leaving them to the generator would put them all in training (checked with dry runs of the split search, 2026-10-17).
 - Effect on evaluation: 7% fewer training images. The main split stays about 65/16/19. Follow-cam is evaluated once, like test.
+
+## D10 — Pilot videos (2026-10-17)
+- Choice: `5UHRvqx1iuQ` (Slalom, 300 images), `oKQFABiOTw8` (Giant Slalom, 385), `zW1bF2PsB0M` (Super G, 114), in `data/manifests/pilot_videos.txt`.
+- Reason: they are forced into training, so they are the only videos studied closely before the freeze (overlay review, code sanity checks, the MMPose cross-check). Picking the **larger** video of each two-video race type gives the best achievable split (about 65/16/19 with follow-cam set aside); the smaller ones would push val to 27%.
+- Effect on evaluation: none on the metrics. If the overlay review shows a pilot's skier is too small to judge, swap it before the freeze and record the swap here.
+
+## D12 — Heatmap convention and the MMPose cross-check (2026-10-17)
+- Choice:
+  - Training targets are Gaussians centered **exactly** at `input / 4` (sub-pixel, sigma 2).
+  - Decoding copies MMPose 1.x's MSRA decoder verbatim: argmax, then a quarter-pixel step toward the larger neighbor using MMPose's own edge conditions (no step in the outer heatmap pixels), then times 4.
+  - The cross-check runs MMPose's `inference_topdown` with `flip_test` **disabled**.
+- Reason:
+  - MMPose's default MSRA target rounds the center to a whole heatmap pixel, losing up to 2 input px. The sub-pixel target is more precise and only affects training.
+  - The decoder must match the COCO checkpoint for E0 and for the cross-check.
+  - The COCO config enables flip-test averaging by default, but our pipeline never flips (plan §10, 5.2), so comparing against flip-tested output would measure the wrong thing.
+- Effect on evaluation: decode error is at most about 1.4 input px inside the heatmap and about 2.2 px in the outer pixels (tests check both). The cross-check passes only if the mean difference is ≤ 2 original px.

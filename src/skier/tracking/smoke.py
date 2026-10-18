@@ -1,91 +1,36 @@
 """SiamFC tracker smoke test (guide 1H, code spec §11).
 
-A minimal direct use of the tracker, replaced by the proper adapter in Step 3.
-The tracker is initialized once and never reset. torch/siamfc are imported lazily.
+A minimal run of the tracker on one video. Since Step 3 it uses the proper adapter
+(``skier.tracking.siamfc_adapter``) and ``track_clip``; the tracker is initialized once
+and never reset. torch/siamfc are imported lazily.
 """
 
 from __future__ import annotations
 
 import argparse
-import importlib
 import sys
 from pathlib import Path
-from typing import Protocol
 
 import cv2
-import numpy as np
 
 from skier.io_utils import ensure_dir, read_csv, write_csv
 from skier.paths import results_root
+from skier.tracking.frames import VideoFrames
+from skier.tracking.siamfc_adapter import SiamFCTracker, Tracker, xywh1_to_xyxy, xyxy_to_xywh1  # noqa: F401
 from skier.viz import FONT, draw_box
 
 BOX_COLUMNS = ["frame_index", "x1", "y1", "x2", "y2"]
 
 
-class BoxTracker(Protocol):
-    def init(self, frame_bgr: np.ndarray, box_xyxy: np.ndarray) -> None: ...
-
-    def update(self, frame_bgr: np.ndarray) -> np.ndarray: ...  # xyxy
-
-
-def xyxy_to_xywh1(box) -> np.ndarray:
-    """``xyxy`` to 1-based ``[x, y, w, h]`` (GOT-10k / upstream siamfc-pytorch convention)."""
-    x1, y1, x2, y2 = np.asarray(box, dtype=np.float64)
-    return np.array([x1 + 1, y1 + 1, x2 - x1, y2 - y1])
-
-
-def xywh1_to_xyxy(box) -> np.ndarray:
-    x, y, w, h = np.asarray(box, dtype=np.float64)
-    return np.array([x - 1, y - 1, x - 1 + w, y - 1 + h])
-
-
-class SiamFCTracker:
-    """Wraps the siamfc-pytorch tracker. Conversions (BGR→RGB, xyxy↔xywh1) happen here.
-
-    The device is chosen by the tracker itself (upstream uses cuda:0 when available).
-    """
-
-    # --- FILL IN AT 1D/1H (code spec §13): confirm against the fork's source ---
-    MODULE = "siamfc"
-    CLASS = "TrackerSiamFC"
-    # ---------------------------------------------------------------------------
-
-    def __init__(self, siamfc_repo: Path, weights: Path):
-        sys.path.insert(0, str(Path(siamfc_repo).resolve()))
-        cls = getattr(importlib.import_module(self.MODULE), self.CLASS)
-        self._tracker = cls(net_path=str(weights))
-
-    def init(self, frame_bgr: np.ndarray, box_xyxy: np.ndarray) -> None:
-        self._tracker.init(cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB), xyxy_to_xywh1(box_xyxy))
-
-    def update(self, frame_bgr: np.ndarray) -> np.ndarray:
-        return xywh1_to_xyxy(self._tracker.update(cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)))
-
-
-def run_on_video(tracker: BoxTracker, video_path, init_frame: int, init_box_xyxy, max_frames: int) -> list[tuple]:
+def run_on_video(tracker: Tracker, video_path, init_frame: int, init_box_xyxy, max_frames: int) -> list[tuple]:
     """Decode sequentially; init once at ``init_frame``; update until ``max_frames`` rows or EOF."""
-    cap = cv2.VideoCapture(str(video_path))
-    if not cap.isOpened():
-        raise ValueError(f"cannot open video {video_path}")
-    rows: list[tuple] = []
-    idx = 0
+    from skier.tracking.run import track_clip
+
     try:
-        while len(rows) < max_frames:
-            ok, frame = cap.read()
-            if not ok:
-                break
-            if idx == init_frame:
-                box = np.asarray(init_box_xyxy, dtype=np.float64)
-                tracker.init(frame, box)
-                rows.append((idx, *map(float, box)))
-            elif idx > init_frame:
-                rows.append((idx, *map(float, tracker.update(frame))))
-            idx += 1
-    finally:
-        cap.release()
-    if not rows:
-        raise ValueError(f"init frame {init_frame} is past the end of {video_path} ({idx} frames)")
-    return rows
+        rows = track_clip(tracker, VideoFrames(video_path), init_frame, init_box_xyxy, max_frames)
+    except ValueError as exc:
+        raise ValueError(f"init frame {init_frame} is past the end of {video_path}") from exc
+    return [(r["frame_index"], r["x1"], r["y1"], r["x2"], r["y2"]) for r in rows]
 
 
 def write_boxes_csv(rows: list[tuple], path) -> None:

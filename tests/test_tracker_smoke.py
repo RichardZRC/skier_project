@@ -19,7 +19,7 @@ class FakeTracker:
     def update(self, frame_bgr):
         assert frame_bgr.ndim == 3
         self.box = self.box + np.array([3, 1, 3, 1])
-        return self.box
+        return self.box, 0.5
 
 
 @pytest.fixture

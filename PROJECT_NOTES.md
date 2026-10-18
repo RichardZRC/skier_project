@@ -167,6 +167,12 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
       tracking metrics; 123 tests pass. Dry run on real data: train 65% / val 16% / test 19%
       + 134-image follow-cam set; perfect-predictor PCK on val = 100%. **Split not frozen yet.**
 - [x] **D11 follow-cam = separate evaluation set** (2026-10-17).
+- [x] **D10 pilots chosen** (2026-10-17): `5UHRvqx1iuQ`, `oKQFABiOTw8`, `zW1bF2PsB0M`
+      (`data/manifests/pilot_videos.txt`). Only these videos are looked at before the freeze.
+- [x] **Step 3 code written** (2026-10-17, plan-mode plan approved): heatmaps (D12), preprocessing,
+      inference via a plain `heatmap_fn`, E0 evaluation, MMPose cross-check, HRNet wrapper, SiamFC
+      adapter + tracking runner. 152 tests pass (2 `stack` tests skip until AWS); mutation check
+      4/4 caught; pipeline sanity check on 30 real pilot images within the error bound.
 
 ## Next steps
 
@@ -182,8 +188,7 @@ Follow `skier_step_1_guide.md`. In order:
 
 Rule (2026-10-17): **every step starts with a plan-mode plan, approved before coding.**
 
-To freeze the Step 2 split (in order): choose pilot videos (recommended `5UHRvqx1iuQ`,
-`oKQFABiOTw8`, `zW1bF2PsB0M`) → draw overlays and review them (1F) → run
+To freeze the Step 2 split (in order, before the first AWS scoring run): pilots chosen ✓ → draw overlays and review them (1F) → run
 `make_pose_split.py --set-aside followcam=auto` → review summary → commit (freeze), and
 review/freeze `docs/evaluation_protocol.md` (draft).
 

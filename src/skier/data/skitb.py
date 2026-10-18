@@ -34,6 +34,17 @@ def sequences_for_partition(split: dict, partition: str) -> list[str]:
     if not isinstance(seqs, list) or not all(isinstance(s, (str, int)) for s in seqs):
         raise ValueError(f"split JSON partition {partition!r} is not a list of sequence IDs")
     return [str(s) for s in seqs]
+
+
+def frame_file(entry: str) -> str:
+    """Image filename (under ``frames/``) for one ``frames.txt`` entry.
+
+    Entries that already are filenames pass through. Bare indices need the real naming
+    pattern, which is unknown until the data arrives, so they raise instead of guessing.
+    """
+    if "." in entry:
+        return entry
+    raise NotImplementedError(f"frames.txt entry {entry!r} is not a filename: fill in frame_file() (code spec §13)")
 # -------------------------------------------------------------------------------
 
 

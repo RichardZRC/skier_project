@@ -6,7 +6,9 @@ import pytest
 from skier import envcheck, splits
 from skier.data import alignment, audit, overlays
 from skier.paths import repo_root
+from skier.pose import crosscheck, eval_generic
 from skier.pose import smoke as pose_smoke
+from skier.tracking import run as tracking_run
 from skier.tracking import smoke as tracker_smoke
 
 TOOLS = {
@@ -17,6 +19,9 @@ TOOLS = {
     "smoke_pose": pose_smoke,
     "smoke_tracker": tracker_smoke,
     "make_pose_split": splits,
+    "eval_generic_pose": eval_generic,
+    "crosscheck_mmpose": crosscheck,
+    "run_tracker": tracking_run,
 }
 
 

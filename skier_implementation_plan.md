@@ -307,6 +307,11 @@ Tests (synthetic numbers only):
 
 ## 8. Step 3 — Baselines (Week 2, 12 h)
 
+> **Status, 2026-10-17: offline code implemented and tested; the run block waits for AWS.**
+> - **Model seam:** the model enters only as a plain `heatmap_fn(np [N,3,256,192]) -> np [N,K,64,48]` (`skier.pose.infer`). The whole crop → decode → map-back path is tested without torch, and only `build_hrnet` needs mmpose (its tests are marked `stack`).
+> - **Scripts:** `eval_generic_pose.py` (E0; requires the frozen split), `crosscheck_mmpose.py` (flip test disabled on the MMPose side, D12) and `run_tracker.py`.
+> - **Heatmap convention:** recorded as D12.
+
 ### Offline coding block
 
 **`[CODE]` 3.1 Model wrapper — `src/skier/pose/model.py`**
