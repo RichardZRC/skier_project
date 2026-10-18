@@ -94,7 +94,11 @@ Install commands are in Step 1C of the guide.
 
 **Ski 2DPose** (EPFL, no access form; cite Bachmann et al., 3DV 2019):
 
-- 1,982 images from 16 videos, 158 camera sequences (32 SL, 52 GS, 26 SG, 24 DH, 6 follow-cam). At least 32 athletes, 5 locations. Images are 1920×1080 or 1280×720.
+- 1,982 images from 16 videos, 158 camera sequences. At least 32 athletes, 5 locations. Images are 1920×1080 (1,585) or 1280×720 (397).
+- Race type is **per video** (info JSON `video_info.type`), checked against the files on 2026-10-17. Counts are videos / segments / images:
+  - Giant Slalom 2 / 52 / 670; Slalom 2 / 32 / 539; Combined Slalom 1 / 18 / 395; Super G 2 / 26 / 152;
+  - Follow Cam 6 / 6 / 134; Mixed 1 / 18 / 62; Downhill 2 / 6 / 30.
+  - The EPFL page's per-sequence breakdown (32 SL, 52 GS, 26 SG, 24 DH, 6 follow-cam) sums to 140, not 158; the info file is used instead. Details are in `docs/data_audit.md`.
 - Labels JSON: `VideoID → SplitID → ImageID → {"annotation": [[x, y, visible] × 24], "frame_idx": i}`. **Their "SplitID" is a camera sequence, not a train/val split; our code calls it `segment_id`.** `frame_idx` is the frame index within that sequence.
 - Coordinates are normalized 0–1 with (0, 0) at the top-left. `visible = 1` means visible or confidently labeled; `0` means occluded best guess.
 - Frames are sampled every 0.3–10 s, so the leakage risk is the same video, course and athlete, not near-duplicate frames.
@@ -285,7 +289,13 @@ Tests (synthetic numbers only):
 
 ### Review block
 - `[MANUAL]` Look at the split summary: which videos landed where, race types, image and ski-point counts.
-- `[MANUAL]` **Follow-cam placement.** Recommended default: if the follow-cam sequences come from one or two videos, force those videos into **test** (`forced_test`) as long as the split still meets the hard rules, and report follow-cam results as a separate row. They are the closest stand-in for amateur footage. If forcing them in breaks the rules, leave them where the generator puts them and still report them separately. Record the choice in `docs/decisions.md` before training anything.
+- `[MANUAL]` **Follow-cam placement.** The original default ("if the follow-cam sequences come from one or two videos, force them into test") **does not apply**: the data has **6 follow-cam videos**, one segment each, 134 images in total (`docs/data_audit.md`). Forcing all six into test would make them most of the test set's videos. Options to choose from before any training:
+  - (a) Hold all 6 out as a separate **follow-cam evaluation set**, reported as its own row and excluded from the 70/15/15 race-video split. They are the closest stand-in for amateur footage.
+  - (b) Split them between val and test with `forced_*` and report them separately.
+  - (c) Let the generator place them, and still report them separately.
+
+  Record the choice in `docs/decisions.md`.
+- `[MANUAL]` **Expect coarse partitions.** The five largest videos each hold 12–20% of the images. So val and test will each be roughly one large race video plus small ones, and race types can't all be spread across partitions. Report per-video results next to the pooled numbers.
 - `[MANUAL]` Freeze: commit the manifest and write `docs/evaluation_protocol.md` (metric definitions above, exclusion rules, coordinate convention).
 
 **Exit condition:** all Step 2 tests pass; the split manifest is committed; a perfect predictor scores 100% on the real val records.

@@ -689,13 +689,13 @@ Step 1 has no `stack` or `gpu` tests. The first ones arrive with Step 3.1, using
 
 Each fill-in is a small commit, noted in `docs/data_audit.md` (data facts) or `docs/decisions.md` (code/tool facts).
 
-| What | Where | How to find it | Guide step |
-| --- | --- | --- | --- |
-| `IMAGE_PATH_TEMPLATE` | `data/ski2dpose_raw.py` | Example loader + `unzip -l` of the images archive | 1E.1 |
-| `info_for` (discipline and view-angle keys) | `data/ski2dpose_raw.py` | `info_preview` in `label_summary.json` | 1E.2 |
-| `locate_segment` | `data/alignment.py` | File count and `ffprobe` durations in `videos/` | 1G.1 |
-| `MIN_SCORE`, `MIN_MARGIN` | `data/alignment.py` | First real segment's scores and margins | 1G.3 |
-| SiamFC import path, constructor, box and color conventions | `tracking/smoke.py` | Read the fork's tracker source | 1D / 1H.3 |
+| What | Where | How to find it | Guide step | Status |
+| --- | --- | --- | --- | --- |
+| `IMAGE_PATH_TEMPLATE` | `data/ski2dpose_raw.py` | Example loader + `unzip -l` of the images archive | 1E.1 | **Done 2026-10-17:** `Images_jpg/{video_id}/{segment_id}/{image_id}.jpg` |
+| `info_for` (discipline and view-angle keys) | `data/ski2dpose_raw.py` | `info_preview` in `label_summary.json` | 1E.2 | **Done 2026-10-17:** `video_info.type`; view flags joined, e.g. `front+side` |
+| `locate_segment` | `data/alignment.py` | File count and `ffprobe` durations in `videos/` | 1G.1 | **Done 2026-10-17:** `Videos/{video_id}/{segment_id}.mp4`, start 0 (confirm in 1G) |
+| `MIN_SCORE`, `MIN_MARGIN` | `data/alignment.py` | First real segment's scores and margins | 1G.3 | Open |
+| SiamFC import path, constructor, box and color conventions | `tracking/smoke.py` | Read the fork's tracker source | 1D / 1H.3 | Open (AWS) |
 
 ---
 

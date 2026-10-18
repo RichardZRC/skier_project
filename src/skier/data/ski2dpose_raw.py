@@ -19,18 +19,33 @@ import numpy as np
 
 NUM_KEYPOINTS = 24
 
-# --- FILL IN AT 1E (code spec §13) ------------------------------------------
-# Image path relative to the images root. Keys: video_id, segment_id, image_id.
-# Example only (not verified): "{video_id}/{segment_id}/{image_id}.jpg"
-IMAGE_PATH_TEMPLATE: str | None = None
+# --- FILLED IN AT 1E (2026-10-17; code spec §13) -----------------------------
+# Image path relative to the images root ($SKIER_DATA/ski2dpose/images), from the
+# images zip listing and the official example loader. Image IDs are full stems,
+# e.g. "uLW74013Wp0_0_00001".
+IMAGE_PATH_TEMPLATE: str | None = "Images_jpg/{video_id}/{segment_id}/{image_id}.jpg"
+
+VIEW_FLAGS = ("front_view", "side_view", "back_view")
 
 
 def info_for(info: Any, video_id: str, segment_id: str) -> dict:
     """Return ``{"discipline": str | None, "view_angle": str | None}`` for one sequence.
 
-    Fill in once ``info_preview`` in label_summary.json shows the info JSON's layout.
+    Info JSON layout: ``VideoID -> {"video_info": {..., "type": str},
+    "splits_info": {SplitID: {"front_view": bool, "side_view": bool, "back_view": bool, ...}}}``.
+    ``discipline`` is the per-video type ("Slalom", "Giant Slalom", "Super G", "Downhill",
+    "Combined Slalom", "Mixed", "Follow Cam"). ``view_angle`` joins the true view flags,
+    e.g. "front+side"; several can be true for one sequence.
     """
-    return {"discipline": None, "view_angle": None}
+    video = info.get(video_id) if isinstance(info, dict) else None
+    if not isinstance(video, dict):
+        return {"discipline": None, "view_angle": None}
+    discipline = (video.get("video_info") or {}).get("type")
+    split = (video.get("splits_info") or {}).get(segment_id)
+    view = None
+    if isinstance(split, dict):
+        view = "+".join(flag.removesuffix("_view") for flag in VIEW_FLAGS if split.get(flag)) or None
+    return {"discipline": discipline, "view_angle": view}
 # -----------------------------------------------------------------------------
 
 

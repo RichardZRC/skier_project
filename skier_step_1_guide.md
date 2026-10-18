@@ -274,7 +274,7 @@ One row per asset: asset, source URL, date, local path, size, SHA-256, license/t
 
    ```bash
    cd ~/skier_project
-   python scripts/audit_pose_labels.py $SKIER_DATA/ski2dpose/labels/<labels>.json \
+   python scripts/audit_pose_labels.py $SKIER_DATA/ski2dpose/labels/ski2dpose_labels.json \
      --info $SKIER_DATA/ski2dpose/archives/ski2dpose_info.json \
      --images-root $SKIER_DATA/ski2dpose/images
    # → $SKIER_RESULTS/step1/audit/{label_summary.json,problems.csv} and data/manifests/pose_inventory.csv
@@ -293,7 +293,7 @@ One row per asset: asset, source URL, date, local path, size, SHA-256, license/t
 
    ```bash
    python scripts/draw_gt_overlays.py --inventory data/manifests/pose_inventory.csv \
-     --labels $SKIER_DATA/ski2dpose/labels/<labels>.json --images-root $SKIER_DATA/ski2dpose/images \
+     --labels $SKIER_DATA/ski2dpose/labels/ski2dpose_labels.json --images-root $SKIER_DATA/ski2dpose/images \
      --videos-file data/manifests/pilot_videos.txt --n 30 --seed 230
    # → $SKIER_RESULTS/step1/overlays/ (PNGs stay there; only overlay_ids.txt is synced in 1I)
    ```

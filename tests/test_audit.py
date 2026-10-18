@@ -5,6 +5,7 @@ import pytest
 import synth
 
 from skier.data import audit
+from skier.data import ski2dpose_raw as raw_mod
 from skier.io_utils import read_csv, read_json, sha256_file
 
 TEMPLATE = "{video_id}/{segment_id}/{image_id}.png"
@@ -94,7 +95,8 @@ def test_pass1_only(tmp_path):
     assert read_json(out / "label_summary.json")["images_checked"] is False
 
 
-def test_images_without_template_fails(tmp_path, capsys):
+def test_images_without_template_fails(tmp_path, capsys, monkeypatch):
+    monkeypatch.setattr(raw_mod, "IMAGE_PATH_TEMPLATE", None)
     labels_path, images_root, out, inv, args = run_audit(tmp_path)
     assert audit.main(args + ["--images-root", str(images_root)]) == 1
     assert "1E" in capsys.readouterr().err
@@ -123,3 +125,17 @@ def test_info_preview_in_summary(tmp_path):
     audit.main(args + ["--info", str(info)])
     preview = read_json(out / "label_summary.json")["info_preview"]
     assert "view" in json.dumps(preview) and "front" not in json.dumps(preview)
+
+
+def test_inventory_gets_discipline_and_view(tmp_path):
+    labels_path, images_root, out, inv, args = run_audit(tmp_path)
+    info = tmp_path / "info.json"
+    info.write_text(json.dumps({
+        "v0": {"video_info": {"type": "Slalom"},
+               "splits_info": {"s0": {"front_view": True, "side_view": True, "back_view": False}}},
+    }))
+    audit.main(args + ["--info", str(info)])
+    by_id = {r["sample_id"]: r for r in read_csv(inv)}
+    assert (by_id["v0/s0/i1"]["discipline"], by_id["v0/s0/i1"]["view_angle"]) == ("Slalom", "front+side")
+    assert (by_id["v0/s1/i2"]["discipline"], by_id["v0/s1/i2"]["view_angle"]) == ("Slalom", "")  # segment not in info
+    assert (by_id["v1/s0/i2"]["discipline"], by_id["v1/s0/i2"]["view_angle"]) == ("", "")  # video not in info

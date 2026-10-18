@@ -6,6 +6,7 @@ from skier.data.ski2dpose_raw import (
     RawLabel,
     annotation_array,
     image_path_for,
+    info_for,
     info_preview,
     iter_raw_labels,
     make_sample_id,
@@ -71,6 +72,22 @@ def test_info_preview_has_keys_not_values():
     text = str(preview)
     assert "location" in text and "angle" in text
     assert "Kitzbuehel" not in text and "45.0" not in text
+
+
+def test_info_for_real_layout():
+    info = {"v1": {"video_info": {"type": "Giant Slalom", "location": "x"},
+                   "splits_info": {"0": {"front_view": False, "side_view": True, "back_view": True,
+                                         "start_time_stamp": "00:00:01.000"}}}}
+    assert info_for(info, "v1", "0") == {"discipline": "Giant Slalom", "view_angle": "side+back"}
+    assert info_for(info, "v1", "9") == {"discipline": "Giant Slalom", "view_angle": None}
+    assert info_for(info, "nope", "0") == {"discipline": None, "view_angle": None}
+    none_true = {"v": {"video_info": {"type": "Slalom"}, "splits_info": {"0": {"front_view": False}}}}
+    assert info_for(none_true, "v", "0")["view_angle"] is None
+
+
+def test_default_template_matches_dataset_layout(tmp_path):
+    p = image_path_for(tmp_path, "uLW74013Wp0", "0", "uLW74013Wp0_0_00001")
+    assert p == tmp_path / "Images_jpg" / "uLW74013Wp0" / "0" / "uLW74013Wp0_0_00001.jpg"
 
 
 def test_box_from_points():

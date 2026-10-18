@@ -54,9 +54,11 @@ The plans are sound; dataset facts were verified.
   - JSON nesting: `VideoID → SplitID → ImageID → {annotation: [[x,y,vis]...], frame_idx}`.
     Note: their "SplitID" means a **camera sequence/segment**, not train/val.
     Our code calls it `segment_id`. `frame_idx` is the index within that segment.
-  - 1,982 images, 16 videos, 158 sequences (32 SL, 52 GS, 26 SG, 24 DH,
-    6 follow-cam). Official split: 147 train / 11 val sequences
+  - 1,982 images, 16 videos, 158 sequences. Official split: 147 train / 11 val sequences
     (val = 152 images from 5 video IDs). Images 1920×1080 or 1280×720.
+    **Corrected 2026-10-17 from the files:** the page's breakdown (32 SL, 52 GS, 26 SG,
+    24 DH, 6 follow-cam) sums to 140, not 158. The info JSON's per-video `type` is the
+    source of truth, and follow-cam is **6 separate videos** (see `docs/data_audit.md`).
   - Frames sampled every 0.3–10 s, so leakage risk is same video/course/athlete,
     not near-duplicate frames. Video-grouped splitting is still correct.
 - **SkiTB** (https://github.com/matteo-dunnhofer/SkiTB-toolkit)
@@ -156,7 +158,10 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
       light env (`.venv`, installed via `uv` from pypi.apple.com because the sandbox proxy blocks PyPI);
       spec §14 acceptance passes. `FILL IN` blocks (spec §13) are still open: they need the real data.
 - [ ] **AWS credit requested** (2026-10-17); waiting. No instance or GPU environment yet.
-- [ ] No data downloaded.
+- [x] **Ski 2DPose downloaded, checked and audited** (2026-10-17, Mac, `~/skier_data`):
+      checksums in `docs/data_audit.md`; 16 / 158 / 1,982 as expected; **0 audit problems**;
+      path template, `info_for` and `locate_segment` filled in; inventory committed at
+      `data/manifests/pose_inventory.csv`. Still to do: pilot videos, overlay review (1F), alignment (1G).
 
 ## Next steps
 
@@ -165,12 +170,15 @@ Follow `skier_step_1_guide.md`. In order:
 1. `[MANUAL]` Today: AWS budget alert + GPU quota request (guide 1C.1–1C.3).
 2. ~~`[CODE]` Offline: implement `skier_step_1_code_spec.md` §2–§11~~ Done 2026-10-17.
 3. `[MANUAL][NET]` Launch instance, install pinned stack (1C.4–1C.7).
-4. `[NET][DATA]` Downloads (1D), then audit, overlays + review, alignment, smoke tests (1E–1H).
+4. `[NET][DATA]` ~~Downloads (1D), audit (1E)~~ done 2026-10-17 on the Mac. Next: pilot videos,
+   overlays + review (1F), alignment (1G) — none need the GPU. Smoke tests (1H) wait for AWS.
 5. `[MANUAL]` Readiness decision (1I), sync evidence to `results/step1/` and push, then Step 2.
 6. `[MANUAL]` Chase SkiTB if no reply by 2026-10-24.
 
-Open decision for Step 2: follow-cam placement (default: force their videos into test
-and report separately, if the split's hard rules still hold).
+Open decision for Step 2: follow-cam placement. The old default (force them into test)
+no longer fits: there are 6 follow-cam videos (134 images). Options (a) separate
+follow-cam eval set, (b) split across val/test, (c) generator decides; always reported
+separately. See plan §7 review block and `docs/data_audit.md`.
 
 ## Manual label review guide (for Ruichao)
 

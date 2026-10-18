@@ -22,14 +22,22 @@ from skier.paths import data_root, results_root
 from skier.schema import Schema, load_schema
 from skier.viz import FONT, render_gt_overlay
 
-# --- FILL IN AT 1E/1G (code spec §13) ----------------------------------------
+# --- PARTLY FILLED IN AT 1G (2026-10-17; code spec §13) ----------------------
 MIN_SCORE = 0.8  # starting values; adjust on the first real segment and record them
 MIN_MARGIN = 0.02
 
 
 def locate_segment(videos_root: Path, video_id: str, segment_id: str, info: Any = None) -> tuple[Path, int]:
-    """Return (video file, decode index of the segment's frame_idx 0)."""
-    raise NotImplementedError("video layout unknown: fill in at 1G (code spec §13)")
+    """Return (video file, decode index of the segment's frame_idx 0).
+
+    The videos zip holds one clip per segment at ``Videos/{video_id}/{segment_id}.mp4``
+    (158 files). Start index 0 assumes ``frame_idx`` counts from the clip's first
+    frame; the alignment check confirms or corrects that.
+    """
+    path = Path(videos_root) / "Videos" / video_id / f"{segment_id}.mp4"
+    if not path.is_file():
+        raise FileNotFoundError(f"no clip for {video_id}/{segment_id}: {path}")
+    return path, 0
 # -----------------------------------------------------------------------------
 
 PROBE_SIZE = (160, 90)  # (w, h)
@@ -195,7 +203,7 @@ def main(argv: list[str] | None = None) -> int:
         info = read_json(args.info) if args.info else None
         try:
             video_path, start_frame = locate_segment(videos_root, vid, seg, info)
-        except NotImplementedError as exc:
+        except (NotImplementedError, FileNotFoundError) as exc:
             print(f"error: {exc}; or pass --video FILE --start-frame N", file=sys.stderr)
             return 1
 

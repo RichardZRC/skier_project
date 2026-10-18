@@ -82,13 +82,29 @@ def test_gt_clip(tmp_path, square_video):
     assert n == (50 + 5) - (10 - 5) + 1
 
 
-def test_locate_segment_unfilled(tmp_path, square_video, capsys):
+def test_locate_segment_layout(tmp_path, square_video):
+    """Without --video, the clip is found at <videos-root>/Videos/<video>/<segment>.mp4 with start 0."""
+    video, images_root, _ = square_video
+    videos_root = tmp_path / "videos"
+    (videos_root / "Videos" / "vA").mkdir(parents=True)
+    video.rename(videos_root / "Videos" / "vA" / "sA.mp4")  # container doesn't matter to OpenCV
+    assert alignment.locate_segment(videos_root, "vA", "sA") == (videos_root / "Videos" / "vA" / "sA.mp4", 0)
+    inv = write_inventory(tmp_path / "inventory.csv", [("i10", 10, 10), ("i30", 30, 30)])
+    out = tmp_path / "o"
+    code = alignment.main(["--inventory", str(inv), "--images-root", str(images_root), "--video-id", "vA",
+                           "--segment-id", "sA", "--videos-root", str(videos_root), "--out", str(out)])
+    assert code == 0
+    assert [int(r["offset"]) for r in read_csv(out / "alignment.csv")] == [0, 0]
+
+
+def test_missing_clip_fails(tmp_path, square_video, capsys):
     _, images_root, _ = square_video
     inv = write_inventory(tmp_path / "inventory.csv", [("i10", 10, 10)])
-    code = alignment.main(["--inventory", str(inv), "--images-root", str(images_root),
-                           "--video-id", "vA", "--segment-id", "sA", "--out", str(tmp_path / "o")])
+    code = alignment.main(["--inventory", str(inv), "--images-root", str(images_root), "--video-id", "vA",
+                           "--segment-id", "sA", "--videos-root", str(tmp_path / "nothing"),
+                           "--out", str(tmp_path / "o")])
     assert code == 1
-    assert "--video" in capsys.readouterr().err
+    assert "no clip" in capsys.readouterr().err
 
 
 def test_ncc():
