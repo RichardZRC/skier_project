@@ -52,3 +52,8 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
 - Choice: none for the core.
 - Reason: the core experiments use the published labels (proposal §3); annotation time only comes out of the 8 h reserve.
 - Effect on evaluation: the amateur-footage stretch is qualitative unless the reserve allows 30–60 annotated frames.
+
+## D11 — Follow-cam placement (2026-10-17)
+- Choice: option (a). The 6 follow-cam videos (134 images, one segment each) are a separate `followcam` evaluation set: never trained on, outside the 70/15/15 split, reported as their own row. Implemented with `make_pose_split.py --set-aside followcam=auto`.
+- Reason: they are the closest stand-in for amateur footage. Forcing all six into test would make them most of the test set's videos, and leaving them to the generator would put them all in training (checked with dry runs of the split search, 2026-10-17).
+- Effect on evaluation: 7% fewer training images. The main split stays about 65/16/19. Follow-cam is evaluated once, like test.

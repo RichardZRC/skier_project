@@ -289,6 +289,9 @@ One row per asset: asset, source URL, date, local path, size, SHA-256, license/t
 ## 1F. Ground-truth overlays and your review `[DATA][MANUAL]`
 
 1. Choose 2–3 **pilot videos**: large, clearly visible skiers, different race types, and none of the follow-cam videos. Save their IDs in `data/manifests/pilot_videos.txt`, one per line. They are forced into **training** in Step 2 (`forced_train`), so looking at them closely never contaminates val or test.
+   - **Prefer the larger video of a race type.** Forcing a small one into training leaves the big ones (240–385 images each) to overfill val and test.
+   - Check a candidate set with a dry run first: `make_pose_split.py --pilot-file <candidates> --set-aside followcam=auto --out $TMPDIR/try.json`.
+   - The recommended set (2026-10-17) is `5UHRvqx1iuQ`, `oKQFABiOTw8`, `zW1bF2PsB0M`. It gives the best possible split (about 65/16/19).
 2. Draw 30 overlays:
 
    ```bash

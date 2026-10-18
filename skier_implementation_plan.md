@@ -285,7 +285,10 @@ Tests (synthetic numbers only):
 - Tests: hand-made box sequences with known IoUs and one known failure episode.
 
 ### Run block
-- `[DATA]` Build `video_stats` from the real records; run the split generator with the Step 1 pilot videos as `forced_train`; commit `pose_split_v1.json`.
+- `[DATA]` Build `video_stats` from the real records, and run the split generator:
+  - with the Step 1 pilot videos as `forced_train` and the follow-cam videos set aside (D11): `python scripts/make_pose_split.py --set-aside followcam=auto`;
+  - then commit `pose_split_v1.json`. The script refuses to overwrite a frozen manifest without `--force`.
+  - **Implemented 2026-10-17.** A dry run with the recommended pilots gives train 65% / val 16% / test 19%, plus a 134-image follow-cam set. Perfect-predictor PCK on that val = 100%.
 
 ### Review block
 - `[MANUAL]` Look at the split summary: which videos landed where, race types, image and ski-point counts.

@@ -162,6 +162,11 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
       checksums in `docs/data_audit.md`; 16 / 158 / 1,982 as expected; **0 audit problems**;
       path template, `info_for` and `locate_segment` filled in; inventory committed at
       `data/manifests/pose_inventory.csv`. Still to do: pilot videos, overlay review (1F), alignment (1G).
+- [x] **Step 2 code written** (2026-10-17, after a plan-mode plan): geometry, canonical records,
+      split generator (+ `make_pose_split.py`), SkiTB reader (layout unverified), pose and
+      tracking metrics; 123 tests pass. Dry run on real data: train 65% / val 16% / test 19%
+      + 134-image follow-cam set; perfect-predictor PCK on val = 100%. **Split not frozen yet.**
+- [x] **D11 follow-cam = separate evaluation set** (2026-10-17).
 
 ## Next steps
 
@@ -175,10 +180,12 @@ Follow `skier_step_1_guide.md`. In order:
 5. `[MANUAL]` Readiness decision (1I), sync evidence to `results/step1/` and push, then Step 2.
 6. `[MANUAL]` Chase SkiTB if no reply by 2026-10-24.
 
-Open decision for Step 2: follow-cam placement. The old default (force them into test)
-no longer fits: there are 6 follow-cam videos (134 images). Options (a) separate
-follow-cam eval set, (b) split across val/test, (c) generator decides; always reported
-separately. See plan §7 review block and `docs/data_audit.md`.
+Rule (2026-10-17): **every step starts with a plan-mode plan, approved before coding.**
+
+To freeze the Step 2 split (in order): choose pilot videos (recommended `5UHRvqx1iuQ`,
+`oKQFABiOTw8`, `zW1bF2PsB0M`) → draw overlays and review them (1F) → run
+`make_pose_split.py --set-aside followcam=auto` → review summary → commit (freeze), and
+review/freeze `docs/evaluation_protocol.md` (draft).
 
 ## Manual label review guide (for Ruichao)
 

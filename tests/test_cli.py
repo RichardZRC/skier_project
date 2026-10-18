@@ -3,8 +3,8 @@ import sys
 
 import pytest
 
+from skier import envcheck, splits
 from skier.data import alignment, audit, overlays
-from skier import envcheck
 from skier.paths import repo_root
 from skier.pose import smoke as pose_smoke
 from skier.tracking import smoke as tracker_smoke
@@ -16,6 +16,7 @@ TOOLS = {
     "check_env": envcheck,
     "smoke_pose": pose_smoke,
     "smoke_tracker": tracker_smoke,
+    "make_pose_split": splits,
 }
 
 
