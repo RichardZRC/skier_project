@@ -20,6 +20,7 @@ from skier.pose.train import (
     TrainConfig,
     append_log,
     lr_for,
+    run_name,
     schema_fingerprint,
     select_overfit_records,
 )
@@ -67,6 +68,13 @@ def test_config_rejects_unknown_keys_and_test_partition():
         TrainConfig.from_dict({"batchsize": 8})
     with pytest.raises(ValueError, match="test"):
         TrainConfig.from_dict({"val_partition": "test"})
+
+
+def test_run_name():
+    assert run_name("E2") == "E2"
+    assert run_name("E1", seed=231) == "E1-seed231"
+    assert run_name("E1", overfit=32) == "E1-overfit32"
+    assert run_name("E4", overfit=8, seed=232) == "E4-seed232-overfit8"
 
 
 def test_lr_schedule_boundaries():

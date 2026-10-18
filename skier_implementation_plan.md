@@ -11,7 +11,7 @@ Hyperparameters, runtimes and costs below are starting estimates, not measured v
 
 **Deadline: Friday 2026-11-20** (D14). The week-by-week schedule is in §4.
 
-The **offline code for Steps 1–5 is written, tested and pushed**, ahead of the schedule in §4. That covers 205 unit tests; 8 more (`torch`, `stack`) run on AWS. Both datasets are on the Mac and audited:
+The **offline code for Steps 1–6 is written and tested**, ahead of the schedule in §4. That covers 249 unit tests; 8 more (`torch`, `stack`) run on AWS. Both datasets are on the Mac and audited:
 - Ski 2DPose: 0 problems (`docs/data_audit_ski2dpose.md`).
 - SkiTB `AL/`: arrived 2026-10-18, 0 format problems, reader layout confirmed (`docs/data_audit_skitb.md`, D15).
 
@@ -24,24 +24,26 @@ What's left needs the GPU or Ruichao, plus SkiTB's frame rate for each sequence.
 | 3 | Done | MMPose cross-check, E0 on val, SiamFC on pilot segments / SkiTB val | AWS, frozen split; SkiTB frame rates (failure episodes) |
 | 4 | Done | Replays of the pilot segments; τ/k grid on SkiTB val | Tracker output (AWS); SkiTB frame rates |
 | 5 | Done | Tiny overfit → 200-step profile → full E1 | AWS, frozen split |
-| 6–8 | Not started | — | Plan-mode plan first |
+| 6 | Done | Crop-error set (after the freeze); train E2–E4; evaluate E0–E4 on val; compare; choose the recipe | AWS, frozen split |
+| 7–8 | Not started | — | Plan-mode plan first. Step 7 waits for the alignment check (1G) and the first AWS session |
 
 **Possible now, on the Mac, no GPU:**
 1. Overlay review (pilot videos).
 2. Alignment check on 1–2 pilot segments.
 3. Freeze the split (`make_pose_split.py --set-aside followcam=auto`).
-4. Plan and code Step 6 (E2–E4 augmentations), then Step 7.
+4. ~~Plan and code Step 6.~~ Done 2026-10-18. Look over the augmentation sheets in `$SKIER_RESULTS/pose/aug_preview/` (pilot images).
 5. Find SkiTB's frame rate for each sequence, from the toolkit source or the source videos (`docs/data_audit_skitb.md`, finding 2). Then pass it per clip to the tracker and replay tools, a small fix within Steps 3–4.
 
 **First AWS session, in this order:**
 1. Install the pinned stack (guide 1C.7); `check_env.py --strict`.
-2. **The full `pytest`.** All 213 tests must pass, including the `torch` and `stack` tests, before any training (D13).
+2. **The full `pytest`.** All 257 tests must pass, including the `torch` and `stack` tests, before any training (D13).
 3. Get the data onto the instance.
    - **Ski 2DPose:** download again and compare the SHA-256 values with `docs/data_audit_ski2dpose.md`, or copy it from the Mac.
    - **SkiTB:** copy only what's needed from the Mac, never `FS/`/`JP/`. Since nothing trains on SkiTB, that's the 6 val and 41 test sequences plus one train sequence for the smoke test, instead of all 15.5 GB of `AL/`. Then rerun `results/step1/skitb_audit/audit_skitb_al.py` and compare the per-sequence digests with `skitb_al_sequences.csv`.
 4. Download the COCO HRNet config and checkpoint (`mim download`) and the SiamFC fork and weights. Fill in `SiamFCTracker`'s `FILL IN` block (code spec §13). While the toolkit is cloned, check how it handles frame rate and `--split_file`.
 5. `smoke_pose.py`, `smoke_tracker.py` → **`crosscheck_mmpose.py` (must pass ≤ 2 px)**.
 6. E0 on val → E1 `--overfit 32` → `--profile-steps 200` → full E1.
+7. After the freeze: `make_crop_error_set.py`, then E2–E4 with `--config configs/pose/eN.yaml --experiment EN`, then `eval_pose.py` (with the crop-error set) for E1–E4, then `compare_experiments.py`.
 
 ---
 
@@ -200,7 +202,7 @@ End-of-week checkpoints:
 
 - **Week 1 (Oct 25):**
   - split frozen;
-  - AWS environment verified (all 213 tests pass);
+  - AWS environment verified (all 257 tests pass);
   - cross-check passes;
   - E0 val numbers;
   - E1 overfit passes.
@@ -551,6 +553,12 @@ Provisional target, not a promise: at least 95% of visible ski endpoints kept on
 ---
 
 ## 11. Step 6 — Augmentation study (code in Week 1, runs in Weeks 2–3; about 10 h)
+
+> **Status, 2026-10-18: offline code implemented and tested; the runs wait for AWS and the frozen split.**
+> - Augmentations in `skier.pose.augment`, with settings in D16 (jitter p 1, blur p 0.5, occlusion p 0.5). The paired design gives E1–E4 identical flips, rotations, scales and data order.
+> - `configs/pose/e2–e4.yaml`; `make_crop_error_set.py` (val, three levels); `eval_pose.py` (clean, strata, crop-error, cut-off share); `compare_experiments.py` (table, per-joint deltas, and the D16 selection rule); `show_augmentations.py` (pilot sheets); `train_pose.py --seed`.
+> - **Changed from the list below:** follow-cam is not a Step 6 stratum (D11/D16), and the selection rule is pre-registered (D16).
+> - 44 new tests; mutation check 10/10 caught. The pilot augmentation sheets were checked visually.
 
 **Research question:** does targeted augmentation improve ski landmarks and robustness to imperfect crops, without materially hurting body accuracy?
 

@@ -4,7 +4,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 **Deadline: Fri 2026-11-20** (D14; plan §4). If the schedule slips, cut stretch goals first, then extra seeds, then E2/E3.
 
-**Read first:** `PROJECT_NOTES.md` (status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D15; append only).
+**Read first:** `PROJECT_NOTES.md` (status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D16; append only).
 
 ## Working rules (Ruichao's instructions; follow them exactly)
 
@@ -21,7 +21,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 ## Environment
 
-- Run the tests with `.venv/bin/python -m pytest -q`. Currently **205 passed, 8 skipped**: 6 `torch` and 2 `stack` tests run on AWS.
+- Run the tests with `.venv/bin/python -m pytest -q`. Currently **249 passed, 8 skipped**: 6 `torch` and 2 `stack` tests run on AWS.
   - Markers: `torch` needs PyTorch; `stack` needs the pinned torch, mmcv and mmpose; `gpu` needs CUDA.
 - **Paths:** code reads `SKIER_DATA` (default `~/skier_data`) and `SKIER_RESULTS` (default `~/skier_results`) through `skier.paths`. Never hard-code absolute paths.
 - **Data on this Mac:**
@@ -68,7 +68,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 | --- | --- |
 | Data | `data/ski2dpose_raw.py` (raw labels, path template, info), `data/ski2dpose.py` + `data/records.py` (`PoseRecord`), `data/audit.py`, `data/overlays.py`, `data/alignment.py`, `data/skitb.py` (layout confirmed 2026-10-18), `splits.py` |
 | Geometry and drawing | `geometry.py`, `viz.py`, `schema.py` (+ `configs/ski24_schema.json`) |
-| Pose | `pose/preprocess.py`, `pose/heatmap.py`, `pose/infer.py`, `pose/model.py`, `pose/coco_map.py`, `pose/eval_generic.py` (E0), `pose/crosscheck.py`, `pose/augment.py`, `pose/dataset.py`, `pose/loss.py`, `pose/train.py` |
+| Pose | `pose/preprocess.py`, `pose/heatmap.py`, `pose/infer.py`, `pose/model.py`, `pose/coco_map.py`, `pose/eval_generic.py` (E0), `pose/crosscheck.py`, `pose/augment.py`, `pose/dataset.py`, `pose/loss.py`, `pose/train.py`, `pose/crop_error.py`, `pose/evaluate.py`, `pose/compare.py`, `pose/aug_preview.py` |
 | Tracking and replay | `tracking/siamfc_adapter.py`, `tracking/frames.py`, `tracking/run.py`, `replay/controller.py`, `replay/render.py`, `replay/run.py` |
 | Metrics | `eval/pose_metrics.py`, `eval/track_metrics.py`, `eval/replay_metrics.py` |
 | Tools | `envcheck.py`, `io_utils.py`, `paths.py` |

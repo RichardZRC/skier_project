@@ -26,6 +26,17 @@
   - COCO wrist → Ski hand goes in a separate, explicitly approximate row.
   - E0's ski PCK is **N/A**, not 0.
 - **Comparisons between experiments** use identical sample IDs and denominators. Paired differences use a bootstrap over source videos, not frames (Step 8).
+- **Crop-error set (D16):** a fixed set of perturbed **val** crops standing in for tracker error.
+  - Three levels per image: mild, moderate and severe. At each level the reference box's center moves by exactly 0.05, 0.10 or 0.20 box widths/heights in a random direction, and its size by a factor in [1/(1+r), 1+r].
+  - The crop is then made exactly as usual.
+  - Reliable points that fall outside the crop count as misses, and the **cut-off share** is reported next to PCK.
+- **Strata (Step 6):** PCK@0.1 by discipline and by view flag on val. View strata overlap, because one image can have several views. The follow-cam set is not used until Step 8 (D11).
+- **Recipe selection (D16, fixed before any E2–E4 result):**
+  1. Drop candidates whose clean val body PCK@0.1 is more than 2 points below E1.
+  2. Take the highest clean val ski PCK@0.1. If the top two are within 1 point, take the one with the higher moderate crop-error ski PCK@0.1.
+  3. If none beats E1, keep E1 and report the negative result.
+
+  Ruichao confirms the choice.
 
 ## 3. Split (D4, D11)
 

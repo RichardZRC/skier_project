@@ -313,6 +313,16 @@ def save_val_overlays(model, records: Sequence[PoseRecord], schema: Schema, devi
     return len(chosen)
 
 
+def run_name(experiment: str, overfit: int | None = None, seed: int | None = None) -> str:
+    """Output folder name: ``E2``, ``E1-seed231``, ``E1-overfit32``."""
+    name = experiment
+    if seed is not None:
+        name += f"-seed{seed}"
+    if overfit:
+        name += f"-overfit{overfit}"
+    return name
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Train the 24-point HRNet (E1 and later experiments).")
     p.add_argument("--config", type=Path, help="default: configs/pose/e1.yaml")
@@ -321,6 +331,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--checkpoint", type=Path, required=True, help="COCO HRNet-W32 checkpoint")
     p.add_argument("--device", default="cuda:0")
     p.add_argument("--experiment", default="E1")
+    p.add_argument("--seed", type=int, help="override the config's seed (extra seeds); output <experiment>-seed<N>")
     p.add_argument("--overfit", type=int, metavar="N", help="N training images, no augmentation, validated on themselves")
     p.add_argument("--epochs", type=int, help="override finetune_epochs (e.g. for --overfit)")
     p.add_argument("--profile-steps", type=int, metavar="N", help="time N steps, estimate the full run, exit")
@@ -335,6 +346,8 @@ def main(argv: list[str] | None = None) -> int:
     cfg = TrainConfig.from_yaml(args.config or configs_dir() / "pose" / "e1.yaml")
     if args.epochs is not None:
         cfg = dataclasses.replace(cfg, finetune_epochs=args.epochs)
+    if args.seed is not None:
+        cfg = dataclasses.replace(cfg, seed=args.seed)
     manifest = read_json(args.split)
     schema = load_schema()
 
@@ -346,11 +359,10 @@ def main(argv: list[str] | None = None) -> int:
                            s2d / "archives/ski2dpose_info.json", schema=schema)
     train_recs, train_excl = select_partition(records, manifest, "train")
     val_recs, _ = select_partition(records, manifest, cfg.val_partition)
-    name = args.experiment
+    name = run_name(args.experiment, args.overfit, args.seed)
     if args.overfit:
         train_recs = val_recs = select_overfit_records(train_recs, args.overfit, cfg.seed)
         cfg = dataclasses.replace(cfg, aug=AugConfig.none())
-        name = f"{name}-overfit{args.overfit}"
     out = Path(args.out or results_root() / "pose" / name)
 
     cache = None

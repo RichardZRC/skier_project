@@ -1,0 +1,26 @@
+# E3: as E1 plus motion blur and one occlusion patch (plan Step 6, D16). Only the aug block differs from e1.yaml.
+batch_size: 16            # 8 if memory requires
+warm_epochs: 3            # backbone frozen (weights and BatchNorm statistics), head only
+finetune_epochs: 50
+lr_head_warm: 0.001
+lr_backbone: 0.0001
+lr_head: 0.0005
+milestones: [0.6, 0.85]   # x0.1 from fine-tune epochs floor(0.6 E) and floor(0.85 E)
+seed: 230
+num_workers: 4
+val_every: 1
+val_partition: val        # never test
+val_batch_size: 32
+expand: 1.25
+sigma: 2.0
+aug:
+  flip_p: 0.5
+  rot_deg: 15.0
+  scale_range: [0.8, 1.2]
+  blur:                   # linear motion blur at model resolution, random direction; odd lengths only
+    p: 0.5
+    lengths: [3, 5, 7, 9]
+  occlusion:              # one solid random-color patch; points under it stay supervised
+    p: 0.5
+    area_range: [0.05, 0.15]
+    aspect_range: [0.5, 2.0]

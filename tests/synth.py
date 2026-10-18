@@ -93,3 +93,24 @@ def make_moving_square_video(
             cv2.imwrite(str(saved[k]), frame)
     writer.release()
     return saved
+
+
+def box_oracle_heatmap_fn(calls):
+    """A fake model for crops requested in this exact order: ``calls`` is a list of
+    ``(record, box)``. Each crop gets Gaussians at that record's labels in that crop's own
+    input space (so labels a crop cuts off get no peak, and decode to NaN)."""
+    from skier.geometry import apply_affine, crop_affine
+    from skier.pose.heatmap import encode
+    from skier.pose.preprocess import INPUT_H, INPUT_W, pose_crop_box
+
+    queue = list(calls)
+
+    def fn(batch):
+        out = []
+        for _ in range(len(batch)):
+            r, box = queue.pop(0)
+            M = crop_affine(pose_crop_box(box), INPUT_W, INPUT_H)
+            target, _ = encode(apply_affine(M, r.keypoints_xy), np.isfinite(r.keypoints_xy).all(axis=1))
+            out.append(target)
+        return np.stack(out)
+    return fn

@@ -97,3 +97,35 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
   - Two facts from the audit (`docs/data_audit_skitb.md`):
     - **The athlete split isn't fully athlete-disjoint by the metadata:** 5 athletes in train and test, 10 test sequences. This causes no leakage, since nothing is trained on SkiTB. Report it as "the official athlete split".
     - **The frame rate varies by sequence:** about 25 or about 30 fps, estimated. It must be known per clip before tracking failure episodes or replay timing are scored.
+
+## D16 — Step 6 augmentations, the crop-error set, and the recipe-selection rule (2026-10-18)
+- Choice, fixed before any E2–E4 results exist:
+  - **Experiments:** E2 = E1 + crop jitter; E3 = E1 + motion blur + occlusion; E4 = E1 + all three. Everything else matches E1 exactly (`configs/pose/e2–e4.yaml`; a test checks this).
+  - **Crop jitter:** probability 1. The reference-box center moves by U(−0.10, 0.10) of the box's width and height, independently per axis, and its size by U(0.9, 1.1). The labels follow through the single crop transform.
+  - **Motion blur:** probability 0.5. A line kernel at a random direction, with length 3, 5, 7 or 9 px at model resolution. Odd lengths only, so the kernel never shifts the image against the labels.
+  - **Occlusion:** probability 0.5. One solid random-color rectangle covering 5–15% of the crop, with width/height ratio log-uniform in 0.5–2, fully inside the crop.
+  - **Occlusion label policy:** points under the patch **stay supervised**, since their true position is known. Unreliable labels stay masked as always. Neither pixel augmentation changes targets or weights.
+  - **Paired design:** one fixed-length vector of uniforms per `(seed, epoch, index)`, one slot per parameter.
+    - E1–E4 see identical flips, rotations, scales and data order.
+    - E2 and E4 share jitter values; E3 and E4 share blur and occlusion values.
+  - **Crop-error set** (`data/manifests/crop_error_set_v1.json`, val):
+    - Per image, three levels (mild 0.05, moderate 0.10, severe 0.20). At each level the reference box's center moves by exactly that radius, in box units, in a random direction, and its size by a factor in [1/(1+r), 1+r].
+    - Seed 230; each sample's draws depend only on (seed, sample ID).
+    - Only perturbation parameters are stored, never coordinates. The file is frozen like the split.
+    - Reliable points the crop cuts off count as misses, and their share is reported.
+  - **Strata in Step 6:** discipline and view flag on val only. **Follow-cam is not used in Step 6.** D11 makes it a once-only set like test (plan §11's stratum list is superseded).
+  - **Selection rule:**
+    1. Drop candidates whose clean val body PCK@0.1 is more than 2 points below E1.
+    2. Take the highest clean val ski PCK@0.1. If the top two are within 1 point, take the one with the higher moderate crop-error ski PCK@0.1.
+    3. If none beats E1, keep E1 and report the negative result.
+
+    `compare_experiments.py` prints the rule's pick. Ruichao makes the final choice and records it here.
+- Reason:
+  - The values implement plan §11's ranges.
+  - Probability 0.5 for blur and occlusion keeps half of the samples clean, so clean accuracy isn't traded away by default.
+  - The severe level lies outside E2's training jitter (at most 0.14 radially), so the set also measures extrapolation.
+  - The levels are fixed before any tracker results, so they can't be fitted to them.
+  - Writing the rule down first prevents choosing the recipe after seeing the numbers.
+- Effect on evaluation:
+  - The Step 6 table reports, per run, clean body / body-shared / ski PCK, ski PCK at each crop-error level, the cut-off share, and Δ vs. E1, with counts.
+  - Bootstrap intervals come in Step 8.

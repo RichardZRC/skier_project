@@ -23,7 +23,7 @@ from skier.data.records import PoseRecord
 from skier.data.ski2dpose_raw import safe_name
 from skier.geometry import apply_affine, box_center_size, box_from_center_size
 from skier.io_utils import ensure_dir, read_json, write_json
-from skier.pose.augment import AugConfig, AugParams, compose, crop_transform, flip_labels, sample_aug
+from skier.pose.augment import AugConfig, AugParams, apply_pixel_aug, compose, crop_transform, flip_labels, sample_aug
 from skier.pose.heatmap import encode
 from skier.pose.preprocess import INPUT_H, INPUT_W, normalize, pose_crop_box
 from skier.schema import Schema
@@ -55,6 +55,7 @@ def make_sample(record: PoseRecord, image_bgr: np.ndarray, params: AugParams, sc
     M_img = M if offset == (0.0, 0.0) else compose(M, np.array([[1.0, 0.0, offset[0]], [0.0, 1.0, offset[1]]]))
     crop = cv2.warpAffine(image_bgr, M_img, (INPUT_W, INPUT_H), flags=cv2.INTER_LINEAR,
                           borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0))
+    crop = apply_pixel_aug(crop, params)  # blur, occlusion: pixels only, labels untouched (D16)
     xy = apply_affine(M, record.keypoints_xy)
     reliable = record.reliable
     if params.flip:
@@ -122,16 +123,27 @@ def collate(samples: list[dict]):
 
 # --- optional crop cache ------------------------------------------------------------------
 
+def _bounds(aug: AugConfig, expand: float) -> dict:
+    j = aug.jitter
+    return {"expand": expand, "scale_max": max(1.0, *aug.scale_range), "rot_deg": abs(aug.rot_deg),
+            "jitter_shift": j.shift if j else 0.0, "jitter_scale_max": max(1.0, *j.scale_range) if j else 1.0}
+
+
 def required_region(ref_box_xyxy, aug: AugConfig, expand: float, margin_px: float = 4.0) -> np.ndarray:
-    """Original-image region that contains every crop the augmentation can produce."""
-    if aug.jitter:
-        raise NotImplementedError("extend required_region for crop jitter in Step 6")
-    crop = pose_crop_box(ref_box_xyxy, expand, max(1.0, *aug.scale_range))
-    c, (w, h) = box_center_size(crop)
-    th = math.radians(abs(aug.rot_deg))
+    """Original-image region that contains every crop the augmentation can produce.
+
+    The largest crop (both scale factors at their maximum), rotated, centered anywhere the
+    jitter can move the reference box's center to.
+    """
+    b = _bounds(aug, expand)
+    c_ref, (w_ref, h_ref) = box_center_size(ref_box_xyxy)
+    crop = pose_crop_box(ref_box_xyxy, expand, b["scale_max"] * b["jitter_scale_max"])
+    _, (w, h) = box_center_size(crop)
+    th = math.radians(b["rot_deg"])
     rw = w * math.cos(th) + h * math.sin(th)  # bounding box of the rotated crop
     rh = w * math.sin(th) + h * math.cos(th)
-    return box_from_center_size(c, (rw + 2 * margin_px, rh + 2 * margin_px))
+    shift = b["jitter_shift"]
+    return box_from_center_size(c_ref, (rw + 2 * shift * w_ref + 2 * margin_px, rh + 2 * shift * h_ref + 2 * margin_px))
 
 
 class CropCache:
@@ -157,15 +169,14 @@ class CropCache:
             xe, ye = min(w, math.ceil(x2)), min(h, math.ceil(y2))
             cv2.imwrite(str(root / f"{safe_name(r.sample_id)}.png"), img[y0:ye, x0:xe], [cv2.IMWRITE_PNG_COMPRESSION, 1])
             offsets[r.sample_id] = [x0, y0]
-        bounds = {"expand": expand, "scale_max": max(1.0, *aug.scale_range), "rot_deg": abs(aug.rot_deg)}
-        write_json({"offsets": offsets, "bounds": bounds}, root / "index.json")
+        write_json({"offsets": offsets, "bounds": _bounds(aug, expand)}, root / "index.json")
         return cls(root)
 
     def check_covers(self, aug: AugConfig, expand: float) -> None:
-        b = self.bounds
-        if aug.jitter or expand > b["expand"] + 1e-9 or max(1.0, *aug.scale_range) > b["scale_max"] + 1e-9 \
-                or abs(aug.rot_deg) > b["rot_deg"] + 1e-9:
-            raise ValueError(f"crop cache built for {b} doesn't cover this augmentation; rebuild it")
+        """Blur and occlusion act on the warped crop, so only the geometry bounds matter."""
+        built = {"jitter_shift": 0.0, "jitter_scale_max": 1.0, **self.bounds}
+        if any(v > built[k] + 1e-9 for k, v in _bounds(aug, expand).items()):
+            raise ValueError(f"crop cache built for {self.bounds} doesn't cover this augmentation; rebuild it")
 
     def load(self, record: PoseRecord) -> tuple[np.ndarray, tuple[float, float]]:
         if record.sample_id not in self.offsets:

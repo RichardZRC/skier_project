@@ -6,7 +6,7 @@ import pytest
 from skier import envcheck, splits
 from skier.data import alignment, audit, overlays
 from skier.paths import repo_root
-from skier.pose import crosscheck, eval_generic, train as pose_train
+from skier.pose import aug_preview, compare, crop_error, crosscheck, eval_generic, evaluate, train as pose_train
 from skier.pose import smoke as pose_smoke
 from skier.replay import run as replay_run
 from skier.tracking import run as tracking_run
@@ -25,6 +25,10 @@ TOOLS = {
     "run_tracker": tracking_run,
     "make_replay": replay_run,
     "train_pose": pose_train,
+    "make_crop_error_set": crop_error,
+    "eval_pose": evaluate,
+    "compare_experiments": compare,
+    "show_augmentations": aug_preview,
 }
 
 

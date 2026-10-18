@@ -29,11 +29,12 @@ flowchart LR
 | 3 Baselines (E0, tracker) | ✅ done | ⏳ AWS |
 | 4 Centered replay | ✅ done | ⏳ Needs tracker output (AWS) |
 | 5 Train 24-point model (E1) | ✅ done | ⏳ AWS |
-| 6–8 Augmentation study, integration, report | not started | — |
+| 6 Augmentation study (E2–E4) | ✅ done | ⏳ AWS, after the split freeze. ✅ Augmentation preview on pilot images |
+| 7–8 Integration, report | not started | — |
 
 - The **AWS** GPU instance is pending.
 - **SkiTB** data arrived 2026-10-18 and is audited. The frame rate of each sequence is still open.
-- The test suite has 205 passing tests; 8 more need PyTorch or mmpose and run on AWS.
+- The test suite has 249 passing tests; 8 more need PyTorch or mmpose and run on AWS.
 - Detailed status and next actions: `PROJECT_NOTES.md`.
 
 ## Setup
@@ -93,6 +94,11 @@ Every tool has `--help`. Outputs go under `$SKIER_RESULTS` unless `--out` is giv
 | Tracker | `python scripts/run_tracker.py --siamfc-repo DIR --weights siamfc_alexnet_e50.pth --pilot-segments` (or `--skitb-root … --split-json … --partition val --fps N`) |
 | Centered replay | `python scripts/make_replay.py --track-csv CLIP.csv --video CLIP.mp4` (τ/k grid on val: `--grid …`) |
 | E1 training | `python scripts/train_pose.py --split data/manifests/pose_split_v1.json --hrnet-config CFG --checkpoint COCO.pth` (first `--overfit 32`, then `--profile-steps 200`) |
+| E2–E4 training | the same, plus `--config configs/pose/e2.yaml --experiment E2` (likewise E3, E4); extra seeds: `--seed 231` |
+| Augmentation preview (pilot images) | `python scripts/show_augmentations.py` → `$SKIER_RESULTS/pose/aug_preview/` |
+| **Freeze the crop-error set** (after the split) | `python scripts/make_crop_error_set.py` → `data/manifests/crop_error_set_v1.json` |
+| Evaluate a checkpoint (val) | `python scripts/eval_pose.py --checkpoint $SKIER_RESULTS/pose/E2/best.pt --hrnet-config CFG --split data/manifests/pose_split_v1.json --crop-error-set data/manifests/crop_error_set_v1.json` |
+| Compare experiments | `python scripts/compare_experiments.py E0=…/E0/val/metrics.json E1=…/E1/eval/val/metrics.json E2=… E3=… E4=…` (table + D16 selection rule) |
 
 `CFG` and `COCO.pth` come from `mim download mmpose --config td-hm_hrnet-w32_8xb64-210e_coco-256x192 --dest $SKIER_DATA/pretrained`.
 
@@ -112,8 +118,8 @@ The full definitions are in `docs/evaluation_protocol.md`.
 | --- | --- |
 | `src/skier/` | The package: `data/`, `pose/`, `tracking/`, `replay/`, `eval/`, plus `geometry`, `schema`, `splits`, `viz` |
 | `scripts/` | Command-line entry points (thin wrappers) |
-| `configs/` | `ski24_schema.json`, `pose/e1.yaml`, `replay/default.yaml` |
-| `data/manifests/` | `pose_inventory.csv`, `pilot_videos.txt`, and (after the freeze) `pose_split_v1.json` |
+| `configs/` | `ski24_schema.json`, `pose/e1.yaml`–`e4.yaml`, `replay/default.yaml` |
+| `data/manifests/` | `pose_inventory.csv`, `pilot_videos.txt`, and (after the freeze) `pose_split_v1.json` and `crop_error_set_v1.json` |
 | `docs/` | `scope.md`, `decisions.md`, `data_audit_ski2dpose.md`, `data_audit_skitb.md`, `evaluation_protocol.md` |
 | `tests/` | Unit tests on synthetic data (`tests/synth.py`) |
 | `results/` | Small committed evidence; large outputs stay under `$SKIER_RESULTS` |

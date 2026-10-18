@@ -194,8 +194,14 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
       100 sequences, 1,100 single-camera clips (train 554 / val 75 / test 471). The data-audit doc is split into
       `docs/data_audit_ski2dpose.md` and `docs/data_audit_skitb.md`; evidence in `results/step1/skitb_audit/`.
       The reader's layout block and `frame_file` are filled in; 205 tests pass. **Open:** the frame rate of each sequence.
+- [x] **Step 6 code written** (2026-10-18, plan-mode plan approved; D16): crop jitter, motion blur and occlusion with a
+      paired design (E1–E4 share flips, rotations, scales and data order); `configs/pose/e2–e4.yaml`; crop-error set
+      generator; checkpoint evaluator (clean, strata, crop-error, cut-off share); comparison table with the
+      pre-registered selection rule; augmentation preview; `train_pose.py --seed`. 249 tests pass; mutation check
+      10/10 caught. Pilot augmentation sheets checked visually (`~/skier_results/pose/aug_preview/`).
 - [ ] **First on AWS:** full `pytest` (torch + stack tests) → data (Ski 2DPose; the SkiTB val/test subset)
-      → cross-check → (freeze split) → E0 → E1 tiny overfit → profile → full E1.
+      → cross-check → (freeze split) → E0 → E1 tiny overfit → profile → full E1 → (freeze the crop-error set)
+      → E2–E4 → evaluate and compare on val.
 
 ## Next steps
 
@@ -210,6 +216,8 @@ Follow `skier_step_1_guide.md`. In order:
 6. ~~`[MANUAL]` Chase SkiTB if no reply by 2026-10-24.~~ Received 2026-10-18.
 7. `[MANUAL][NET]` Find SkiTB's frame rate for each sequence (toolkit source, or the source videos'
    metadata; `docs/data_audit_skitb.md` finding 2). Then the tracker and replay take it per clip.
+8. `[MANUAL]` Optional: look at the augmentation sheets (`~/skier_results/pose/aug_preview/e1–e4.png`).
+9. `[CODE]` Step 7 (integration): plan after the alignment check (1G) and the first AWS session.
 
 Rule (2026-10-17): **every step starts with a plan-mode plan, approved before coding.**
 
