@@ -1,0 +1,61 @@
+import subprocess
+import sys
+
+import pytest
+
+from skier.data import alignment, audit, overlays
+from skier import envcheck
+from skier.paths import repo_root
+from skier.pose import smoke as pose_smoke
+from skier.tracking import smoke as tracker_smoke
+
+TOOLS = {
+    "audit_pose_labels": audit,
+    "draw_gt_overlays": overlays,
+    "check_alignment": alignment,
+    "check_env": envcheck,
+    "smoke_pose": pose_smoke,
+    "smoke_tracker": tracker_smoke,
+}
+
+
+@pytest.mark.parametrize("name", TOOLS)
+def test_help_in_process(name, capsys):
+    with pytest.raises(SystemExit) as exc:
+        TOOLS[name].main(["--help"])
+    assert exc.value.code == 0
+    assert "usage" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("name", TOOLS)
+def test_script_help_and_lazy_imports(name):
+    """The script runs `--help` without importing torch, mmpose or siamfc."""
+    script = repo_root() / "scripts" / f"{name}.py"
+    code = (
+        "import runpy, sys\n"
+        f"sys.argv = [{str(script)!r}, '--help']\n"
+        "try:\n"
+        f"    runpy.run_path({str(script)!r}, run_name='__main__')\n"
+        "except SystemExit as e:\n"
+        "    assert e.code == 0, e.code\n"
+        "heavy = [m for m in ('torch', 'mmpose', 'mmcv', 'siamfc', 'got10k') if m in sys.modules]\n"
+        "assert not heavy, heavy\n"
+    )
+    res = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    assert res.returncode == 0, res.stderr
+
+
+def test_smoke_pose_parser():
+    args = pose_smoke.build_parser().parse_args(
+        ["--config", "c.py", "--checkpoint", "w.pth", "--image", "i.jpg", "--box", "1", "2", "30.5", "40"]
+    )
+    assert args.box == [1.0, 2.0, 30.5, 40.0]
+    assert (args.warmup, args.runs, args.device) == (5, 20, "cuda:0")
+
+
+def test_smoke_tracker_parser():
+    args = tracker_smoke.build_parser().parse_args(
+        ["--siamfc-repo", "r", "--weights", "w.pth", "--video", "v.mp4", "--init-frame", "3",
+         "--init-box", "1", "2", "3", "4"]
+    )
+    assert args.init_box == [1.0, 2.0, 3.0, 4.0] and args.max_frames == 300

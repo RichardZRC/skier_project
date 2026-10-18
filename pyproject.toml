@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "skier"
+version = "0.1.0"
+description = "Skier tracking, centered replay and 2D body/ski landmarks (CS230 project)"
+requires-python = ">=3.10"
+dependencies = ["numpy<2", "opencv-python", "pillow", "pyyaml"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "stack: needs the pinned torch/mmcv/mmpose stack (skipped otherwise)",
+    "gpu: needs a CUDA GPU (skipped otherwise)",
+]

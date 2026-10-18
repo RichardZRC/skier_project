@@ -4,6 +4,7 @@
 **Guide version:** v2, October 17, 2026 (replaces v1; v1 is in git history)
 **Time budget:** about 12 active hours (Week 1, starting 2026-10-19)
 **Full plan:** [Six-week implementation plan](skier_implementation_plan.md)
+**Code spec:** [Step 1 code spec](skier_step_1_code_spec.md) (how to write every 1A/1B module and test)
 
 Tags: `[CODE]` pure coding (no internet, data or GPU) · `[NET]` internet · `[DATA]` real dataset · `[GPU]` CUDA GPU · `[MANUAL]` you.
 
@@ -37,198 +38,40 @@ The output is a small evidence package and a decision: **ready**, **ready with a
 
 ---
 
-## 1A. Repo scaffold `[CODE]`
+## 1A. Repo scaffold `[CODE]` (+ one-time `[NET]`)
 
 Work in the existing repo (`git@github.com:RichardZRC/skier_project.git`); don't create a new folder. Clone it outside any cloud-sync folder.
 
-Create:
+Build the scaffold exactly as in [code spec](skier_step_1_code_spec.md) §2: folder tree, `pyproject.toml`, `requirements-pose.txt`, `.gitignore`, `paths.py`, `io_utils.py`, and the `docs/scope.md` / `docs/decisions.md` seeds.
 
-```text
-docs/  configs/  configs/pose/  configs/replay/  data/manifests/
-src/skier/  src/skier/data/  src/skier/pose/  src/skier/tracking/
-src/skier/replay/  src/skier/eval/  scripts/  tests/  tests/fixtures/  results/
-```
+**One-time `[NET]`:** create the light dev environment (spec §2.3), which has `numpy<2`, `opencv-python`, `pillow`, `pyyaml` and `pytest`. After that, all `[CODE]` work and its tests run offline. Tests that need torch or mmpose are marked `stack` and skip here; Step 1 has none.
 
-- `pyproject.toml`: package `skier` under `src/`, installable with `pip install -e .`; `pytest` config pointing at `tests/`.
-- `requirements-pose.txt`: the pinned stack from section 1C (comments mark which lines need special index URLs).
-- `src/skier/paths.py`: `data_root()` reads `SKIER_DATA` (default `~/skier_data`), `results_root()` reads `SKIER_RESULTS` (default `~/skier_results`).
-- `.gitignore`:
+Two repo rules matter because planning and coding happen on different machines:
+- The repo is the only channel between them. Small text evidence (JSON/CSV/TXT) is committed under `results/step1/` (see 1I).
+- Dataset images and labels are never committed. Overlays, clips and predictions stay under `$SKIER_RESULTS`.
 
-  ```gitignore
-  # large or machine-specific
-  data/raw/
-  data/processed/
-  artifacts/
-  *.pth
-  *.pt
-  *.mp4
-  *.avi
-  *.zip
-  __pycache__/
-  .venv/
-  .pytest_cache/
-  CLAUDE.local.md
-  ```
-
-- `docs/scope.md`: core, stretch order, research question, exclusions (copy from section 1 of the main plan).
-- `docs/decisions.md`: one entry per decision with date, reason and effect on evaluation. Seed it with D1–D9 from the main plan.
-
-**Done when:** `pip install -e .` and `pytest` run (zero tests is fine at this point).
+**Done when:** `pip install -e ".[dev]"` and `pytest` run (zero tests is fine at this point).
 
 ---
 
 ## 1B. Offline coding block `[CODE]`
 
-Write all of these without data or internet. Each has a synthetic test. Unknowns that only the real files can answer are isolated in one clearly marked place, filled in during 1E.
+Write all Step 1 code without data or internet, following the [code spec](skier_step_1_code_spec.md). The spec gives the module layout, signatures, behaviour and the exact synthetic tests. Facts that only the real files can answer sit in marked `FILL IN` blocks (spec §13), which get filled in during 1E–1H.
 
-### 1B.1 Landmark schema — `configs/ski24_schema.json` + `src/skier/schema.py`
+| Task | What | Entry point | Spec |
+| --- | --- | --- | --- |
+| 1B.1 | 24-landmark schema: names, groups, flip pairs, edges, COCO mapping | `configs/ski24_schema.json`, `skier.schema` | §3 |
+| shared | Raw label reader, image paths, reference box | `skier.data.ski2dpose_raw`, `skier.geometry` | §4–5 |
+| 1B.2 | Label audit and image inventory | `scripts/audit_pose_labels.py` | §6 |
+| 1B.3 | Ground-truth overlays and contact sheet | `scripts/draw_gt_overlays.py` | §7 |
+| 1B.4 | Video-frame alignment and GT clip | `scripts/check_alignment.py` | §8 |
+| 1B.5 | Environment check (`--strict` on AWS) | `scripts/check_env.py` | §9 |
+| 1B.6 | Pretrained pose smoke test (MMPose's own pipeline) | `scripts/smoke_pose.py` | §10 |
+| 1B.7 | SiamFC tracker smoke test | `scripts/smoke_tracker.py` | §11 |
 
-Zero-based order from the official dataset page (verified 2026-10-17):
+Every tool writes to `--out`, which defaults to `$SKIER_RESULTS/step1/<tool>/` (spec §1).
 
-| Index | Name | Group | Flip partner |
-| ---: | --- | --- | ---: |
-| 0 | head | body | 0 |
-| 1 | neck | body | 1 |
-| 2 | shoulder_right | body | 6 |
-| 3 | elbow_right | body | 7 |
-| 4 | hand_right | body | 8 |
-| 5 | pole_basket_right | pole | 9 |
-| 6 | shoulder_left | body | 2 |
-| 7 | elbow_left | body | 3 |
-| 8 | hand_left | body | 4 |
-| 9 | pole_basket_left | pole | 5 |
-| 10 | hip_right | body | 13 |
-| 11 | knee_right | body | 14 |
-| 12 | ankle_right | body | 15 |
-| 13 | hip_left | body | 10 |
-| 14 | knee_left | body | 11 |
-| 15 | ankle_left | body | 12 |
-| 16 | ski_tip_right | ski | 20 |
-| 17 | toes_right | ski | 21 |
-| 18 | heel_right | ski | 22 |
-| 19 | ski_tail_right | ski | 23 |
-| 20 | ski_tip_left | ski | 16 |
-| 21 | toes_left | ski | 17 |
-| 22 | heel_left | ski | 18 |
-| 23 | ski_tail_left | ski | 19 |
-
-JSON fields:
-- `names`: the 24 names.
-- `groups`:
-  - `body`: [0, 1, 2, 3, 4, 6, 7, 8, 10, 11, 12, 13, 14, 15]
-  - `ski`: [16, 17, 18, 19, 20, 21, 22, 23]
-  - `pole`: [5, 9]
-- `flip_pairs`: [[2,6],[3,7],[4,8],[5,9],[10,13],[11,14],[12,15],[16,20],[17,21],[18,22],[19,23]]
-- `side`: `right` / `left` / `center` per index.
-- `edges`, each tagged `body` / `ski` / `pole`:
-  - Body: 0–1, 1–2, 1–6, 2–3, 3–4, 6–7, 7–8, 2–10, 6–13, 10–13, 10–11, 11–12, 13–14, 14–15.
-  - Ski: 16–17, 17–18, 18–19, 20–21, 21–22, 22–23.
-  - Pole: 4–5, 8–9.
-- `coco_shared`: COCO → Ski pairs `{5:6, 6:2, 7:7, 8:3, 11:13, 12:10, 13:14, 14:11, 15:15, 16:12}`.
-- `coco_approx`: `{9:8, 10:4}`, wrist → hand, reported separately.
-
-"Right" means the skier's own right, not the image's right side.
-
-Tests:
-- 24 unique names.
-- Groups partition 0–23 with sizes 14 / 8 / 2.
-- Flip mapping is symmetric, and flipping twice gives back the original order.
-- Every flip pair maps right to left.
-- Edges reference valid indices.
-
-### 1B.2 Label audit and inventory — `scripts/audit_pose_labels.py`
-
-```text
-python scripts/audit_pose_labels.py LABELS_JSON --info INFO_JSON
-       [--images-root DIR --path-template TEMPLATE] --out DIR
-```
-
-- **Pass 1, structure only.** Walk `video → segment → image`. Count videos, segments and images; images per video; visibility values seen; reliable count per joint. Flag:
-  - annotation shape ≠ (24, 3);
-  - non-finite values;
-  - coordinates outside [0, 1];
-  - visibility values other than 0 or 1;
-  - missing `frame_idx`;
-  - repeated `frame_idx` within a segment.
-
-  Never clamp or fix anything; only report.
-- **Pass 2, with images.** Resolve each record through `--path-template` (for example `{video_id}/{segment_id}/{image_id}.jpg`; the real pattern is filled in during 1E). Read each image's real width and height (header only). Flag labels without images, images without labels, and duplicate sample IDs.
-- **Outputs:**
-  - `label_summary.json`;
-  - `problems.csv` with `sample_id, problem, detail`;
-  - `data/manifests/pose_inventory.csv` with `sample_id, video_id, segment_id, image_id, frame_idx, image_path, width, height, n_reliable_body, n_reliable_ski, n_reliable_pole, discipline, view_angle`. `discipline` and `view_angle` come from the info JSON; leave them blank if the key names aren't known yet.
-- Tests: a fixture JSON with 2 videos × 2 segments × 3 images, where one record has shape (23, 3), one has x = 1.2, one is missing `frame_idx`, and one image file is missing (blank PNGs generated in a temp dir). Each problem must be reported exactly once.
-
-### 1B.3 Ground-truth overlays — `scripts/draw_gt_overlays.py`
-
-```text
-python scripts/draw_gt_overlays.py --inventory CSV --labels LABELS_JSON
-       --videos-file data/manifests/pilot_videos.txt --n 30 --seed 230 --out DIR
-```
-
-- Picks `n` images from the pilot videos only, spread across segments and view angles.
-- Drawing rules:
-  - Skier's **right** side in orange, **left** side in cyan, head/neck in white.
-  - **Filled** circle = reliable (`visible = 1`); **hollow** circle = occluded guess (`visible = 0`).
-  - Each point labeled with its index number.
-  - Edges: body thin, skis thick, poles dotted. An edge with an unreliable endpoint is drawn dashed.
-  - Dashed yellow rectangle = reference box (reliable body + ski points, no poles).
-  - Header text: sample ID, image size, discipline, view.
-- Outputs: one full-resolution PNG per image, `contact_sheet.png` (6 × 5 thumbnails), and `overlay_ids.txt`.
-- Tests: on a synthetic 200 × 100 blank image with three points, a reliable point's center pixel has the marker color and a hollow point's center pixel stays the background color. The coordinate conversion uses the image's real size.
-
-**Pilot videos:** pick 2–3 videos with large, clearly visible skiers and different race types, and avoid the follow-cam videos. Save their IDs in `data/manifests/pilot_videos.txt`. They will be forced into **training** in Step 2 (`forced_train`), so looking at them closely never contaminates val or test.
-
-### 1B.4 Video-frame alignment — `scripts/check_alignment.py`
-
-```text
-python scripts/check_alignment.py --inventory CSV --video FILE --video-id ID --segment-id SEG
-       --window 5 --out DIR
-```
-
-- Decodes the video **sequentially** (no random seeking). For each labeled image in the segment, compares the image with frames `frame_idx − window … frame_idx + window`: convert both to grayscale at 160 × 90 and compute normalized cross-correlation.
-- Reports the best offset and the gap between the best and second-best score. A small gap means the match is ambiguous.
-- Outputs:
-  - `alignment.csv` with `video_id, segment_id, image_id, label_frame_idx, best_decode_idx, offset, best_score, margin, verified`;
-  - `gt_clip.mp4`, with labels drawn **only** on labeled frames.
-- Whether the video archive holds one clip per segment or whole source videos is unknown until 1E. Keep the "which file, which start frame" logic in one function, `locate_segment(...)`. If they are whole videos, use the info JSON's split time to find the start.
-- Tests: generate a 60-frame synthetic video of a moving square (MJPG `.avi`), save frames 10, 30 and 50 as images; the script must return offset 0. With labels deliberately shifted by +2, it must return −2.
-
-### 1B.5 Environment check — `scripts/check_env.py`
-
-- Prints and saves `artifacts/step1/env.json` with:
-  - OS, Python version;
-  - torch, torchvision, mmcv, mmengine, mmpose, numpy and opencv versions;
-  - `torch.version.cuda`, `torch.cuda.is_available()`, GPU name and VRAM.
-- Asserts `numpy < 2` and that `import mmcv.ops` works (proves the compiled extensions match).
-- Runs one 3 × 3 convolution on the GPU and reports success.
-- Test: runs on CPU without a GPU and reports `cuda_available: false` without crashing.
-
-### 1B.6 Pose smoke test — `scripts/smoke_pose.py`
-
-```text
-python scripts/smoke_pose.py --config CFG --checkpoint PTH --image IMG --box x1 y1 x2 y2 --out DIR
-```
-
-- Uses MMPose's own `init_model` + `inference_topdown(model, img, bboxes, bbox_format="xyxy")` with the skier's **tight** box. MMPose adds its own 1.25 padding here; this is only a test of the install.
-- Asserts 17 finite keypoints and scores.
-- Saves `generic_pose_prediction.npz` and an overlay drawn with the **COCO 17-point** skeleton (never the 24-point one).
-- Times 20 runs after 5 warm-up runs, calling `torch.cuda.synchronize()` around the timing.
-- Offline test: none needed beyond argument parsing; this script exists to be run.
-
-### 1B.7 Tracker smoke test — `scripts/smoke_tracker.py`
-
-```text
-python scripts/smoke_tracker.py --siamfc-repo DIR --weights PTH --video FILE
-       --init-frame N --init-box x1 y1 x2 y2 --max-frames 300 --out DIR
-```
-
-- Minimal direct use of the `siamfc-pytorch` tracker. It is replaced by the proper adapter in Step 3.
-- Initializes once and never resets.
-- Writes `boxes.csv` (`frame_index, x1, y1, x2, y2`) and `track.mp4` with boxes drawn.
-- Offline test: the box-drawing and CSV functions on a synthetic video with a fake tracker.
-
-**Done when:** `pytest` passes for 1B.1–1B.4 and 1B.7, and every script shows `--help`.
+**Done when:** spec §14 passes: `pytest` is green in the light environment, and every script's `--help` works without torch installed.
 
 ---
 
@@ -344,8 +187,10 @@ mkdir -p $SKIER_DATA $SKIER_RESULTS
 
 ```bash
 git clone git@github.com:RichardZRC/skier_project.git ~/skier_project
-cd ~/skier_project && pip install -e . && python scripts/check_env.py
-pip freeze > artifacts/step1/pip-freeze.txt
+cd ~/skier_project && pip install -e ".[dev]" && pytest
+mkdir -p $SKIER_RESULTS/step1/env
+python scripts/check_env.py --strict          # writes $SKIER_RESULTS/step1/env/env.json; exit code 1 = something to fix
+pip freeze > $SKIER_RESULTS/step1/env/pip-freeze.txt
 ```
 
 ### 1C.8 Daily habits
@@ -423,9 +268,18 @@ One row per asset: asset, source URL, date, local path, size, SHA-256, license/t
 
 ## 1E. Label audit and inventory `[DATA]`
 
-1. Read the example loader and `unzip -l` listings, and write down the real image path pattern. Put it into `--path-template` / `image_path_for`. This is the one deliberate unknown from 1B.
-2. Find the info JSON keys for discipline and view angle and fill them into the inventory.
-3. Run `audit_pose_labels.py` with images. Expected totals: 16 videos, 158 segments, 1,982 images. Any difference goes in `docs/data_audit.md` with an explanation.
+1. Read the example loader and the `unzip -l` listings, and write down the real image path pattern. Put it into `IMAGE_PATH_TEMPLATE` (code spec §13). This is the main deliberate unknown from 1B.
+2. Run the audit once with `--info` and no images, then read `info_preview` in `label_summary.json` to find the discipline and view-angle keys. Fill in `info_for` (spec §13).
+3. Run the full audit with images. Expected totals: 16 videos, 158 segments, 1,982 images (`matches_expected` in the summary). Any difference goes in `docs/data_audit.md` with an explanation.
+
+   ```bash
+   cd ~/skier_project
+   python scripts/audit_pose_labels.py $SKIER_DATA/ski2dpose/labels/<labels>.json \
+     --info $SKIER_DATA/ski2dpose/archives/ski2dpose_info.json \
+     --images-root $SKIER_DATA/ski2dpose/images
+   # → $SKIER_RESULTS/step1/audit/{label_summary.json,problems.csv} and data/manifests/pose_inventory.csv
+   ```
+
 4. Check `problems.csv`. Investigate each problem type on a few examples; don't silently drop records.
 
 **Done when:** every label resolves to an image (or the exceptions are documented), and the counts are recorded.
@@ -434,9 +288,23 @@ One row per asset: asset, source URL, date, local path, size, SHA-256, license/t
 
 ## 1F. Ground-truth overlays and your review `[DATA][MANUAL]`
 
-1. Choose the pilot videos (see 1B.3) and save `pilot_videos.txt`.
-2. Run `draw_gt_overlays.py` for 30 images.
-3. Review them with the checklist below (30–45 min).
+1. Choose 2–3 **pilot videos**: large, clearly visible skiers, different race types, and none of the follow-cam videos. Save their IDs in `data/manifests/pilot_videos.txt`, one per line. They are forced into **training** in Step 2 (`forced_train`), so looking at them closely never contaminates val or test.
+2. Draw 30 overlays:
+
+   ```bash
+   python scripts/draw_gt_overlays.py --inventory data/manifests/pose_inventory.csv \
+     --labels $SKIER_DATA/ski2dpose/labels/<labels>.json --images-root $SKIER_DATA/ski2dpose/images \
+     --videos-file data/manifests/pilot_videos.txt --n 30 --seed 230
+   # → $SKIER_RESULTS/step1/overlays/ (PNGs stay there; only overlay_ids.txt is synced in 1I)
+   ```
+
+3. Review them with the checklist below (30–45 min). Copy the overlays to your own machine with `scp` or open them through VS Code Remote.
+
+**Legend:**
+- Orange = skier's right; cyan = left; white = head/neck.
+- Filled circle = visible (`visible = 1`); hollow circle = occluded guess (`visible = 0`). The number beside each point is its schema index.
+- Body edges are thin, skis thick, poles dotted. A dashed edge means one of its endpoints is a guess.
+- Dashed yellow box = reference box.
 
 ### Review checklist
 
@@ -457,8 +325,8 @@ Write `sample_id + check number + what you saw` in `docs/data_audit.md`. **If th
 
 ## 1G. Video-frame alignment `[DATA][MANUAL]`
 
-1. Find out whether `videos/` holds one clip per segment or whole source videos (file count, durations from `ffprobe`). Fill in `locate_segment`.
-2. Run `check_alignment.py` on 1–2 pilot segments.
+1. Find out whether `videos/` holds one clip per segment or whole source videos (file count, durations from `ffprobe`). Fill in `locate_segment` (code spec §13).
+2. Run `check_alignment.py` on 1–2 pilot segments, with `--labels` so it also writes `gt_clip.mp4`. Before `locate_segment` is filled in, pass `--video FILE --start-frame N` by hand. Output goes to `$SKIER_RESULTS/step1/alignment/<video>__<segment>/`.
 3. Check that every labeled image has a confident match (`margin` clearly above 0) at a **consistent** offset: near the start, middle and end of the segment. One match isn't enough.
 4. `[MANUAL]` Watch `gt_clip.mp4`: the labels should land on the skier at labeled frames, not ahead or behind.
 
@@ -470,13 +338,13 @@ Record the indexing convention (0- or 1-based, any offset) in `docs/data_audit.m
 
 ## 1H. Smoke tests `[DATA][GPU]`
 
-1. `check_env.py` on the instance: CUDA available, `mmcv.ops` imports, numpy < 2.
+1. `check_env.py --strict` on the instance (already run in 1C.7): CUDA available, `mmcv.ops` imports, numpy < 2.
 2. `smoke_pose.py` on one pilot image with its tight reference box (from the inventory):
    - 17 finite points near the skier;
    - difficult joints may be wrong;
    - no ski points, because the generic model doesn't predict them.
 
-   Record ms/image and peak GPU memory.
+   ms/image and peak GPU memory are saved in `$SKIER_RESULTS/step1/smoke_pose/smoke_pose.json`.
 3. `smoke_tracker.py` on one Ski 2DPose pilot video, initialized once at the first labeled frame with the reference box. Look at the first, middle and last frames. This is qualitative only, not a benchmark. Once SkiTB data arrives, repeat on one **training** AL single-camera clip. While doing that, check the toolkit's `--split_file` vs. `--split-file` spelling and the `ST` vs. `SC` folder name against the real data, and note any fix in `docs/decisions.md`.
 
 **Done when:** at least one real pose inference runs on the AWS GPU; the tracker runs on a clip or has a named, specific blocker.
@@ -532,13 +400,29 @@ Active hours spent:
 
 If SkiTB access is still missing at the end of Week 1, apply the main plan's fallback and say so in the report.
 
+### Sync evidence to the repo `[DATA][NET]`
+
+The planning machine sees only what is in git. Copy the small text outputs (and nothing else) into the repo, then push:
+
+```bash
+cd ~/skier_project
+mkdir -p results/step1
+rsync -a --prune-empty-dirs --include='*/' --include='*.json' --include='*.csv' --include='*.txt' \
+      --exclude='*' $SKIER_RESULTS/step1/ results/step1/
+git add results/step1 data/manifests docs
+git status        # check: no .png / .mp4 / .npz, no dataset images or label files
+git commit -m "Step 1 evidence" && git push
+```
+
+That brings over `env.json`, `pip-freeze.txt`, `label_summary.json`, `problems.csv`, `overlay_ids.txt`, `alignment.csv`, `alignment_summary.json`, `smoke_pose.json` and `boxes.csv`. None of them contain label coordinates (code spec §1).
+
 ---
 
 ## End-of-step checklist
 
 - [ ] `[MANUAL]` Budget alert set; GPU quota approved; instance launched and reachable.
-- [ ] `[CODE]` Scaffold and all 1B scripts written; synthetic tests pass.
-- [ ] `[NET]` Pinned environment installed on AWS; `env.json` and `pip-freeze.txt` saved.
+- [ ] `[CODE]` Scaffold and all 1B scripts written; code spec §14 acceptance passes.
+- [ ] `[NET]` Pinned environment installed on AWS; `check_env.py --strict` passes; `env.json` and `pip-freeze.txt` saved.
 - [ ] `[NET][DATA]` Ski 2DPose, COCO checkpoint, SiamFC code and weights downloaded with checksums; ledger filled.
 - [ ] `[DATA]` Image path pattern resolved; audit counts recorded; problems explained.
 - [ ] `[MANUAL]` Pilot videos chosen and saved.
@@ -547,6 +431,7 @@ If SkiTB access is still missing at the end of Week 1, apply the main plan's fal
 - [ ] `[DATA][GPU]` Pose smoke test passes on AWS; tracker smoke test run or blocker named.
 - [ ] `[MANUAL]` SkiTB status recorded; follow-up done if needed.
 - [ ] `[MANUAL]` Readiness decision written.
+- [ ] `[NET]` Evidence synced to `results/step1/` and pushed (1I).
 
 ## References (checked 2026-10-17)
 

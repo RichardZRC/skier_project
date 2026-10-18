@@ -3,7 +3,7 @@
 **Owner:** Ruichao Zhang — ruichaoz@stanford.edu
 **Plan version:** v2, October 17, 2026 (replaces v1; v1 is in git history)
 **Budget:** one person, six weeks, about 20 working hours per week (120 h total)
-**Companion:** [Step 1 guide](skier_step_1_guide.md) (setup, AWS, data checks) and [PROJECT_NOTES.md](PROJECT_NOTES.md) (discussion log)
+**Companion:** [Step 1 guide](skier_step_1_guide.md) (setup, AWS, data checks), [Step 1 code spec](skier_step_1_code_spec.md) (module contracts and tests for 1A/1B) and [PROJECT_NOTES.md](PROJECT_NOTES.md) (discussion log)
 
 This is a plan. No data has been downloaded, no environment installed, and nothing has been trained or measured. Hyperparameters, runtimes and costs below are starting estimates, not measured values.
 
@@ -15,7 +15,7 @@ Every task carries one or more tags:
 
 | Tag | What it needs | Where it can run |
 | --- | --- | --- |
-| `[CODE]` | Only coding. No internet, no real dataset, no GPU. Tested with synthetic inputs. | Any machine, offline |
+| `[CODE]` | Only coding. No internet, no real dataset, no GPU. Tested with synthetic inputs. | Any machine with the light dev env (`numpy<2`, OpenCV, Pillow, PyYAML, pytest; one-time install), offline |
 | `[NET]` | Internet: downloads, installs, cloning, pushing | Any machine with internet; downloads go straight to AWS |
 | `[DATA]` | The real dataset files | AWS instance (or any machine holding the data) |
 | `[GPU]` | A CUDA GPU | AWS GPU instance |
@@ -28,6 +28,8 @@ Each step lists its work in the same order:
 3. **Review block:** `[MANUAL]` checks and decisions.
 
 A `[CODE]` task is done when its unit tests pass. A run task is done when its output files exist and have been looked at.
+
+Tests that need torch or mmpose are marked `stack` (and GPU tests `gpu`). They call `pytest.importorskip` and skip in the light env, so `pytest` stays green there; they run on the AWS instance.
 
 ---
 
@@ -169,11 +171,12 @@ Conventions every module follows:
   2. **Reference pose box:** tight box around reliable body + ski labels (poles excluded). Its unpadded diagonal is the PCK normalizer.
   3. **Replay crop:** the 16:9 region shown in the output video.
 - **Seeds:** one global seed (default 230) passed explicitly to every random process and saved with outputs.
+- **Evidence in git:** planning and coding happen on different machines, and the repo is the only channel between them. Small text outputs (JSON/CSV/TXT) are synced into `results/stepN/` and committed. Dataset images and labels, overlays, videos and checkpoints never are; they stay under `$SKIER_RESULTS`.
 
 **Canonical pose record** (dataclass in `src/skier/data/records.py`):
 
 ```text
-sample_id, dataset, source_video_id, segment_id, image_id
+sample_id = "{source_video_id}/{segment_id}/{image_id}", dataset, source_video_id, segment_id, image_id
 frame_index, image_path, image_width, image_height
 keypoints_xy[24, 2] (original pixels), reliable[24] (bool), raw_visibility[24]
 reference_box_xyxy (from reliable body + ski points), discipline, view_angle
@@ -184,7 +187,7 @@ split
 
 ## 6. Step 1 — Setup and feasibility (Week 1, 12 h)
 
-Full instructions are in the [Step 1 guide](skier_step_1_guide.md). Summary:
+Full instructions are in the [Step 1 guide](skier_step_1_guide.md). Module contracts and tests for the offline coding block are in the [Step 1 code spec](skier_step_1_code_spec.md). Summary:
 
 **Offline coding block**
 - `[CODE]` Repo scaffold, `.gitignore`, `pyproject.toml`, `requirements-pose.txt`, `paths.py`.
@@ -233,8 +236,8 @@ Tests (synthetic numbers only):
 
 **`[CODE]` 2.2 Ski 2DPose reader — `src/skier/data/ski2dpose.py`**
 
-- `load_records(labels_json, images_root, info_json) -> list[PoseRecord]` builds canonical records: normalized coordinates become pixels using each image's real width and height; `reliable = visible == 1`; reference box from reliable body + ski points.
-- Image path resolution is isolated in one function, `image_path_for(video_id, segment_id, image_id)`. Its body is written after Step 1's `[DATA]` inspection of the archive and the official loader. Do not guess the filename pattern.
+- `load_records(labels_json, images_root, info_json) -> list[PoseRecord]` builds canonical records on top of Step 1's `iter_raw_labels` and `reference_box`: normalized coordinates become pixels using each image's real width and height; `reliable = visible == 1`; reference box from reliable body + ski points.
+- Image path resolution reuses `image_path_for` from `skier.data.ski2dpose_raw` (Step 1 code spec §4). Its template is filled in after Step 1's `[DATA]` inspection of the archive and the official loader (guide 1E). Do not guess the filename pattern.
 - Records with fewer than 2 reliable body + ski points or a degenerate reference box are kept but flagged `excluded_reason`, which is reported in every table.
 - Tests: a fixture JSON with 2 videos × 2 segments × 2 images plus generated blank images; check pixel conversion, reliability mask, reference box, and exclusion flagging.
 
@@ -299,7 +302,7 @@ Tests (synthetic numbers only):
   2. If `num_keypoints != 17`, replace `head.final_layer` with a new `Conv2d(32, num_keypoints, 1)`, randomly initialized.
   3. Load the COCO checkpoint, skipping every `head.final_layer.*` tensor. Check that every other tensor loaded (count loaded vs. skipped and assert the skipped set is exactly the final layer).
 - `forward(x) = head(backbone(x))` returns `N × K × 64 × 48`. Never route through `model.data_preprocessor`.
-- Tests: these run offline once mmpose is installed, with a random-init model. Output shape for a `2 × 3 × 256 × 192` input; the checkpoint-filter function on a fake state dict.
+- Tests (marked `stack`; they start with `pytest.importorskip("mmpose")`, so they skip in the light env and run on AWS) use a random-init model: output shape for a `2 × 3 × 256 × 192` input. The checkpoint-filter function is tested on a fake state dict and needs no mmpose.
 
 **`[CODE]` 3.2 Heatmaps — `src/skier/pose/heatmap.py`**
 - `encode(xy_input[K,2], mask[K], hm_w=48, hm_h=64, sigma=2.0) -> (target[K,64,48], weight[K])`. A Gaussian is centered at input coordinate / 4; a point outside the heatmap gets weight 0.
@@ -409,6 +412,7 @@ Provisional target, not a promise: at least 95% of visible ski endpoints kept on
 
 **`[CODE]` 5.3 Loss — `src/skier/pose/loss.py`**
 - Implements exactly `L = Σ_ij w_ij · mean_uv (Ĥ_ij − H_ij)² / max(1, Σ_ij w_ij)`.
+- This is the proposal's loss (squared Frobenius norm, i.e. a sum over pixels) divided by the heatmap size 64 × 48 = 3,072. The optimum is the same, and the per-pixel mean keeps loss values in MMPose's usual range. The report states this form.
 - Tests: matches a hand-computed value on a 2 × 3 × 4 × 4 example; masked joints contribute exactly 0; an all-masked batch gives 0 with no NaN.
 
 **`[CODE]` 5.4 Training loop — `src/skier/pose/train.py`, `scripts/train_pose.py`, `configs/pose/e1.yaml`**

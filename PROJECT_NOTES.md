@@ -2,7 +2,8 @@
 
 Running record of decisions and open items for the CS230 skier project.
 Read this first when resuming work in a new environment.
-Companion docs: `skier_proposal.pdf`, `skier_implementation_plan.md`, `skier_step_1_guide.md`.
+Companion docs: `skier_proposal.pdf`, `skier_implementation_plan.md`, `skier_step_1_guide.md`,
+`skier_step_1_code_spec.md`.
 
 Last updated: 2026-10-17
 
@@ -18,10 +19,13 @@ Last updated: 2026-10-17
   - `[DATA]` needs the real dataset files.
   - `[GPU]` needs a CUDA GPU.
   - `[MANUAL]` human action (forms, accounts, visual review, decisions, report).
+- The repo is the **only channel** between the two machines. Anything the planning
+  side needs to see (evidence, counts, decisions) must be committed as small text
+  files (`results/stepN/`, `docs/`). Dataset images and labels never are.
 - (Earlier rule, superseded: Claude does the coding and asks before non-coding tasks.)
 - Ruichao is not very familiar with AWS — keep cloud steps minimal and explained.
-- Manual data inspection is done by Ruichao, using a guide Claude provides
-  (see "Manual label review guide" below).
+- Manual data inspection is done by Ruichao, using the checklist in
+  `skier_step_1_guide.md` §1F (plus §1G step 4 for the video clip).
 
 ---
 
@@ -141,17 +145,28 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
 - [x] **Plan v2 written** (2026-10-17): `skier_implementation_plan.md` and
       `skier_step_1_guide.md` rewritten with `[CODE]/[NET]/[DATA]/[GPU]/[MANUAL]` tags,
       AWS click-by-click setup, pinned stack, and per-step coding contracts + synthetic tests.
-- [ ] No code written yet; no data downloaded; no environment installed.
+- [x] **Docs re-reviewed; Step 1 code spec written** (2026-10-17, planning machine).
+      Fixes: Step 1 evidence now synced to `results/step1/` and committed (was the git-ignored
+      `artifacts/`); light dev env + `stack`/`gpu` test markers so `[CODE]` tests run offline;
+      plan §10 5.3 notes the loss is the proposal's divided by 64×48; single label-review
+      checklist (guide §1F). New `skier_step_1_code_spec.md` is the source of truth for 1A/1B
+      code; guide §1B is now a summary table pointing to it.
+- [x] **Step 1 offline code written** (2026-10-17, on the planning machine at Ruichao's request):
+      scaffold (1A) + all 1B tools per `skier_step_1_code_spec.md`; 71 synthetic tests pass in the
+      light env (`.venv`, installed via `uv` from pypi.apple.com because the sandbox proxy blocks PyPI);
+      spec §14 acceptance passes. `FILL IN` blocks (spec §13) are still open: they need the real data.
+- [ ] **AWS credit requested** (2026-10-17); waiting. No instance or GPU environment yet.
+- [ ] No data downloaded.
 
 ## Next steps
 
 Follow `skier_step_1_guide.md`. In order:
 
 1. `[MANUAL]` Today: AWS budget alert + GPU quota request (guide 1C.1–1C.3).
-2. `[CODE]` Offline: repo scaffold (1A) and all Step 1 scripts with synthetic tests (1B).
+2. ~~`[CODE]` Offline: implement `skier_step_1_code_spec.md` §2–§11~~ Done 2026-10-17.
 3. `[MANUAL][NET]` Launch instance, install pinned stack (1C.4–1C.7).
 4. `[NET][DATA]` Downloads (1D), then audit, overlays + review, alignment, smoke tests (1E–1H).
-5. `[MANUAL]` Readiness decision (1I), then Step 2.
+5. `[MANUAL]` Readiness decision (1I), sync evidence to `results/step1/` and push, then Step 2.
 6. `[MANUAL]` Chase SkiTB if no reply by 2026-10-24.
 
 Open decision for Step 2: follow-cam placement (default: force their videos into test
@@ -159,19 +174,5 @@ and report separately, if the split's hard rules still hold).
 
 ## Manual label review guide (for Ruichao)
 
-Purpose: confirm **our code reads the labels correctly** (not re-auditing the
-published dataset). For each of ~30 overlays, check:
-
-1. **Position:** points sit on the skier (not in a corner, not consistently shifted).
-2. **Left/right:** "right" = skier's own right. Facing camera → their right
-   appears on image left. Check front and back views.
-3. **Skis:** tip → toes → heel → tail along each ski; toes/heel near the boot.
-4. **Poles:** basket point at the bottom end of the pole.
-5. **Hollow (occluded) points:** only need to be plausible; note any filled
-   point that is clearly wrong.
-6. **Box:** dashed box contains whole body and both ski tips.
-7. **Video clip:** labels land on the skier in matching frames (not leading/lagging).
-
-Record image ID + issue in `docs/data_audit.md`. If the same issue appears in
-more than ~2 of 30 images, report it — it's almost certainly a code bug.
-Time: ~30–45 min.
+Moved to `skier_step_1_guide.md` §1F (legend + 6-point checklist) and §1G step 4
+(watching the GT video clip), so there is one copy. Time: ~30–45 min.

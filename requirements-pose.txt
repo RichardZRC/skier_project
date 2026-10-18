@@ -1,0 +1,13 @@
+# Pinned GPU stack. A record of the pins, not a one-shot install file:
+# install in the order of skier_step_1_guide.md 1C.7.
+# --index-url https://download.pytorch.org/whl/cu121
+torch==2.1.2
+torchvision==0.16.2
+# -f https://download.openmmlab.com/mmcv/dist/cu121/torch2.1/index.html
+mmcv==2.1.0
+mmengine>=0.10,<0.11
+mmpose==1.3.2
+numpy<2
+openmim
+got10k
+gdown
