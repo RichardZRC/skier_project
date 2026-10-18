@@ -24,6 +24,9 @@ Last updated: 2026-10-17
   files (`results/stepN/`, `docs/`). Dataset images and labels never are.
 - (Earlier rule, superseded: Claude does the coding and asks before non-coding tasks.)
 - Ruichao is not very familiar with AWS — keep cloud steps minimal and explained.
+- **No local installs (2026-10-17):** nothing beyond the light `.venv` is installed on the Mac
+  (no torch/mmpose). Torch tests are marked `torch` and run on AWS; first AWS action = full `pytest` (D13).
+- **Every step starts with a plan-mode plan**, approved before coding (2026-10-17).
 - Manual data inspection is done by Ruichao, using the checklist in
   `skier_step_1_guide.md` §1F (plus §1G step 4 for the video clip).
 
@@ -177,6 +180,12 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
       (replay + debug videos), replay metrics, `make_replay.py` with a val-only tau/k grid. 181 tests
       pass; mutation check 4/4 caught (after adding an uneven-timestep acceleration test). Synthetic
       demo: `~/skier_results/replay/synthetic_demo/out/` (smoothed accel 0.57 vs 4.97 unsmoothed).
+- [x] **Step 5 code written** (2026-10-17, plan-mode plan approved; no local installs, D13): augmentation,
+      dataset + optional crop cache, masked loss (numpy reference + torch), training loop + `train_pose.py`
+      (`--overfit`, `--profile-steps`, `--resume`), `configs/pose/e1.yaml`. 204 tests pass; 6 `torch` + 2
+      `stack` tests skip until AWS. Mutation check 5/5 caught. Real pilot samples checked visually.
+- [ ] **First on AWS:** full `pytest` (torch + stack tests) → cross-check → (freeze split) → E0 →
+      E1 tiny overfit → profile → full E1.
 
 ## Next steps
 

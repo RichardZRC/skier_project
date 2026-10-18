@@ -74,7 +74,7 @@ def build_hrnet(num_keypoints: int, config_path: str | Path, checkpoint: str | P
     info = {"num_keypoints": num_keypoints, "replaced_head": replaced, "checkpoint": None,
             "loaded_tensors": 0, "skipped_tensors": []}
     if checkpoint is not None:
-        ckpt = torch.load(str(checkpoint), map_location="cpu")
+        ckpt = torch.load(str(checkpoint), map_location="cpu", weights_only=False)  # MMPose checkpoints carry metadata
         state = ckpt.get("state_dict", ckpt)
         kept, dropped = filter_checkpoint(state) if replaced else (dict(state), [])
         result = model.load_state_dict(kept, strict=False)

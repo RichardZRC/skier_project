@@ -160,3 +160,22 @@ def render_gt_overlay(img_bgr: np.ndarray, ann_norm: np.ndarray, schema: Schema,
     draw_points(out, xy, reliable, schema)
     draw_header(out, lines)
     return out
+
+
+GT_MARK_COLOR = (255, 255, 255)  # white crosses: reliable labels
+
+
+def prediction_overlay(img_bgr: np.ndarray, pred_xy, gt_xy, gt_reliable, schema: Schema,
+                       header_lines: list[str] | None = None) -> np.ndarray:
+    """Predicted skeleton (side colours, filled points) over reliable labels (white crosses)."""
+    out = img_bgr.copy()
+    pred = np.asarray(pred_xy, dtype=np.float64)
+    shown = np.isfinite(pred).all(axis=1)
+    draw_edges(out, pred, shown, schema)
+    draw_points(out, pred, shown, schema, label_indices=False)
+    r = marker_radius(out)
+    for i in np.flatnonzero(np.asarray(gt_reliable, dtype=bool)):
+        if _drawable(gt_xy[i], out):
+            cv2.drawMarker(out, _pt(gt_xy[i]), GT_MARK_COLOR, cv2.MARKER_CROSS, 3 * r, 1, cv2.LINE_8)
+    draw_header(out, list(header_lines or []) + ["points = prediction, crosses = labels"])
+    return out

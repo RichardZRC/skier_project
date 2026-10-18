@@ -20,4 +20,5 @@ testpaths = ["tests"]
 markers = [
     "stack: needs the pinned torch/mmcv/mmpose stack (skipped otherwise)",
     "gpu: needs a CUDA GPU (skipped otherwise)",
+    "torch: needs PyTorch (skipped otherwise; not installed on the Mac, runs on AWS, D13)",
 ]

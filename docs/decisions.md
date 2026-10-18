@@ -73,3 +73,8 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
   - The decoder must match the COCO checkpoint for E0 and for the cross-check.
   - The COCO config enables flip-test averaging by default, but our pipeline never flips (plan §10, 5.2), so comparing against flip-tested output would measure the wrong thing.
 - Effect on evaluation: decode error is at most about 1.4 input px inside the heatmap and about 2.2 px in the outer pixels (tests check both). The cross-check passes only if the mean difference is ≤ 2 original px.
+
+## D13 — No local installs; torch-dependent tests run on AWS (2026-10-17)
+- Choice: nothing more is installed on the Mac (no torch, no mmpose). Code that needs torch keeps its imports lazy. Its tests are marked `torch` (and mmpose ones `stack`); they skip locally and run on AWS. Logic is written to be testable with numpy/OpenCV where possible (for example, a numpy reference loss `masked_mse_np`).
+- Reason: Ruichao's instruction (2026-10-17).
+- Effect on evaluation: none on the metrics. **The first action on AWS, before any training, is a full `pytest`** that includes the `torch` and `stack` tests, so the training loop is verified before GPU time counts.

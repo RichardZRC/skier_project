@@ -421,6 +421,14 @@ Provisional target, not a promise: at least 95% of visible ski endpoints kept on
 
 ## 10. Step 5 — Train the 24-point model, E1 (Week 3, 20 h)
 
+> **Status, 2026-10-17: offline code implemented.**
+> - `skier.pose.augment`, `.dataset` (with an optional `CropCache`), `.loss`, `.train` (`scripts/train_pose.py`, `configs/pose/e1.yaml`).
+> - **Tested on the Mac:** augmentation, sample building, the cache, the LR schedule, best-checkpoint selection, the numpy loss.
+> - **Marked `torch`, run on AWS first (D13):** the torch loss, `collate`, and the training loop (2-step smoke test, warm-up freeze, reproducibility, tiny overfit).
+> - **Warm-up freezes the backbone completely:** its weights and its BatchNorm statistics.
+> - **Flip:** `x → 191 − x` plus the left/right label swap.
+> - Pilot samples build in about 4 ms each on the Mac, so the cache stays off unless AWS profiling shows a data-loading bottleneck.
+
 ### Offline coding block
 
 **`[CODE]` 5.1 Dataset — `src/skier/pose/dataset.py`**

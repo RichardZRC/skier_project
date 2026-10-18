@@ -11,6 +11,7 @@ def _has(module: str) -> bool:
 
 def pytest_collection_modifyitems(config, items):
     has_mmpose = _has("mmpose")
+    has_torch = _has("torch")
     cuda = False
     if any("gpu" in item.keywords for item in items) and _has("torch"):
         import torch
@@ -19,6 +20,8 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if "stack" in item.keywords and not has_mmpose:
             item.add_marker(pytest.mark.skip(reason="needs the pinned torch/mmcv/mmpose stack"))
+        if "torch" in item.keywords and not has_torch:
+            item.add_marker(pytest.mark.skip(reason="needs PyTorch (runs on AWS, D13)"))
         if "gpu" in item.keywords and not cuda:
             item.add_marker(pytest.mark.skip(reason="needs a CUDA GPU"))
 
