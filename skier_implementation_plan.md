@@ -370,6 +370,11 @@ Tests (synthetic numbers only):
 
 ## 9. Step 4 — Centered replay (Week 2, 8 h)
 
+> **Status, 2026-10-17: offline code implemented and tested; the real runs need SiamFC output (AWS).**
+> - `skier.replay.controller`, `.render`, `.run` (`scripts/make_replay.py`, including `--grid`); `skier.eval.replay_metrics`; defaults in `configs/replay/default.yaml`.
+> - "Expand fast when the target nears the border" is implemented as the border of the **replay crop** (`tau_urgent`).
+> - The state is `(cx, cy, log_h)`, since `log_w` is redundant at a fixed 16:9 aspect.
+
 ### Offline coding block
 
 **`[CODE]` 4.1 Crop controller — `src/skier/replay/controller.py`**

@@ -1,0 +1,14 @@
+# Replay crop controller defaults (plan Step 4.1). Starting values, not tuned:
+# choose final values on validation clips only (plan §9 review block).
+k: 2.0                    # tracker box expansion before fitting to 16:9
+aspect: 1.7777777777777777  # 16:9
+tau_pos: 0.2              # s, crop centre smoothing
+tau_grow: 0.1             # s, size smoothing when the crop must get bigger
+tau_shrink: 0.6           # s, size smoothing when it may get smaller (contract slowly)
+tau_urgent: 0.03          # s, when the target nears the replay crop's border
+urgent_margin: 0.05       # of the crop size
+min_crop_h_px: 240.0
+max_zoom: 3.0             # crop height >= frame height / max_zoom
+lost_zoom_out_per_s: 0.5  # log-height per second while the tracker is lost
+lost_score: null          # off until the SiamFC score is known (code spec §13)
+reset_gap_s: 1.0          # a longer timestamp gap restarts the smoothing

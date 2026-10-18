@@ -173,6 +173,10 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
       inference via a plain `heatmap_fn`, E0 evaluation, MMPose cross-check, HRNet wrapper, SiamFC
       adapter + tracking runner. 152 tests pass (2 `stack` tests skip until AWS); mutation check
       4/4 caught; pipeline sanity check on 30 real pilot images within the error bound.
+- [x] **Step 4 code written** (2026-10-17, plan-mode plan approved): replay crop controller, renderer
+      (replay + debug videos), replay metrics, `make_replay.py` with a val-only tau/k grid. 181 tests
+      pass; mutation check 4/4 caught (after adding an uneven-timestep acceleration test). Synthetic
+      demo: `~/skier_results/replay/synthetic_demo/out/` (smoothed accel 0.57 vs 4.97 unsmoothed).
 
 ## Next steps
 

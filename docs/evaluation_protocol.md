@@ -50,6 +50,14 @@
 - **The toolkit's official metrics** are kept in separate, correctly named columns.
 - **The tracker** is initialized once per clip, and ground truth is never fed back.
 
-## 5. Replay metrics
+## 5. Replay metrics (code: `src/skier/eval/replay_metrics.py`)
 
-Defined in Step 4 (plan §9). They will be added here before any replay tuning.
+- **Box containment:** per frame, `area(box ∩ crop) / area(box)`. The box is the SkiTB ground-truth box on visible frames, or else the tracker box (each table says which). Reported as the mean, the minimum and the fraction of frames fully inside.
+- **Landmark containment:** reliable body + ski points inside the crop, plus **ski endpoints** (tips and tails) separately, with counts.
+  - Ski 2DPose labeled frames are used only once the 1G alignment is verified; otherwise the result is flagged.
+- **Centering error:** distance from the box center to the crop center ÷ crop diagonal (mean, p95).
+- **Crop acceleration:** the second difference of the crop center, `2(v₁ − v₀)/(Δt₀ + Δt₁)`, which is exact for uneven time steps, ÷ frame diagonal (units 1/s²). Computed only within continuous segments (gaps over 1 s split them). Mean and p95.
+- **Zoom:** mean crop-area fraction of the frame, and mean |d log(crop height)/dt|.
+- **Always together:** crop area and centering are always reported next to containment and smoothness, because a static full-frame crop would otherwise look perfect. Every run also reports the unsmoothed (τ = 0) baseline.
+- **Tuning:** the τ/k grid runs on **val** clips only. The CLI refuses `--partition test`.
+- **Provisional target** (not a promise): at least 95% of visible ski endpoints inside the crop on labeled frames, with lower crop acceleration than unsmoothed cropping at similar zoom.
