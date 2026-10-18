@@ -1,0 +1,13 @@
+athletes in >1 partition:
+   ('Petra', 'Vlhova') [('test', 'AL0005', 'W', 'SVK'), ('train', 'AL0007', 'W', 'SVK'), ('test', 'AL0037', 'W', 'SVK'), ('test', 'AL0041', 'W', 'SVK'), ('train', 'AL0062', 'W', 'SVK')]
+   ('Marco', 'Odermatt') [('train', 'AL0011', 'M', 'SUI'), ('train', 'AL0014', 'M', 'SUI'), ('train', 'AL0036', 'M', 'SUI'), ('test', 'AL0065', 'M', 'SUI'), ('test', 'AL0066', 'M', 'SUI')]
+   ('Marcel', 'Hirscher') [('test', 'AL0017', 'M', 'AUT'), ('test', 'AL0039', 'M', 'AUT'), ('test', 'AL0045', 'M', 'AUT'), ('train', 'AL0050', 'M', 'AUT'), ('train', 'AL0058', 'W', 'AUT')]
+   ('Lara', 'GutBehrami') [('train', 'AL0023', 'W', 'SUI'), ('test', 'AL0031', 'W', 'SUI')]
+   ('Dominik', 'Paris') [('train', 'AL0075', 'M', 'ITA'), ('test', 'AL0097', 'M', 'ITA'), ('train', 'AL0100', 'M', 'ITA')]
+train clips <=1: 1  <10: 2  <25: 8  <50: 28 of 554
+val clips <=1: 0  <10: 0  <25: 0  <50: 2 of 75
+test clips <=1: 0  <10: 0  <25: 2  <50: 14 of 471
+fps estimate = (last MC frame - first MC frame) / AthleteTime:
+  n 100 min ['23.4 AL0088', '23.7 AL0086', '25.2 AL0002', '25.3 AL0013'] max ['31.1 AL0044', '31.1 AL0043', '31.5 AL0078', '37.9 AL0098']
+  histogram (rounded to 5): [(25, 18), (30, 81), (40, 1)]
+channels: [('FIS Alpine', 32), ('France tv sport', 7), ('Ski Stars', 6), ('FISI TV Official', 6), ('SkiFans', 5), ('SKI RACES', 4)]

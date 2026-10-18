@@ -32,7 +32,7 @@ The output is a small evidence package and a decision: **ready**, **ready with a
 | 1I. Readiness decision | `[MANUAL]` | 0.5 | `docs/step1_readiness.md` |
 | **Total** | | **12** | |
 
-**Do first, today:** the AWS budget alert and GPU quota request in 1C, which can take a day or more to approve. SkiTB access was requested on 2026-10-17; follow up if there's no reply by 2026-10-24.
+**Do first, today:** the AWS budget alert and GPU quota request in 1C, which can take a day or more to approve. SkiTB access was requested on 2026-10-17, and the data arrived on 2026-10-18.
 
 **Order:** start 1C's quota request → do 1A + 1B offline while waiting → finish 1C → 1D–1I on the instance.
 
@@ -256,9 +256,11 @@ The SkiTB README links the SiamFC fork to clone and the Google Drive file for `s
 
 ### SkiTB data (when access arrives)
 
-The download method depends on the link you receive. Download straight to the instance if possible. Record the size, date and any sharing restrictions. Only `AL/` is needed.
+**Done 2026-10-18:** the data came already extracted. It now lives at `~/skier_data/skitb/` on the Mac and is audited in `docs/data_audit_skitb.md`. Copy only the val and test sequences (plus one train sequence) to AWS; the plan's first-AWS-session checklist has the steps.
 
-### Download ledger — `docs/data_audit.md` `[MANUAL]`
+The original instructions: the download method depends on the link you receive. Download straight to the instance if possible. Record the size, date and any sharing restrictions. Only `AL/` is needed.
+
+### Download ledger — `docs/data_audit_ski2dpose.md` and `docs/data_audit_skitb.md` `[MANUAL]`
 
 One row per asset: asset, source URL, date, local path, size, SHA-256, license/terms note, status.
 - Ski 2DPose terms: no explicit dataset license on the page; source videos are described as YouTube Creative Commons; cite Bachmann et al. 2019. Don't redistribute images or labels in the repo.
@@ -270,7 +272,7 @@ One row per asset: asset, source URL, date, local path, size, SHA-256, license/t
 
 1. Read the example loader and the `unzip -l` listings, and write down the real image path pattern. Put it into `IMAGE_PATH_TEMPLATE` (code spec §13). This is the main deliberate unknown from 1B.
 2. Run the audit once with `--info` and no images, then read `info_preview` in `label_summary.json` to find the discipline and view-angle keys. Fill in `info_for` (spec §13).
-3. Run the full audit with images. Expected totals: 16 videos, 158 segments, 1,982 images (`matches_expected` in the summary). Any difference goes in `docs/data_audit.md` with an explanation.
+3. Run the full audit with images. Expected totals: 16 videos, 158 segments, 1,982 images (`matches_expected` in the summary). Any difference goes in `docs/data_audit_ski2dpose.md` with an explanation.
 
    ```bash
    cd ~/skier_project
@@ -322,7 +324,7 @@ You're checking that **our code reads the labels correctly**, not re-auditing a 
 | 5 | Hollow points are plausible guesses; filled points are clearly on the right spot | Visibility flag read backwards |
 | 6 | The dashed box contains the whole body and both ski tips | Reference-box logic |
 
-Write `sample_id + check number + what you saw` in `docs/data_audit.md`. **If the same problem shows up in more than about 2 of the 30 images, it's almost certainly a code bug:** fix the code, not the labels. Never "correct" public labels because they look odd; if a real annotation defect appears, write an objective exclusion rule before any training.
+Write `sample_id + check number + what you saw` in `docs/data_audit_ski2dpose.md`. **If the same problem shows up in more than about 2 of the 30 images, it's almost certainly a code bug:** fix the code, not the labels. Never "correct" public labels because they look odd; if a real annotation defect appears, write an objective exclusion rule before any training.
 
 ---
 
@@ -333,7 +335,7 @@ Write `sample_id + check number + what you saw` in `docs/data_audit.md`. **If th
 3. Check that every labeled image has a confident match (`margin` clearly above 0) at a **consistent** offset: near the start, middle and end of the segment. One match isn't enough.
 4. `[MANUAL]` Watch `gt_clip.mp4`: the labels should land on the skier at labeled frames, not ahead or behind.
 
-Record the indexing convention (0- or 1-based, any offset) in `docs/data_audit.md`.
+Record the indexing convention (0- or 1-based, any offset) in `docs/data_audit_ski2dpose.md`.
 
 **If alignment fails** within this time box: record the exact mismatch and move on. Pose work proceeds unchanged; only the Step 7 temporal comparison becomes a stated limitation.
 
@@ -348,7 +350,7 @@ Record the indexing convention (0- or 1-based, any offset) in `docs/data_audit.m
    - no ski points, because the generic model doesn't predict them.
 
    ms/image and peak GPU memory are saved in `$SKIER_RESULTS/step1/smoke_pose/smoke_pose.json`.
-3. `smoke_tracker.py` on one Ski 2DPose pilot video, initialized once at the first labeled frame with the reference box. Look at the first, middle and last frames. This is qualitative only, not a benchmark. Once SkiTB data arrives, repeat on one **training** AL single-camera clip. While doing that, check the toolkit's `--split_file` vs. `--split-file` spelling and the `ST` vs. `SC` folder name against the real data, and note any fix in `docs/decisions.md`.
+3. `smoke_tracker.py` on one Ski 2DPose pilot video, initialized once at the first labeled frame with the reference box. Look at the first, middle and last frames. This is qualitative only, not a benchmark. Once SkiTB data arrives, repeat on one **training** AL single-camera clip. While doing that, check the toolkit's `--split_file` vs. `--split-file` spelling (the data uses `SC`, checked 2026-10-18), and note any fix in `docs/decisions.md`.
 
 **Done when:** at least one real pose inference runs on the AWS GPU; the tracker runs on a clip or has a named, specific blocker.
 
@@ -368,7 +370,7 @@ Active hours spent:
 - Ski 2DPose images/labels: counts (videos / segments / images):
 - Unresolved files or problems:
 - Pilot videos (forced into training):
-- SkiTB status (requested 2026-10-17):
+- SkiTB status (requested 2026-10-17; received and audited 2026-10-18):
 - License/provenance notes:
 
 ## Label understanding
@@ -432,7 +434,7 @@ That brings over `env.json`, `pip-freeze.txt`, `label_summary.json`, `problems.c
 - [ ] `[MANUAL]` 30 overlays reviewed against the checklist.
 - [ ] `[DATA][MANUAL]` Alignment verified or explicitly marked unresolved.
 - [ ] `[DATA][GPU]` Pose smoke test passes on AWS; tracker smoke test run or blocker named.
-- [ ] `[MANUAL]` SkiTB status recorded; follow-up done if needed.
+- [x] `[MANUAL]` SkiTB status recorded; follow-up done if needed (received 2026-10-18).
 - [ ] `[MANUAL]` Readiness decision written.
 - [ ] `[NET]` Evidence synced to `results/step1/` and pushed (1I).
 

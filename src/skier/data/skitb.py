@@ -1,9 +1,9 @@
 """SkiTB single-camera clip reader (plan Step 2.4).
 
-Written against the toolkit README's description, not the real files: SkiTB data
-access is still pending (requested 2026-10-17). Every layout assumption sits in the
-FILL IN block below, and anything unexpected raises instead of being guessed around.
-Boxes are converted from the files' ``xywh`` to ``xyxy`` here, at the edge.
+Layout checked against the real AL files on 2026-10-18 (``docs/data_audit_skitb.md``).
+The facts the reader relies on are collected in the block below; anything unexpected
+raises instead of being guessed around. Boxes are converted from the files' ``xywh``
+to ``xyxy`` here, at the edge.
 """
 
 from __future__ import annotations
@@ -16,18 +16,18 @@ import numpy as np
 
 from skier.io_utils import read_json
 
-# --- FILL IN WHEN SKITB ARRIVES (code spec §13) --------------------------------
-# Layout per the README: <root>/<discipline>/<sequence>/{frames/, MC/, SC/<clip>/...}.
-# The toolkit reportedly reads "ST" in one code path and "SC" in another; check.
+# --- Layout, confirmed on the real AL files (2026-10-18; code spec §13) -------------
+# <root>/<discipline>/<sequence>/{frames/, MC/, SC/<camera index>/}. Single-camera clips
+# are in "SC" (not "ST"); clip folders are camera indices 0..n-1.
 SINGLE_CAMERA_DIR = "SC"
-FRAMES_DIR = "frames"
-BOXES_FILE = "boxes.txt"  # one "x y w h" (or "x,y,w,h") row per frame, pixels
-FRAMES_FILE = "frames.txt"  # one entry per row: a frame index or a filename under frames/
+FRAMES_DIR = "frames"  # <frame index, 5 digits>.jpg, e.g. 00197.jpg
+BOXES_FILE = "boxes.txt"  # one "x,y,w,h" row per frame, pixels
+FRAMES_FILE = "frames.txt"  # one frame index per row (index into the source video)
 VISIBILITIES_FILE = "visibilities.txt"  # one 0/1 per row
 
 
 def sequences_for_partition(split: dict, partition: str) -> list[str]:
-    """Sequence IDs of one partition. Assumed shape: ``{partition: [sequence_id, ...]}``."""
+    """Sequence IDs of one partition. Shape: ``{partition: [sequence_id, ...]}``."""
     if partition not in split:
         raise ValueError(f"split JSON has no partition {partition!r}; keys: {sorted(split)}")
     seqs = split[partition]
@@ -37,14 +37,10 @@ def sequences_for_partition(split: dict, partition: str) -> list[str]:
 
 
 def frame_file(entry: str) -> str:
-    """Image filename (under ``frames/``) for one ``frames.txt`` entry.
-
-    Entries that already are filenames pass through. Bare indices need the real naming
-    pattern, which is unknown until the data arrives, so they raise instead of guessing.
-    """
-    if "." in entry:
-        return entry
-    raise NotImplementedError(f"frames.txt entry {entry!r} is not a filename: fill in frame_file() (code spec §13)")
+    """Image filename (under ``frames/``) for one ``frames.txt`` entry: ``197`` -> ``00197.jpg``."""
+    if not re.fullmatch(r"[0-9]{1,5}", entry):
+        raise ValueError(f"frames.txt entry {entry!r} is not a frame index of at most 5 digits")
+    return f"{int(entry):05d}.jpg"
 # -------------------------------------------------------------------------------
 
 
@@ -114,6 +110,10 @@ def load_skitb_clips(skitb_root: str | Path, split_json: str | Path, partition: 
         sc_dir = root / seq / SINGLE_CAMERA_DIR
         if not sc_dir.is_dir():
             raise FileNotFoundError(f"sequence {seq!r}: no {SINGLE_CAMERA_DIR}/ folder at {sc_dir}")
-        for clip_dir in sorted(p for p in sc_dir.iterdir() if p.is_dir()):
+        clip_dirs = [p for p in sc_dir.iterdir() if p.is_dir()]
+        odd = sorted(p.name for p in clip_dirs if not re.fullmatch(r"[0-9]+", p.name))
+        if odd:
+            raise ValueError(f"sequence {seq!r}: clip folders must be camera indices, found {odd}")
+        for clip_dir in sorted(clip_dirs, key=lambda p: int(p.name)):  # 0, 1, ..., 9, 10
             clips.append(load_clip(clip_dir, seq, partition))
     return clips

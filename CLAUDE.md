@@ -4,7 +4,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 **Deadline: Fri 2026-11-20** (D14; plan §4). If the schedule slips, cut stretch goals first, then extra seeds, then E2/E3.
 
-**Read first:** `PROJECT_NOTES.md` (status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D13; append only).
+**Read first:** `PROJECT_NOTES.md` (status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D15; append only).
 
 ## Working rules (Ruichao's instructions; follow them exactly)
 
@@ -21,10 +21,12 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 ## Environment
 
-- Run the tests with `.venv/bin/python -m pytest -q`. Currently **204 passed, 8 skipped**: 6 `torch` and 2 `stack` tests run on AWS.
+- Run the tests with `.venv/bin/python -m pytest -q`. Currently **205 passed, 8 skipped**: 6 `torch` and 2 `stack` tests run on AWS.
   - Markers: `torch` needs PyTorch; `stack` needs the pinned torch, mmcv and mmpose; `gpu` needs CUDA.
 - **Paths:** code reads `SKIER_DATA` (default `~/skier_data`) and `SKIER_RESULTS` (default `~/skier_results`) through `skier.paths`. Never hard-code absolute paths.
-- **Data on this Mac** (downloaded and audited 2026-10-17, 0 problems): `~/skier_data/ski2dpose/{archives,labels,images/Images_jpg,videos/Videos}`. Checksums are in `docs/data_audit.md`.
+- **Data on this Mac:**
+  - Ski 2DPose (audited 2026-10-17, 0 problems): `~/skier_data/ski2dpose/{archives,labels,images/Images_jpg,videos/Videos}`. Checksums: `docs/data_audit_ski2dpose.md`.
+  - SkiTB (audited 2026-10-18, 0 format problems): `~/skier_data/skitb/{AL,FS,JP}`; only `AL/` is used. Digests and findings: `docs/data_audit_skitb.md`.
 - **Pinned GPU stack** (AWS only): Python 3.10, torch 2.1.2 + cu121, mmcv 2.1.0, mmengine 0.10.x, mmpose 1.3.2, numpy < 2. Install steps are in guide 1C.7.
 - The repo sits in `~/Desktop`, which iCloud syncs. Data and results live outside it, as they should.
 
@@ -54,12 +56,17 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 - **Acceleration tests:** evenly spaced timestamps can't catch a wrong acceleration formula. Keep the uneven-timestep test.
 - **Checkpoints:** load with `torch.load(..., weights_only=False)`, because our checkpoints carry config and metadata.
 - **Minimum crop:** replay crops are at least `max(240 px, frame_h / 3)`, so design controller tests around that.
+- **SkiTB:**
+  - `frames.txt` holds bare frame indices, and `frame_file` maps them (`197` → `00197.jpg`).
+  - The frame rate isn't in the files and differs by sequence (about 25 or 30 fps).
+  - Frame sizes vary, mostly 1280×720.
+  - The "athlete" split shares 5 athletes between train and test.
 
 ## Module map
 
 | Area | Modules (`src/skier/…`) |
 | --- | --- |
-| Data | `data/ski2dpose_raw.py` (raw labels, path template, info), `data/ski2dpose.py` + `data/records.py` (`PoseRecord`), `data/audit.py`, `data/overlays.py`, `data/alignment.py`, `data/skitb.py` (layout unverified), `splits.py` |
+| Data | `data/ski2dpose_raw.py` (raw labels, path template, info), `data/ski2dpose.py` + `data/records.py` (`PoseRecord`), `data/audit.py`, `data/overlays.py`, `data/alignment.py`, `data/skitb.py` (layout confirmed 2026-10-18), `splits.py` |
 | Geometry and drawing | `geometry.py`, `viz.py`, `schema.py` (+ `configs/ski24_schema.json`) |
 | Pose | `pose/preprocess.py`, `pose/heatmap.py`, `pose/infer.py`, `pose/model.py`, `pose/coco_map.py`, `pose/eval_generic.py` (E0), `pose/crosscheck.py`, `pose/augment.py`, `pose/dataset.py`, `pose/loss.py`, `pose/train.py` |
 | Tracking and replay | `tracking/siamfc_adapter.py`, `tracking/frames.py`, `tracking/run.py`, `replay/controller.py`, `replay/render.py`, `replay/run.py` |

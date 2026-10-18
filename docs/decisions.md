@@ -83,3 +83,17 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
 - Choice: finish everything (final test run, report, demo) by **Friday 2026-11-20**, instead of the original six-week plan ending 2026-11-29. Week-by-week schedule: plan §4. Stretch goals (amateur footage, 3D, coaching) happen only if Week 3 ends on track.
 - Reason: Ruichao's target (2026-10-18). It's feasible because the offline code for Steps 1–5 is already written: about 62–70 h of estimated remaining work against about 92 h of capacity.
 - Effect on evaluation: none on the protocol. The split freeze, val-only tuning and the test-once rule are unchanged. If the schedule slips, cut in this order: stretch goals → extra seeds → E2/E3 (keep E1 vs. E4). See plan §15.
+
+## D15 — SkiTB data, split file, and option A confirmed (2026-10-18)
+- Choice:
+  - SkiTB arrived; it lives at `$SKIER_DATA/skitb/`. Only `AL/` is used, and `FS/`/`JP/` are never copied to AWS.
+  - Tracking uses **`AL/AL_train_val_test_athlete_60-40.json`** (53 / 6 / 41 sequences; 554 / 75 / 471 single-camera clips), the official split named in D8, and every single-camera clip of each sequence.
+  - **D1 option A is confirmed.** `PROJECT_NOTES` had deferred A vs. B "until SkiTB arrives", and it has now arrived: pose fine-tuning stays the learning study, and the tracker stays a fixed pretrained SiamFC.
+- Reason:
+  - The three-way file gives a val partition for tuning the replay, and its test set is identical to the two-way athlete file's test set.
+  - For A: the Nov 20 deadline (D14). B would need tracker fine-tuning time and a proposal change approved by the TA.
+- Effect on evaluation:
+  - The replay τ/k grid is tuned on the 6 val sequences only. Test is run once, in Step 8.
+  - Two facts from the audit (`docs/data_audit_skitb.md`):
+    - **The athlete split isn't fully athlete-disjoint by the metadata:** 5 athletes in train and test, 10 test sequences. This causes no leakage, since nothing is trained on SkiTB. Report it as "the official athlete split".
+    - **The frame rate varies by sequence:** about 25 or about 30 fps, estimated. It must be known per clip before tracking failure episodes or replay timing are scored.

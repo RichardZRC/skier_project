@@ -1,6 +1,6 @@
-# Data audit
+# Data audit — Ski 2DPose
 
-Evidence for guide steps 1D–1G. One section per step; findings are facts about the files, not fixes. Never "correct" public labels here.
+Evidence for guide steps 1D–1G for Ski 2DPose (the pose data). SkiTB (the tracking data) has its own file: `data_audit_skitb.md`. One section per step; findings are facts about the files, not fixes. Never "correct" public labels here.
 
 ## 1D. Download ledger
 
@@ -14,12 +14,8 @@ Downloaded 2026-10-17 to `~/skier_data/ski2dpose/archives/` (Ruichao's Mac, outs
 | `ski2dpose_info.json` | https://datasets-cvlab.epfl.ch/2019-ski-2d-pose/ski2dpose_info.json | 40,499 | `8e7e20589f6961962ccac6a46d7550850256f5eb4101d4698259663327e342f7` | OK, used in place |
 | `ski2dpose_example_loader.py` | https://datasets-cvlab.epfl.ch/2019-ski-2d-pose/ski2dpose_example_loader.py | 8,817 | `4334e927a695e42ad150f3c505ca8319375c2bf0ff2f233285c0da4e65bb5ab0` | Read only, never run |
 | COCO HRNet-W32 config + checkpoint | via `mim download` | | | Pending: needs the GPU stack (AWS) |
-| SiamFC fork + `siamfc_alexnet_e50.pth` | linked from the SkiTB README | | | Pending (AWS) |
-| SkiTB `AL/` | access form | | | Requested 2026-10-17; follow up if no reply by 2026-10-24 |
 
-**Terms:**
-- **Ski 2DPose:** no explicit dataset license on the page. The source videos are described as YouTube Creative Commons. Cite Bachmann et al., 3DV 2019. Images and labels are never committed to this repo.
-- **SkiTB:** CC BY-NC 4.0.
+**Terms:** no explicit dataset license on the page. The source videos are described as YouTube Creative Commons. Cite Bachmann et al., 3DV 2019. Images and labels are never committed to this repo.
 
 **Sizes vs. the EPFL page:**
 - The page's "5.1 MB" for labels is the **unzipped** JSON (5,107,158 bytes).
@@ -74,7 +70,7 @@ Ski-tail and heel scores will rest on fewer points; always report the counts.
 | Downhill | 2 | 6 | 30 |
 
 - **The EPFL page's per-sequence counts don't add up.** It lists 32 SL / 52 GS / 26 SG / 24 DH / 6 follow-cam = 140, not 158. The info file is used as the source of truth.
-- **Follow-cam is 6 separate single-segment videos** (134 images), not 6 sequences of one video. Forcing all six into test would make them most of the test set's videos. A separate follow-cam evaluation set, reported on its own, is the likely better choice. **Decision for Ruichao before Step 2.**
+- **Follow-cam is 6 separate single-segment videos** (134 images), not 6 sequences of one video. Forcing all six into test would make them most of the test set's videos. A separate follow-cam evaluation set, reported on its own, is the likely better choice. **Decided: D11** (separate set).
 - **Video sizes are very uneven.** Each of the largest five has 239–395 images (12–20% of the data), so a 15% test partition is about one large race video plus small ones. Spreading race types across partitions is limited: each type has only 1–2 videos.
 
 Per video:

@@ -62,7 +62,7 @@ The plans are sound; dataset facts were verified.
     (val = 152 images from 5 video IDs). Images 1920×1080 or 1280×720.
     **Corrected 2026-10-17 from the files:** the page's breakdown (32 SL, 52 GS, 26 SG,
     24 DH, 6 follow-cam) sums to 140, not 158. The info JSON's per-video `type` is the
-    source of truth, and follow-cam is **6 separate videos** (see `docs/data_audit.md`).
+    source of truth, and follow-cam is **6 separate videos** (see `docs/data_audit_ski2dpose.md`).
   - Frames sampled every 0.3–10 s, so leakage risk is same video/course/athlete,
     not near-duplicate frames. Video-grouped splitting is still correct.
 - **SkiTB** (https://github.com/matteo-dunnhofer/SkiTB-toolkit)
@@ -75,6 +75,10 @@ The plans are sound; dataset facts were verified.
     `SC/` (single-camera clips with `boxes.txt`, `frames.txt`, `visibilities.txt`).
     Split JSONs: by date / athlete / course, 2-way and 3-way variants.
   - README uses `--split-file`, code uses `--split_file` (known discrepancy).
+  - **Data received 2026-10-18**, now at `~/skier_data/skitb/`. Layout confirmed (`SC/`, bare frame
+    indices → `NNNNN.jpg`); audit in `docs/data_audit_skitb.md`. The athlete split shares 5 athletes
+    between train and test (no leakage: nothing is trained on SkiTB). The frame rate is not in the files
+    and differs by sequence (about 25 or 30 fps).
 - **MMPose 1.3.2** needs mmcv >= 2.0.1 and < 2.2.0, mmengine >= 0.9.0.
   Prebuilt **Windows and Linux** wheels exist for `mmcv==2.1.0` with
   torch 2.1 + cu121, Python 3.8–3.11
@@ -134,18 +138,17 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
     skier-focused baseline. Pose becomes a stretch goal. Needs TA OK (changes
     proposal title/question). Do **not** design a tracker from scratch
     (too little data, too big for the budget).
-- **Decision: deferred.** Decide when SkiTB access arrives, or by end of
-  Week 1 at the latest (B needs fine-tuning time). Pose work started now is
-  useful under both options.
+- **Decision: A** (D1, 2026-10-17). It had been deferred until SkiTB arrived; **confirmed
+  2026-10-18** when it did (D15).
 
 ---
 
 ## Status
 
 - [x] Plans reviewed and verified (2026-10-17)
-- [x] **SkiTB access form submitted** (2026-10-17). Follow up if no reply by ~2026-10-24.
+- [x] **SkiTB access form submitted** (2026-10-17). **Approved; data received 2026-10-18.**
       Form: https://forms.office.com/Pages/ResponsePage.aspx?id=Fd5qbmwpJEKsWByOwv1TqGZ0FiFPXjFKh2JII46hSYhUMVQ2RE0yS0FMMEhFSVNWNUxNWks3M0hYSy4u
-- [x] **Option A chosen** (2026-10-17): pose fine-tuning is the learning study; tracker stays fixed pretrained SiamFC. May revisit B later.
+- [x] **Option A chosen** (2026-10-17): pose fine-tuning is the learning study; tracker stays fixed pretrained SiamFC. Confirmed 2026-10-18 (D15).
 - [x] **Compute: AWS** (2026-10-17). Ruichao has an AWS budget; training runs on an AWS GPU instance (not the local 1070 Ti). Proposed change 1 is replaced by this.
 - [x] Proposed changes approved; MMPose model-only (D3) and split rules (D4) settled (2026-10-17)
 - [x] **Plan v2 written** (2026-10-17): `skier_implementation_plan.md` and
@@ -163,11 +166,11 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
       spec §14 acceptance passes. `FILL IN` blocks (spec §13) are still open: they need the real data.
 - [ ] **AWS credit requested** (2026-10-17); waiting. No instance or GPU environment yet.
 - [x] **Ski 2DPose downloaded, checked and audited** (2026-10-17, Mac, `~/skier_data`):
-      checksums in `docs/data_audit.md`; 16 / 158 / 1,982 as expected; **0 audit problems**;
+      checksums in `docs/data_audit_ski2dpose.md`; 16 / 158 / 1,982 as expected; **0 audit problems**;
       path template, `info_for` and `locate_segment` filled in; inventory committed at
       `data/manifests/pose_inventory.csv`. Still to do: pilot videos, overlay review (1F), alignment (1G).
 - [x] **Step 2 code written** (2026-10-17, after a plan-mode plan): geometry, canonical records,
-      split generator (+ `make_pose_split.py`), SkiTB reader (layout unverified), pose and
+      split generator (+ `make_pose_split.py`), SkiTB reader (layout confirmed 2026-10-18), pose and
       tracking metrics; 123 tests pass. Dry run on real data: train 65% / val 16% / test 19%
       + 134-image follow-cam set; perfect-predictor PCK on val = 100%. **Split not frozen yet.**
 - [x] **D11 follow-cam = separate evaluation set** (2026-10-17).
@@ -187,8 +190,12 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
       `stack` tests skip until AWS. Mutation check 5/5 caught. Real pilot samples checked visually.
 - [x] **README.md and CLAUDE.md written; plan status table added** (2026-10-18).
 - [x] **Deadline moved up to Fri 2026-11-20** (2026-10-18, D14): plan §4 rewritten as 5 weeks; fallbacks dated.
-- [ ] **First on AWS:** full `pytest` (torch + stack tests) → cross-check → (freeze split) → E0 →
-      E1 tiny overfit → profile → full E1.
+- [x] **SkiTB received and audited** (2026-10-18, D15): `AL/` at `~/skier_data/skitb/`; 0 format problems;
+      100 sequences, 1,100 single-camera clips (train 554 / val 75 / test 471). The data-audit doc is split into
+      `docs/data_audit_ski2dpose.md` and `docs/data_audit_skitb.md`; evidence in `results/step1/skitb_audit/`.
+      The reader's layout block and `frame_file` are filled in; 205 tests pass. **Open:** the frame rate of each sequence.
+- [ ] **First on AWS:** full `pytest` (torch + stack tests) → data (Ski 2DPose; the SkiTB val/test subset)
+      → cross-check → (freeze split) → E0 → E1 tiny overfit → profile → full E1.
 
 ## Next steps
 
@@ -200,7 +207,9 @@ Follow `skier_step_1_guide.md`. In order:
 4. `[NET][DATA]` ~~Downloads (1D), audit (1E)~~ done 2026-10-17 on the Mac. Next: pilot videos,
    overlays + review (1F), alignment (1G) — none need the GPU. Smoke tests (1H) wait for AWS.
 5. `[MANUAL]` Readiness decision (1I), sync evidence to `results/step1/` and push, then Step 2.
-6. `[MANUAL]` Chase SkiTB if no reply by 2026-10-24.
+6. ~~`[MANUAL]` Chase SkiTB if no reply by 2026-10-24.~~ Received 2026-10-18.
+7. `[MANUAL][NET]` Find SkiTB's frame rate for each sequence (toolkit source, or the source videos'
+   metadata; `docs/data_audit_skitb.md` finding 2). Then the tracker and replay take it per clip.
 
 Rule (2026-10-17): **every step starts with a plan-mode plan, approved before coding.**
 

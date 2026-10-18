@@ -1,0 +1,121 @@
+{
+ "n_sequences": 100,
+ "split_files": {
+  "AL_train_test_athlete_60-40.json": {
+   "train": 59,
+   "test": 41
+  },
+  "AL_train_test_course_60-40.json": {
+   "train": 61,
+   "test": 39
+  },
+  "AL_train_test_date_60-40.json": {
+   "train": 60,
+   "test": 40
+  },
+  "AL_train_val_test_athlete_60-40.json": {
+   "train": 53,
+   "val": 6,
+   "test": 41
+  },
+  "AL_train_val_test_course_60-40.json": {
+   "train": 56,
+   "val": 5,
+   "test": 39
+  },
+  "AL_train_val_test_date_60-40.json": {
+   "train": 53,
+   "val": 7,
+   "test": 40
+  }
+ },
+ "athlete_tt_test_equals_tvt_test": true,
+ "athlete_tt_train_equals_tvt_train_plus_val": true,
+ "athlete_overlap": {
+  "train&val": 0,
+  "train&test": 5,
+  "val&test": 0
+ },
+ "athletes_per_partition": {
+  "train": 31,
+  "test": 26,
+  "val": 4
+ },
+ "discipline_per_partition": {
+  "train": {
+   "SL": 14,
+   "SG": 13,
+   "GS": 17,
+   "DH": 9
+  },
+  "test": {
+   "DH": 11,
+   "SL": 11,
+   "GS": 8,
+   "SG": 11
+  },
+  "val": {
+   "DH": 2,
+   "SL": 2,
+   "GS": 1,
+   "SG": 1
+  }
+ },
+ "al_tree_sha256": "f4d143406d2e4d31c4bab08e5a129391f02812d216f5d86cbe3c1ada1f99ed1a",
+ "problems": [
+  "AL0016: cameras [0, 1, 2, 3, 4, 5, 6, 7, 8] vs 8 SC clips",
+  "AL0034: cameras [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] vs 11 SC clips",
+  "AL0066: cameras [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] vs 13 SC clips",
+  "AL0079: cameras [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14] vs 13 SC clips"
+ ],
+ "clips_per_partition": {
+  "train": {
+   "sequences": 53,
+   "clips": 554,
+   "frames": 110595,
+   "min_len": 1,
+   "median_len": 187,
+   "max_len": 595,
+   "visible_frac": 0.984,
+   "clips_first_frame_invisible": 0,
+   "nonpos_boxes": 0,
+   "outside_boxes": 0
+  },
+  "test": {
+   "sequences": 41,
+   "clips": 471,
+   "frames": 89295,
+   "min_len": 15,
+   "median_len": 170,
+   "max_len": 646,
+   "visible_frac": 0.988,
+   "clips_first_frame_invisible": 0,
+   "nonpos_boxes": 0,
+   "outside_boxes": 0
+  },
+  "val": {
+   "sequences": 6,
+   "clips": 75,
+   "frames": 13180,
+   "min_len": 28,
+   "median_len": 180,
+   "max_len": 394,
+   "visible_frac": 0.986,
+   "clips_first_frame_invisible": 0,
+   "nonpos_boxes": 0,
+   "outside_boxes": 0
+  }
+ },
+ "frame_sizes": {
+  "1280x720": 90,
+  "1152x720": 5,
+  "640x360": 1,
+  "1274x720": 1,
+  "1280x716": 1,
+  "1280x718": 1,
+  "634x360": 1
+ },
+ "mc_contiguous_all": false,
+ "files": 219217,
+ "bytes": 15537744392
+}

@@ -687,7 +687,7 @@ Step 1 has no `stack` or `gpu` tests. The first ones arrive with Step 3.1, using
 
 ## 13. Fill in later (with real data or cloned code)
 
-Each fill-in is a small commit, noted in `docs/data_audit.md` (data facts) or `docs/decisions.md` (code/tool facts).
+Each fill-in is a small commit, noted in `docs/data_audit_ski2dpose.md` or `docs/data_audit_skitb.md` (data facts) or `docs/decisions.md` (code/tool facts).
 
 | What | Where | How to find it | Guide step | Status |
 | --- | --- | --- | --- | --- |
@@ -696,7 +696,7 @@ Each fill-in is a small commit, noted in `docs/data_audit.md` (data facts) or `d
 | `locate_segment` | `data/alignment.py` | File count and `ffprobe` durations in `videos/` | 1G.1 | **Done 2026-10-17:** `Videos/{video_id}/{segment_id}.mp4`, start 0 (confirm in 1G) |
 | `MIN_SCORE`, `MIN_MARGIN` | `data/alignment.py` | First real segment's scores and margins | 1G.3 | Open |
 | SiamFC import path, constructor, box and color conventions, `SCORE_ATTR` | `tracking/siamfc_adapter.py` (moved from `smoke.py` in Step 3) | Read the fork's tracker source | 1D / 1H.3 | Open (AWS) |
-| SkiTB folder names, split-JSON shape, `frame_file()` (frames.txt entry → image file) | `data/skitb.py` | The real SkiTB files and toolkit README | When SkiTB arrives | Open |
+| SkiTB folder names, split-JSON shape, `frame_file()` (frames.txt entry → image file) | `data/skitb.py` | The real SkiTB files and toolkit README | When SkiTB arrives | **Done 2026-10-18:** `SC/<camera index>/`, `frames/`, comma-separated boxes; split JSON `{partition: [IDs]}`; `frame_file("197")` → `00197.jpg` (`docs/data_audit_skitb.md`) |
 
 ---
 

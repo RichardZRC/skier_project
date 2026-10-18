@@ -24,7 +24,7 @@ flowchart LR
 
 | Step | Code | Real runs |
 | --- | --- | --- |
-| 1 Setup and data checks | ✅ done | ✅ Ski 2DPose downloaded and audited (0 problems). ⏳ Overlay review, alignment check, GPU smoke tests |
+| 1 Setup and data checks | ✅ done | ✅ Ski 2DPose and SkiTB `AL/` downloaded and audited (0 problems). ⏳ Overlay review, alignment check, GPU smoke tests |
 | 2 Split, geometry, metrics | ✅ done | ⏳ Split freeze (after the overlay review) |
 | 3 Baselines (E0, tracker) | ✅ done | ⏳ AWS |
 | 4 Centered replay | ✅ done | ⏳ Needs tracker output (AWS) |
@@ -32,8 +32,8 @@ flowchart LR
 | 6–8 Augmentation study, integration, report | not started | — |
 
 - The **AWS** GPU instance is pending.
-- **SkiTB** data access was requested 2026-10-17.
-- The test suite has 204 passing tests; 8 more need PyTorch or mmpose and run on AWS.
+- **SkiTB** data arrived 2026-10-18 and is audited. The frame rate of each sequence is still open.
+- The test suite has 205 passing tests; 8 more need PyTorch or mmpose and run on AWS.
 - Detailed status and next actions: `PROJECT_NOTES.md`.
 
 ## Setup
@@ -67,10 +67,13 @@ unzip -q archives/ski2dpose_images_jpg.zip -d images
 unzip -q archives/ski2dpose_videos.zip -d videos
 ```
 
-- Compare the SHA-256 values with `docs/data_audit.md`.
+- Compare the SHA-256 values with `docs/data_audit_ski2dpose.md`.
 - The expected counts are 16 videos, 158 segments and 1,982 images.
 
 **SkiTB** (Dunnhofer et al., WACV 2024; CC BY-NC 4.0): access by form. Only the alpine (`AL/`) data is used.
+- Put it at `$SKIER_DATA/skitb/` (so `$SKIER_DATA/skitb/AL/AL0001/…`) and pass `--skitb-root $SKIER_DATA/skitb`.
+- The split file is `AL/AL_train_val_test_athlete_60-40.json` (D15).
+- Layout, digests and findings: `docs/data_audit_skitb.md`.
 
 Dataset images and labels are **never** committed. The repo holds only manifests and small text evidence.
 
@@ -111,7 +114,7 @@ The full definitions are in `docs/evaluation_protocol.md`.
 | `scripts/` | Command-line entry points (thin wrappers) |
 | `configs/` | `ski24_schema.json`, `pose/e1.yaml`, `replay/default.yaml` |
 | `data/manifests/` | `pose_inventory.csv`, `pilot_videos.txt`, and (after the freeze) `pose_split_v1.json` |
-| `docs/` | `scope.md`, `decisions.md`, `data_audit.md`, `evaluation_protocol.md` |
+| `docs/` | `scope.md`, `decisions.md`, `data_audit_ski2dpose.md`, `data_audit_skitb.md`, `evaluation_protocol.md` |
 | `tests/` | Unit tests on synthetic data (`tests/synth.py`) |
 | `results/` | Small committed evidence; large outputs stay under `$SKIER_RESULTS` |
 | `skier_implementation_plan.md`, `skier_step_1_guide.md`, `skier_step_1_code_spec.md`, `PROJECT_NOTES.md` | The plan, the setup guide, the Step 1 spec, and the running notes |

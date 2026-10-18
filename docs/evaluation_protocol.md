@@ -40,6 +40,10 @@
 
 ## 4. Tracking metrics (SkiTB AL, single-camera clips)
 
+- **Data:** every single-camera clip of the sequences in `AL/AL_train_val_test_athlete_60-40.json` (D15).
+  - Val: 6 sequences, 75 clips. Test: 41 sequences, 471 clips, run once in Step 8.
+  - Report it as "the official athlete split". By the metadata, 5 athletes appear in both train and test; nothing is trained on SkiTB, so nothing leaks (`docs/data_audit_skitb.md`).
+- **Frame rate:** the files don't store it, and it differs by sequence. Every time-based number below (failure episodes, and all of §5) uses each clip's own frame rate, never one global value. **Open until the rates are known.**
 - **IoU:** averaged over **visible annotated** frames, excluding the initialization frame. A missing tracker box counts as IoU 0.
 - **Means:** the pooled mean is over all such frames; the per-clip mean is the average of the clip means. Both are reported.
 - **Success curve:** the fraction of frames with IoU above each threshold 0, 0.05, …, 1, and its AUC.

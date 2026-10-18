@@ -11,14 +11,18 @@ Hyperparameters, runtimes and costs below are starting estimates, not measured v
 
 **Deadline: Friday 2026-11-20** (D14). The week-by-week schedule is in §4.
 
-The **offline code for Steps 1–5 is written, tested and pushed**, ahead of the schedule in §4. That covers 204 unit tests; 8 more (`torch`, `stack`) run on AWS. Ski 2DPose is downloaded and audited on the Mac (0 problems; `docs/data_audit.md`). What's left needs the GPU, SkiTB, or Ruichao.
+The **offline code for Steps 1–5 is written, tested and pushed**, ahead of the schedule in §4. That covers 205 unit tests; 8 more (`torch`, `stack`) run on AWS. Both datasets are on the Mac and audited:
+- Ski 2DPose: 0 problems (`docs/data_audit_ski2dpose.md`).
+- SkiTB `AL/`: arrived 2026-10-18, 0 format problems, reader layout confirmed (`docs/data_audit_skitb.md`, D15).
+
+What's left needs the GPU or Ruichao, plus SkiTB's frame rate for each sequence.
 
 | Step | Code | Still to run | Blocked on |
 | --- | --- | --- | --- |
 | 1 | Done | Overlay review (1F), alignment check (1G), GPU smoke tests (1H), readiness note (1I) | Ruichao (1F); AWS (1H) |
 | 2 | Done | **Freeze the split** after the overlay review; review `docs/evaluation_protocol.md` | Ruichao |
-| 3 | Done | MMPose cross-check, E0 on val, SiamFC on pilot segments / SkiTB val | AWS, frozen split, SkiTB |
-| 4 | Done | Replays of the pilot segments; τ/k grid on SkiTB val | Tracker output (AWS), SkiTB |
+| 3 | Done | MMPose cross-check, E0 on val, SiamFC on pilot segments / SkiTB val | AWS, frozen split; SkiTB frame rates (failure episodes) |
+| 4 | Done | Replays of the pilot segments; τ/k grid on SkiTB val | Tracker output (AWS); SkiTB frame rates |
 | 5 | Done | Tiny overfit → 200-step profile → full E1 | AWS, frozen split |
 | 6–8 | Not started | — | Plan-mode plan first |
 
@@ -27,12 +31,15 @@ The **offline code for Steps 1–5 is written, tested and pushed**, ahead of the
 2. Alignment check on 1–2 pilot segments.
 3. Freeze the split (`make_pose_split.py --set-aside followcam=auto`).
 4. Plan and code Step 6 (E2–E4 augmentations), then Step 7.
+5. Find SkiTB's frame rate for each sequence, from the toolkit source or the source videos (`docs/data_audit_skitb.md`, finding 2). Then pass it per clip to the tracker and replay tools, a small fix within Steps 3–4.
 
 **First AWS session, in this order:**
 1. Install the pinned stack (guide 1C.7); `check_env.py --strict`.
-2. **The full `pytest`.** All 212 tests must pass, including the `torch` and `stack` tests, before any training (D13).
-3. Get the data onto the instance: download again and compare the SHA-256 values with `docs/data_audit.md`, or `scp` it from the Mac.
-4. Download the COCO HRNet config and checkpoint (`mim download`) and the SiamFC fork and weights. Fill in `SiamFCTracker`'s `FILL IN` block (code spec §13).
+2. **The full `pytest`.** All 213 tests must pass, including the `torch` and `stack` tests, before any training (D13).
+3. Get the data onto the instance.
+   - **Ski 2DPose:** download again and compare the SHA-256 values with `docs/data_audit_ski2dpose.md`, or copy it from the Mac.
+   - **SkiTB:** copy only what's needed from the Mac, never `FS/`/`JP/`. Since nothing trains on SkiTB, that's the 6 val and 41 test sequences plus one train sequence for the smoke test, instead of all 15.5 GB of `AL/`. Then rerun `results/step1/skitb_audit/audit_skitb_al.py` and compare the per-sequence digests with `skitb_al_sequences.csv`.
+4. Download the COCO HRNet config and checkpoint (`mim download`) and the SiamFC fork and weights. Fill in `SiamFCTracker`'s `FILL IN` block (code spec §13). While the toolkit is cloned, check how it handles frame rate and `--split_file`.
 5. `smoke_pose.py`, `smoke_tracker.py` → **`crosscheck_mmpose.py` (must pass ≤ 2 px)**.
 6. E0 on val → E1 `--overfit 32` → `--profile-steps 200` → full E1.
 
@@ -108,6 +115,7 @@ Pose runs on the **original frame** through its own crop. The replay crop is app
 | D12 | Heatmap convention | Sub-pixel Gaussian targets; MMPose's MSRA decoder copied verbatim; cross-check against MMPose with flip test off | 2026-10-17 |
 | D13 | Local machine | Nothing installed on the Mac beyond the light env. `torch`/`stack` tests run on AWS first, before any training | 2026-10-17 |
 | D14 | Deadline | Finish by **Fri 2026-11-20** (5 weeks from Oct 19); stretch goals only if Week 3 ends on track | 2026-10-18 |
+| D15 | SkiTB data | `$SKIER_DATA/skitb/`, `AL/` only; split file `AL_train_val_test_athlete_60-40.json` (53/6/41 sequences); D1 option A confirmed | 2026-10-18 |
 
 Pinned software stack (MMPose 1.3.2 needs mmcv ≥ 2.0.1 and < 2.2.0; prebuilt wheels exist for this exact combination on Linux and Windows):
 
@@ -132,19 +140,19 @@ Install commands are in Step 1C of the guide.
 - Race type is **per video** (info JSON `video_info.type`), checked against the files on 2026-10-17. Counts are videos / segments / images:
   - Giant Slalom 2 / 52 / 670; Slalom 2 / 32 / 539; Combined Slalom 1 / 18 / 395; Super G 2 / 26 / 152;
   - Follow Cam 6 / 6 / 134; Mixed 1 / 18 / 62; Downhill 2 / 6 / 30.
-  - The EPFL page's per-sequence breakdown (32 SL, 52 GS, 26 SG, 24 DH, 6 follow-cam) sums to 140, not 158; the info file is used instead. Details are in `docs/data_audit.md`.
+  - The EPFL page's per-sequence breakdown (32 SL, 52 GS, 26 SG, 24 DH, 6 follow-cam) sums to 140, not 158; the info file is used instead. Details are in `docs/data_audit_ski2dpose.md`.
 - Labels JSON: `VideoID → SplitID → ImageID → {"annotation": [[x, y, visible] × 24], "frame_idx": i}`. **Their "SplitID" is a camera sequence, not a train/val split; our code calls it `segment_id`.** `frame_idx` is the frame index within that sequence.
 - Coordinates are normalized 0–1 with (0, 0) at the top-left. `visible = 1` means visible or confidently labeled; `0` means occluded best guess.
 - Frames are sampled every 0.3–10 s, so the leakage risk is the same video, course and athlete, not near-duplicate frames.
 - Official split: 147 train / 11 val sequences (val = 152 images from 5 videos). We keep it as metadata only; our split is a separate protocol.
 - An info JSON lists source, location, weather, split time in the original video, and the skier's viewing angle per sequence.
 
-**SkiTB** (access form submitted 2026-10-17; data under CC BY-NC 4.0):
+**SkiTB** (received 2026-10-18 and audited in `docs/data_audit_skitb.md`; annotations under CC BY-NC 4.0):
 
 - `AL/`, `JP/`, `FS/`, 100 sequences each. Per sequence: `frames/`, `MC/` (multi-camera), `SC/` (one folder per single-camera clip, each with `boxes.txt` [x, y, w, h], `frames.txt`, `visibilities.txt`).
 - Split JSONs per discipline: by date / athlete / course, in 2-way and 3-way versions.
 - Toolkit code is public. SiamFC comes from a separate public fork (`siamfc-pytorch`); weights `siamfc_alexnet_e50.pth` are GOT-10k-pretrained (not trained on ski footage), linked from the toolkit README.
-- Known code quirks to check: the README says `--split-file` while the code says `--split_file`; one loader path reads `ST` where another reads `SC`.
+- Known code quirks to check: the README says `--split-file` while the code says `--split_file`; one loader path reads `ST` where another reads `SC`. The data itself uses `SC` (checked 2026-10-18).
 
 SkiTB has no 24-point pose labels. Ski 2DPose landmarks are not tracking ground truth. Keep that distinction in every table.
 
@@ -192,7 +200,7 @@ End-of-week checkpoints:
 
 - **Week 1 (Oct 25):**
   - split frozen;
-  - AWS environment verified (all 212 tests pass);
+  - AWS environment verified (all 213 tests pass);
   - cross-check passes;
   - E0 val numbers;
   - E1 overfit passes.
@@ -209,7 +217,7 @@ Current layout (created 2026-10-17; the module map is in `CLAUDE.md`):
 
 | Path | Contents |
 | --- | --- |
-| `docs/` | `scope.md`, `decisions.md`, `data_audit.md`, `evaluation_protocol.md`, `step1_readiness.md` |
+| `docs/` | `scope.md`, `decisions.md`, `data_audit_ski2dpose.md`, `data_audit_skitb.md`, `evaluation_protocol.md`, `step1_readiness.md` |
 | `configs/ski24_schema.json` | Landmark names, groups, flip pairs, skeleton edges, COCO joint mapping |
 | `configs/pose/*.yaml` | E1–E4 training configs |
 | `configs/replay/*.yaml` | Crop-controller settings |
@@ -251,6 +259,7 @@ split
 
 > **Status, 2026-10-18:**
 > - **Done:** offline code (spec §2–§11); Ski 2DPose downloaded, checksummed and audited (0 problems); `IMAGE_PATH_TEMPLATE`, `info_for` and `locate_segment` filled in; pilots chosen (D10).
+> - **Done 2026-10-18:** SkiTB `AL/` received and audited (0 format problems; `docs/data_audit_skitb.md`); the SkiTB reader's layout block and `frame_file` are filled in.
 > - **Open:** overlay review (1F), alignment (1G), AWS smoke tests (1H), readiness note (1I).
 
 Full instructions are in the [Step 1 guide](skier_step_1_guide.md). Module contracts and tests for the offline coding block are in the [Step 1 code spec](skier_step_1_code_spec.md). Summary:
@@ -271,7 +280,7 @@ Full instructions are in the [Step 1 guide](skier_step_1_guide.md). Module contr
 
 **Review block**
 - `[MANUAL]` Label-overlay review (checklist in the guide, 30–45 min).
-- `[MANUAL]` Follow up on SkiTB if no reply by 2026-10-24.
+- ~~`[MANUAL]` Follow up on SkiTB if no reply by 2026-10-24.~~ SkiTB arrived 2026-10-18.
 - `[MANUAL]` Fill in `docs/step1_readiness.md`.
 
 **Exit condition:** labels resolve to images and draw correctly; the pinned environment runs a real pretrained pose inference on AWS; SkiTB status is known. Do not start any long training job in this step.
@@ -326,7 +335,7 @@ Tests (synthetic numbers only):
 **`[CODE]` 2.4 SkiTB split reader — `src/skier/data/skitb.py`**
 
 - `load_skitb_clips(skitb_root, discipline="AL", split_json, partition) -> list[Clip]`: each SC clip inherits its parent sequence's partition, so camera segments from one run are never assigned independently. Reads `boxes.txt` (xywh), `frames.txt`, `visibilities.txt`.
-- The exact JSON keys and folder names are confirmed when the data arrives (`[DATA]`). Write the parser against the README layout, keep key names in one constant block, and fail loudly on surprises.
+- **Confirmed 2026-10-18** (`docs/data_audit_skitb.md`): `SC/<camera index>/`; comma-separated `x,y,w,h` boxes; `frames.txt` holds bare indices, so `197` → `frames/00197.jpg`; the split JSON is `{partition: [IDs]}`. Originally: Write the parser against the README layout, keep key names in one constant block, and fail loudly on surprises.
 - Tests: a synthetic folder tree with two sequences, three SC clips and a split JSON.
 
 **`[CODE]` 2.5 Metrics — `src/skier/eval/`**
@@ -358,7 +367,7 @@ Tests (synthetic numbers only):
 
 ### Review block
 - `[MANUAL]` Look at the split summary: which videos landed where, race types, image and ski-point counts.
-- `[MANUAL]` **Follow-cam placement.** The original default ("if the follow-cam sequences come from one or two videos, force them into test") **does not apply**: the data has **6 follow-cam videos**, one segment each, 134 images in total (`docs/data_audit.md`). Forcing all six into test would make them most of the test set's videos. Options to choose from before any training:
+- `[MANUAL]` **Follow-cam placement.** The original default ("if the follow-cam sequences come from one or two videos, force them into test") **does not apply**: the data has **6 follow-cam videos**, one segment each, 134 images in total (`docs/data_audit_ski2dpose.md`). Forcing all six into test would make them most of the test set's videos. Options to choose from before any training:
   - (a) Hold all 6 out as a separate **follow-cam evaluation set**, reported as its own row and excluded from the 70/15/15 race-video split. They are the closest stand-in for amateur footage.
   - (b) Split them between val and test with `forced_*` and report them separately.
   - (c) Let the generator place them, and still report them separately.
@@ -651,8 +660,8 @@ Spend on blockers first (environment, data access, geometry bugs, report), then:
 | --- | --- | --- |
 | AWS GPU quota delayed | No approved quota by Wed Oct 21 | Do all `[CODE]` work (Step 6 first), run `[DATA]` CPU tasks on the Mac, and use the Windows GTX 1070 Ti (8 GB) for the tiny-overfit test and profiling with batch 8 |
 | AWS still unavailable | Not running by Mon Oct 26 | Train E1 on the 1070 Ti (batch 8). Cut extra seeds first, then E2/E3 (keep E1 vs. E4); record the change |
-| SkiTB access delayed | No data by end of Week 1 | Continue pose; demo tracking on Ski 2DPose videos; mark the benchmark gap clearly |
-| SkiTB too late for the benchmark | No data by Fri Nov 6 | Drop the SkiTB tracking benchmark and the τ/k grid. Report tracking qualitatively, with replay metrics on Ski 2DPose segments, and say so |
+| SkiTB access delayed (**resolved:** data arrived 2026-10-18) | No data by end of Week 1 | Continue pose; demo tracking on Ski 2DPose videos; mark the benchmark gap clearly |
+| SkiTB too late for the benchmark (**resolved**, as above) | No data by Fri Nov 6 | Drop the SkiTB tracking benchmark and the τ/k grid. Report tracking qualitatively, with replay metrics on Ski 2DPose segments, and say so |
 | Pinned install fails | More than 2–3 h without a working pose inference | Try the documented fixes in the Step 1 guide; if still blocked, load the official HRNet repo's pure-PyTorch model with the same contracts and record the change |
 | Tracker integration fails | More than 3–4 h after access | Fix the adapter narrowly; otherwise use another documented pretrained tracker and say so |
 | GPU time over budget | Measured runtimes don't fit | Cut epochs or runs uniformly; keep E1 vs. E4 |

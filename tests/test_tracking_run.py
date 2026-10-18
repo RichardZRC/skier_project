@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 import synth
 
-from skier.data import skitb
 from skier.eval.track_metrics import frame_ious
 from skier.tracking.frames import ImageFrames, VideoFrames
 from skier.tracking.run import (
@@ -88,11 +87,11 @@ def make_skitb(root, n_frames=6):
     seq = root / "AL" / "001"
     (seq / "frames").mkdir(parents=True)
     for i in range(n_frames):
-        cv2.imwrite(str(seq / "frames" / f"{i:05d}.jpg"), np.zeros((40, 60, 3), np.uint8))
+        cv2.imwrite(str(seq / "frames" / f"{100 + i:05d}.jpg"), np.zeros((40, 60, 3), np.uint8))
     clip = seq / "SC" / "0"
     clip.mkdir(parents=True)
     (clip / "boxes.txt").write_text("".join(f"{2 * i},0,10,10\n" for i in range(n_frames)))
-    (clip / "frames.txt").write_text("".join(f"{i:05d}.jpg\n" for i in range(n_frames)))
+    (clip / "frames.txt").write_text("".join(f"{100 + i}\n" for i in range(n_frames)))  # bare indices, as in SkiTB
     (clip / "visibilities.txt").write_text("0\n" + "1\n" * (n_frames - 1))  # first frame invisible
     split = root / "split.json"
     split.write_text(json.dumps({"train": ["001"]}))
@@ -109,9 +108,3 @@ def test_run_skitb_end_to_end(tmp_path):
     assert s["n_clips"] == 1 and s["pooled_mean_iou"] == pytest.approx(1.0)  # fake moves exactly like GT
     assert s["n_failure_episodes"] == 0
     assert json.loads((out / "summary.json").read_text())["partition"] == "train"
-
-
-def test_frame_file_refuses_bare_indices():
-    assert skitb.frame_file("00012.jpg") == "00012.jpg"
-    with pytest.raises(NotImplementedError, match="frame_file"):
-        skitb.frame_file("12")
