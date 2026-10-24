@@ -129,3 +129,18 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
 - Effect on evaluation:
   - The Step 6 table reports, per run, clean body / body-shared / ski PCK, ski PCK at each crop-error level, the cut-off share, and Δ vs. E1, with counts.
   - Bootstrap intervals come in Step 8.
+
+## D17 — GPU work moves to the Windows laptop for now; AWS stays for later (2026-10-24)
+- Choice:
+  - Ruichao's Windows laptop (RTX 4070 Laptop GPU, probably 8 GB) becomes the GPU machine, running WSL2 Ubuntu 22.04 with the same pinned stack. Setup: `docs/laptop_setup.md`.
+  - It takes everything doable now: the full test gate, smoke tests, MMPose cross-check, E0, E1 (overfit, profile, full), E2–E4, evaluation and comparison, and the tracker and replay runs.
+  - **Nothing is dropped.** AWS (g5.xlarge, guide §1C) stays in the plan for heavier or parallel work, such as extra seeds, once the new account's verification completes.
+  - The Mac keeps coding, reviews and the split freeze, with no installs (D13).
+- Reason:
+  - AWS credits are redeemed, but the account's verification is still in progress. Its GPU-quota request was rejected automatically, and the Standard-instance quota is 1 vCPU.
+  - The laptop removes that wait. The dataset is small (about 1,500 training images), so a laptop GPU is enough for the core runs.
+  - This supersedes D2's "AWS for all GPU work"; the original 1070 Ti stopgap is no longer needed.
+- Effect on evaluation:
+  - **Runs compared in one table come from the same kind of machine with the same batch size.** If seeds move to AWS later, E1 is retrained there too.
+  - If 8 GB can't fit batch 16, the batch size changes before any full run, applies to E1–E4 alike, and is recorded as a new decision.
+  - Each run records its GPU (`check_env.py`'s `env.json`).

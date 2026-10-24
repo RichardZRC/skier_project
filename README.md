@@ -32,7 +32,7 @@ flowchart LR
 | 6 Augmentation study (E2–E4) | ✅ done | ⏳ AWS, after the split freeze. ✅ Augmentation preview on pilot images |
 | 7–8 Integration, report | not started | — |
 
-- The **AWS** GPU instance is pending.
+- **GPU machine:** a Windows laptop (RTX 4070, WSL2) for now (D17; `docs/laptop_setup.md`). The AWS account is still being verified and stays for heavier work later.
 - **SkiTB** data arrived 2026-10-18 and is audited. The frame rate of each sequence is still open.
 - The test suite has 249 passing tests; 8 more need PyTorch or mmpose and run on AWS.
 - Detailed status and next actions: `PROJECT_NOTES.md`.
@@ -47,8 +47,9 @@ pip install -e ".[dev]"          # numpy<2, opencv-python, pillow, pyyaml, pytes
 pytest -q                        # torch/stack/gpu tests skip without those packages
 ```
 
-**GPU environment (AWS g5.xlarge):** the pinned stack is torch 2.1.2 + cu121, mmcv 2.1.0, mmengine 0.10.x, mmpose 1.3.2, numpy < 2.
-- Install it exactly as in `skier_step_1_guide.md` §1C.7; the pins are listed in `requirements-pose.txt`.
+**GPU environment:** the pinned stack is torch 2.1.2 + cu121, mmcv 2.1.0, mmengine 0.10.x, mmpose 1.3.2, numpy < 2; the pins are listed in `requirements-pose.txt`.
+- **Windows laptop (current, D17):** WSL2 Ubuntu 22.04, step by step in `docs/laptop_setup.md`.
+- **AWS g5.xlarge (later):** install exactly as in `skier_step_1_guide.md` §1C.7.
 - Then run the full test suite, **before any training**.
 - `python scripts/check_env.py --strict` must pass.
 
@@ -120,7 +121,7 @@ The full definitions are in `docs/evaluation_protocol.md`.
 | `scripts/` | Command-line entry points (thin wrappers) |
 | `configs/` | `ski24_schema.json`, `pose/e1.yaml`–`e4.yaml`, `replay/default.yaml` |
 | `data/manifests/` | `pose_inventory.csv`, `pilot_videos.txt`, and (after the freeze) `pose_split_v1.json` and `crop_error_set_v1.json` |
-| `docs/` | `scope.md`, `decisions.md`, `data_audit_ski2dpose.md`, `data_audit_skitb.md`, `evaluation_protocol.md` |
+| `docs/` | `scope.md`, `decisions.md`, `data_audit_ski2dpose.md`, `data_audit_skitb.md`, `evaluation_protocol.md`, `laptop_setup.md` |
 | `tests/` | Unit tests on synthetic data (`tests/synth.py`) |
 | `results/` | Small committed evidence; large outputs stay under `$SKIER_RESULTS` |
 | `skier_implementation_plan.md`, `skier_step_1_guide.md`, `skier_step_1_code_spec.md`, `PROJECT_NOTES.md` | The plan, the setup guide, the Step 1 spec, and the running notes |

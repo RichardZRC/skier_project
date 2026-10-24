@@ -6,7 +6,51 @@ Companion docs: `README.md` (setup and commands), `CLAUDE.md` (rules for Claude 
 `skier_proposal.pdf`, `skier_implementation_plan.md` (status table at the top), `skier_step_1_guide.md`,
 `skier_step_1_code_spec.md`, `docs/decisions.md`.
 
-Last updated: 2026-10-18
+Last updated: 2026-10-24
+
+---
+
+## Handoff: where things stand (2026-10-24)
+
+Start here in a new session, on any machine. Claude's own notes stay on the machine they were written on, so everything a new session needs is in the repo: this section, `CLAUDE.md`, the decisions log and the plan's status table.
+
+### Done since 2026-10-18
+- **SkiTB:** the alpine set (`AL/`) arrived and is audited (D15, `docs/data_audit_skitb.md`), and its reader is filled in. The data-audit doc is split per dataset.
+- **Step 6 code** (D16): augmentations with paired draws, E2–E4 configs, the crop-error set, the checkpoint evaluator, the comparison table with the pre-registered selection rule, and the augmentation preview.
+- **AWS:** credits redeemed, budget alert set, key pair `skier-aws` created in us-west-2. The key is at `~/.ssh/skier-aws.pem` on the Mac. **The account is still being verified**, so nothing is launched (see Status and "AWS lessons" below).
+- **D17:** GPU work moves to Ruichao's Windows laptop (RTX 4070, WSL2), following `docs/laptop_setup.md`. AWS is kept for later.
+
+### Machine state
+
+| Machine | State |
+| --- | --- |
+| **Mac** | Repo at `~/Desktop/skier_project`; light `.venv` (249 passed, 8 skipped). Data in `~/skier_data`: Ski 2DPose, plus SkiTB (`AL/FS/JP`; only `AL` is used). Results in `~/skier_results`: `step1/audit`, `pose/aug_preview/e1–e4.png`, `replay/synthetic_demo`, `skitb_audit`. **The 1F overlay images aren't rendered yet.** No `skier-aws` entry in `~/.ssh/config` yet. |
+| **Laptop** | Not set up yet. Next: `docs/laptop_setup.md` Parts 1–4, which end with the 257-test gate, the smoke test and the cross-check. |
+| **AWS** | Account verification pending: the GPU-quota request was auto-rejected, the Standard quota is 1 vCPU, and CloudShell says "account verification is in progress". No instance yet. |
+
+### Waiting on Ruichao, in priority order
+1. **Laptop setup and trial** (`docs/laptop_setup.md` Parts 1–4). Paste the outputs to Claude.
+2. **Overlay review (1F), then freeze the split, then the crop-error set** (Mac). Claude renders the overlays on request (pilot videos only).
+3. **Read D16** (augmentation settings and the selection rule) before E2–E4 are trained, and `docs/evaluation_protocol.md` at the freeze.
+4. **The SkiTB frame rate of each sequence.** It isn't in the files; it's about 25 or 30 fps by estimate. Look in the toolkit's source or the paper. Then the tracker and replay take a per-clip rate, a small fix within Steps 3–4.
+5. **The SiamFC fork's tracker class**, once the toolkit is cloned on the laptop, to complete the `FILL IN` block in `tracking/siamfc_adapter.py`.
+6. **The alignment check (1G),** which fills in `MIN_SCORE`/`MIN_MARGIN`. Step 7 waits for it and for the first GPU session.
+7. **AWS, after verification:** reapply for the quotas: G and VT at 4 vCPUs in us-west-2 (and us-east-1), Standard at 8. If the account is on AWS's "Free plan", upgrading to the Paid plan keeps the credits and may be required for GPUs; that's Ruichao's call.
+
+### AWS lessons (so they aren't rediscovered)
+- **"Global" in the region menu** means an account-wide page (Billing, IAM, Budgets, EC2 Global View). EC2, key pairs and quotas are per region, so use us-west-2: https://us-west-2.console.aws.amazon.com/ec2/home?region=us-west-2
+- **Quotas:** requests are free. Until account verification finishes, requests are rejected automatically and quotas sit at placeholder values. The relevant quota is "Running On-Demand G and VT instances", measured in **vCPUs** (a g5.xlarge needs 4).
+- **Credits** come off the monthly bill automatically. To confirm, look for a **Credits** line in Billing → Bills; it can take about 24 h to appear. Check the credits' expiry and eligible services. Budget alerts may measure cost after credits.
+- **Trial path once verified:**
+  - Run an `m5.large` CPU instance with the Deep Learning Base GPU AMI (Ubuntu 22.04), then later **stop it → change instance type → `g5.xlarge`**, keeping the same disk.
+  - Within a 1-vCPU limit: `t2.small` with plain Ubuntu works. `t2.micro` doesn't: it's free-tier, so it wouldn't test the credits, and its 1 GB of RAM is too little.
+- **Habits:** stop the instance when idle and never terminate it (that deletes the disk). The public DNS changes after every stop/start.
+
+### How Ruichao likes to work (in addition to the working rules)
+- Step-by-step walkthroughs for console and infrastructure tasks. Ruichao runs the commands in their own terminal and pastes the output.
+- A cheap trial run before any compute-heavy work.
+- Keep options open: don't drop plans (AWS, experiments). Move doable work to whatever machine is available.
+- When Ruichao says "don't do anything yet, just tell me", answer only.
 
 ---
 
@@ -164,7 +208,11 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
       scaffold (1A) + all 1B tools per `skier_step_1_code_spec.md`; 71 synthetic tests pass in the
       light env (`.venv`, installed via `uv` from pypi.apple.com because the sandbox proxy blocks PyPI);
       spec §14 acceptance passes. `FILL IN` blocks (spec §13) are still open: they need the real data.
-- [ ] **AWS credit requested** (2026-10-17); waiting. No instance or GPU environment yet.
+- [x] **AWS credits redeemed**, budget alert and key pair `skier-aws` created (us-west-2). **Account verification still
+      in progress** (2026-10-24): the GPU-quota request was rejected automatically, the Standard quota is 1 vCPU, and
+      CloudShell won't start. Reapply (G and VT: 4 vCPUs; Standard: 8) once verification completes.
+- [x] **D17 (2026-10-24): GPU work moves to Ruichao's Windows laptop** (RTX 4070, WSL2) for now; AWS kept for
+      heavier or parallel work later. Setup note: `docs/laptop_setup.md`.
 - [x] **Ski 2DPose downloaded, checked and audited** (2026-10-17, Mac, `~/skier_data`):
       checksums in `docs/data_audit_ski2dpose.md`; 16 / 158 / 1,982 as expected; **0 audit problems**;
       path template, `info_for` and `locate_segment` filled in; inventory committed at
@@ -199,15 +247,23 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
       generator; checkpoint evaluator (clean, strata, crop-error, cut-off share); comparison table with the
       pre-registered selection rule; augmentation preview; `train_pose.py --seed`. 249 tests pass; mutation check
       10/10 caught. Pilot augmentation sheets checked visually (`~/skier_results/pose/aug_preview/`).
-- [ ] **First on AWS:** full `pytest` (torch + stack tests) → data (Ski 2DPose; the SkiTB val/test subset)
+- [ ] **First GPU session (laptop, `docs/laptop_setup.md`):** full `pytest` (torch + stack tests) → data (Ski 2DPose; the SkiTB val/test subset)
       → cross-check → (freeze split) → E0 → E1 tiny overfit → profile → full E1 → (freeze the crop-error set)
       → E2–E4 → evaluate and compare on val.
 
 ## Next steps
 
-Follow `skier_step_1_guide.md`. In order:
+Current order (2026-10-24):
 
-1. `[MANUAL]` Today: AWS budget alert + GPU quota request (guide 1C.1–1C.3).
+A. `[MANUAL][NET]` **Laptop setup and trial** (`docs/laptop_setup.md` Parts 1–4): the 257-test gate, `check_env --strict`,
+   Ski 2DPose, the COCO weights, the smoke test, the MMPose cross-check (≤ 2 px). Paste the outputs to Claude.
+B. `[MANUAL]` **Overlay review (1F) → freeze the split** on the Mac; then the crop-error set (Mac, committed).
+C. `[GPU]` On the laptop: E0 → E1 overfit → profile (send `profile.json`; batch-size decision if needed) → full E1 → E2–E4.
+D. `[MANUAL]` AWS: wait for account verification, then reapply for the quotas. Not blocking anything now (D17).
+
+The original Step 1 order, kept for reference (follow `skier_step_1_guide.md`):
+
+1. `[MANUAL]` ~~AWS budget alert + GPU quota request (guide 1C.1–1C.3).~~ Done; quota pending verification (see Status).
 2. ~~`[CODE]` Offline: implement `skier_step_1_code_spec.md` §2–§11~~ Done 2026-10-17.
 3. `[MANUAL][NET]` Launch instance, install pinned stack (1C.4–1C.7).
 4. `[NET][DATA]` ~~Downloads (1D), audit (1E)~~ done 2026-10-17 on the Mac. Next: pilot videos,

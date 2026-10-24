@@ -4,12 +4,12 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 **Deadline: Fri 2026-11-20** (D14; plan §4). If the schedule slips, cut stretch goals first, then extra seeds, then E2/E3.
 
-**Read first:** `PROJECT_NOTES.md` (status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D16; append only).
+**Read first:** `PROJECT_NOTES.md` (start with its **Handoff** section: machine state, what's waiting, AWS lessons; then status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D17; append only).
 
 ## Working rules (Ruichao's instructions; follow them exactly)
 
 - **Plan mode before every plan step.** Enter plan mode, write the plan, and get it approved before coding Step N. Small fixes inside an approved step don't need a new plan.
-- **Install nothing on this Mac (D13).** No torch, no mmpose, no new packages. Only the light `.venv` exists here. Torch- and mmpose-dependent tests skip here and run on AWS.
+- **Install nothing on this Mac (D13).** No torch, no mmpose, no new packages. Only the light `.venv` exists here. Torch- and mmpose-dependent tests skip here and run on the GPU machine (the laptop for now, D17).
 - **Commit and push only when asked.** Work directly on `main`; no branches.
 - **Never widen the sandbox.** pypi.org and the EPFL dataset server are blocked from this session. Ruichao downloads in their own terminal. Don't edit the ACC allowlists or sandbox settings.
 - **Data discipline:**
@@ -17,17 +17,26 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
   - Before the split is frozen, look only at **pilot-video** images (`data/manifests/pilot_videos.txt`).
   - Never browse test images. Tune on **val** only. Evaluate **test once** (Step 8).
   - The split manifest is frozen: `make_pose_split.py` refuses to overwrite it without `--force` and a recorded reason.
-- **Record as you go.** Each new decision goes into `docs/decisions.md`. After each step, update the status in `PROJECT_NOTES.md` and the step's status note in the plan.
+- **Record as you go.** Each new decision goes into `docs/decisions.md`. After each step, update the status in `PROJECT_NOTES.md` and the step's status note in the plan. Knowledge a later session needs goes into the repo (the Handoff section), because Claude's own notes stay on the machine where they were written.
+- **Working style:**
+  - Give step-by-step walkthroughs for console and infrastructure tasks. Ruichao runs commands on the other machines and pastes the output.
+  - Run a cheap trial before any compute-heavy work.
+  - Keep options open: don't drop plans, move doable work to whatever machine is available.
+  - "Don't do anything yet, just tell me" means answer only.
 
 ## Environment
 
-- Run the tests with `.venv/bin/python -m pytest -q`. Currently **249 passed, 8 skipped**: 6 `torch` and 2 `stack` tests run on AWS.
+- Run the tests with `.venv/bin/python -m pytest -q`. Currently **249 passed, 8 skipped**: 6 `torch` and 2 `stack` tests run on the GPU machine.
   - Markers: `torch` needs PyTorch; `stack` needs the pinned torch, mmcv and mmpose; `gpu` needs CUDA.
 - **Paths:** code reads `SKIER_DATA` (default `~/skier_data`) and `SKIER_RESULTS` (default `~/skier_results`) through `skier.paths`. Never hard-code absolute paths.
 - **Data on this Mac:**
   - Ski 2DPose (audited 2026-10-17, 0 problems): `~/skier_data/ski2dpose/{archives,labels,images/Images_jpg,videos/Videos}`. Checksums: `docs/data_audit_ski2dpose.md`.
   - SkiTB (audited 2026-10-18, 0 format problems): `~/skier_data/skitb/{AL,FS,JP}`; only `AL/` is used. Digests and findings: `docs/data_audit_skitb.md`.
-- **Pinned GPU stack** (AWS only): Python 3.10, torch 2.1.2 + cu121, mmcv 2.1.0, mmengine 0.10.x, mmpose 1.3.2, numpy < 2. Install steps are in guide 1C.7.
+- **Which machine is this session on?**
+  - **Mac** (macOS, repo in `~/Desktop/skier_project`): coding, the light tests, reviews, the split freeze. No installs (D13); the sandbox rules above apply.
+  - **Laptop** (WSL2 Ubuntu, repo in `~/skier_project`): GPU runs. The pinned stack is installed there as in `docs/laptop_setup.md`; ask before installing anything else. Data lives only in `~/skier_data` inside WSL (SkiTB: just the val/test subset). Never commit images, labels, checkpoints or `.npz` files.
+- **GPU machines (D17):** Ruichao's Windows laptop (RTX 4070, WSL2 Ubuntu 22.04) for now, set up as in `docs/laptop_setup.md`. AWS g5.xlarge (guide 1C.7) is kept for later; its account verification is still pending. Ruichao runs the commands there and pastes the output; code moves through GitHub.
+- **Pinned GPU stack** (GPU machines only): Python 3.10, torch 2.1.2 + cu121, mmcv 2.1.0, mmengine 0.10.x, mmpose 1.3.2, numpy < 2.
 - The repo sits in `~/Desktop`, which iCloud syncs. Data and results live outside it, as they should.
 
 ## Code conventions

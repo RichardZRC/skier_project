@@ -7,25 +7,27 @@
 
 Hyperparameters, runtimes and costs below are starting estimates, not measured values. Nothing has been trained or measured on a GPU yet.
 
-## Status and next actions (2026-10-18)
+## Status and next actions (2026-10-24)
 
 **Deadline: Friday 2026-11-20** (D14). The week-by-week schedule is in §4.
 
-The **offline code for Steps 1–6 is written and tested**, ahead of the schedule in §4. That covers 249 unit tests; 8 more (`torch`, `stack`) run on AWS. Both datasets are on the Mac and audited:
+The **offline code for Steps 1–6 is written and tested**, ahead of the schedule in §4. That covers 249 unit tests; 8 more (`torch`, `stack`) run on the GPU machine. Both datasets are on the Mac and audited:
 - Ski 2DPose: 0 problems (`docs/data_audit_ski2dpose.md`).
 - SkiTB `AL/`: arrived 2026-10-18, 0 format problems, reader layout confirmed (`docs/data_audit_skitb.md`, D15).
 
 What's left needs the GPU or Ruichao, plus SkiTB's frame rate for each sequence.
 
+**GPU machine (D17):** Ruichao's Windows laptop (RTX 4070, WSL2; setup in `docs/laptop_setup.md`) for now. The AWS account's verification is still in progress: its GPU-quota request was rejected automatically, and the Standard quota is 1 vCPU. AWS stays for heavier or parallel work once verified; reapply for the quotas then.
+
 | Step | Code | Still to run | Blocked on |
 | --- | --- | --- | --- |
-| 1 | Done | Overlay review (1F), alignment check (1G), GPU smoke tests (1H), readiness note (1I) | Ruichao (1F); AWS (1H) |
+| 1 | Done | Overlay review (1F), alignment check (1G), GPU smoke tests (1H), readiness note (1I) | Ruichao (1F); GPU laptop (1H) |
 | 2 | Done | **Freeze the split** after the overlay review; review `docs/evaluation_protocol.md` | Ruichao |
-| 3 | Done | MMPose cross-check, E0 on val, SiamFC on pilot segments / SkiTB val | AWS, frozen split; SkiTB frame rates (failure episodes) |
-| 4 | Done | Replays of the pilot segments; τ/k grid on SkiTB val | Tracker output (AWS); SkiTB frame rates |
-| 5 | Done | Tiny overfit → 200-step profile → full E1 | AWS, frozen split |
-| 6 | Done | Crop-error set (after the freeze); train E2–E4; evaluate E0–E4 on val; compare; choose the recipe | AWS, frozen split |
-| 7–8 | Not started | — | Plan-mode plan first. Step 7 waits for the alignment check (1G) and the first AWS session |
+| 3 | Done | MMPose cross-check, E0 on val, SiamFC on pilot segments / SkiTB val | GPU laptop, frozen split; SkiTB frame rates (failure episodes) |
+| 4 | Done | Replays of the pilot segments; τ/k grid on SkiTB val | Tracker output (GPU laptop); SkiTB frame rates |
+| 5 | Done | Tiny overfit → 200-step profile → full E1 | GPU laptop, frozen split |
+| 6 | Done | Crop-error set (after the freeze); train E2–E4; evaluate E0–E4 on val; compare; choose the recipe | GPU laptop, frozen split |
+| 7–8 | Not started | — | Plan-mode plan first. Step 7 waits for the alignment check (1G) and the first GPU session |
 
 **Possible now, on the Mac, no GPU:**
 1. Overlay review (pilot videos).
@@ -34,10 +36,10 @@ What's left needs the GPU or Ruichao, plus SkiTB's frame rate for each sequence.
 4. ~~Plan and code Step 6.~~ Done 2026-10-18. Look over the augmentation sheets in `$SKIER_RESULTS/pose/aug_preview/` (pilot images).
 5. Find SkiTB's frame rate for each sequence, from the toolkit source or the source videos (`docs/data_audit_skitb.md`, finding 2). Then pass it per clip to the tracker and replay tools, a small fix within Steps 3–4.
 
-**First AWS session, in this order:**
-1. Install the pinned stack (guide 1C.7); `check_env.py --strict`.
+**First GPU session (the laptop for now, `docs/laptop_setup.md`; the same order on AWS later):**
+1. Install the pinned stack (laptop: `docs/laptop_setup.md` Part 2; AWS: guide 1C.7); `check_env.py --strict`.
 2. **The full `pytest`.** All 257 tests must pass, including the `torch` and `stack` tests, before any training (D13).
-3. Get the data onto the instance.
+3. Get the data onto the GPU machine.
    - **Ski 2DPose:** download again and compare the SHA-256 values with `docs/data_audit_ski2dpose.md`, or copy it from the Mac.
    - **SkiTB:** copy only what's needed from the Mac, never `FS/`/`JP/`. Since nothing trains on SkiTB, that's the 6 val and 41 test sequences plus one train sequence for the smoke test, instead of all 15.5 GB of `AL/`. Then rerun `results/step1/skitb_audit/audit_skitb_al.py` and compare the per-sequence digests with `skitb_al_sequences.csv`.
 4. Download the COCO HRNet config and checkpoint (`mim download`) and the SiamFC fork and weights. Fill in `SiamFCTracker`'s `FILL IN` block (code spec §13). While the toolkit is cloned, check how it handles frame rate and `--split_file`.
@@ -118,6 +120,8 @@ Pose runs on the **original frame** through its own crop. The replay crop is app
 | D13 | Local machine | Nothing installed on the Mac beyond the light env. `torch`/`stack` tests run on AWS first, before any training | 2026-10-17 |
 | D14 | Deadline | Finish by **Fri 2026-11-20** (5 weeks from Oct 19); stretch goals only if Week 3 ends on track | 2026-10-18 |
 | D15 | SkiTB data | `$SKIER_DATA/skitb/`, `AL/` only; split file `AL_train_val_test_athlete_60-40.json` (53/6/41 sequences); D1 option A confirmed | 2026-10-18 |
+| D16 | Step 6 settings | Jitter p 1 (±10%, ×0.9–1.1), blur p 0.5 (odd 3–9 px), occlusion p 0.5 (5–15%, points stay supervised); paired draws; crop-error set at 0.05/0.10/0.20; follow-cam not used in Step 6; pre-registered selection rule | 2026-10-18 |
+| D17 | GPU machine | Windows laptop (RTX 4070, WSL2) for now; AWS kept for heavier or parallel work once the account is verified; compared runs share machine type and batch size | 2026-10-24 |
 
 Pinned software stack (MMPose 1.3.2 needs mmcv ≥ 2.0.1 and < 2.2.0; prebuilt wheels exist for this exact combination on Linux and Windows):
 
@@ -666,7 +670,7 @@ Spend on blockers first (environment, data access, geometry bugs, report), then:
 
 | Risk | Trigger | Action |
 | --- | --- | --- |
-| AWS GPU quota delayed | No approved quota by Wed Oct 21 | Do all `[CODE]` work (Step 6 first), run `[DATA]` CPU tasks on the Mac, and use the Windows GTX 1070 Ti (8 GB) for the tiny-overfit test and profiling with batch 8 |
+| AWS GPU quota delayed (**in effect:** account verification pending; handled by the RTX 4070 laptop, D17) | No approved quota by Wed Oct 21 | Do all `[CODE]` work (Step 6 first), run `[DATA]` CPU tasks on the Mac, and use the Windows GTX 1070 Ti (8 GB) for the tiny-overfit test and profiling with batch 8 |
 | AWS still unavailable | Not running by Mon Oct 26 | Train E1 on the 1070 Ti (batch 8). Cut extra seeds first, then E2/E3 (keep E1 vs. E4); record the change |
 | SkiTB access delayed (**resolved:** data arrived 2026-10-18) | No data by end of Week 1 | Continue pose; demo tracking on Ski 2DPose videos; mark the benchmark gap clearly |
 | SkiTB too late for the benchmark (**resolved**, as above) | No data by Fri Nov 6 | Drop the SkiTB tracking benchmark and the τ/k grid. Report tracking qualitatively, with replay metrics on Ski 2DPose segments, and say so |
