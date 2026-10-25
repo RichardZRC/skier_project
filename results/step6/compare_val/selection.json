@@ -1,0 +1,13 @@
+{
+  "baseline": "E1",
+  "beat_baseline": [],
+  "candidates": [
+    "E2",
+    "E3",
+    "E4"
+  ],
+  "disqualified_body_drop": [],
+  "pick": "E1",
+  "reason": "no candidate beats E1 on clean ski PCK@0.1: negative result, keep E1",
+  "rule": "D16: drop candidates whose clean body PCK@0.1 falls > 2 points below E1; take the highest clean ski PCK@0.1; if the top two are within 1 point, take the higher moderate crop-error ski PCK@0.1; if none beats E1, keep E1 (negative result)"
+}

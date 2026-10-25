@@ -282,6 +282,15 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
       - **Run time:** 12.9 min of compute (0.17 s/step, 2.9 GB peak, as profiled), but **34.8 min wall clock**: Windows
         entered **Modern Standby from 19:20:25 to 19:42:20** (Kernel-Power events 506/507), which paused WSL. The run resumed
         unharmed. Keep the laptop from sleeping during runs (`docs/laptop_setup.md` Part 6).
+- [x] **E2–E4 trained, E1–E4 evaluated on val, comparison run** (2026-10-24; `results/step5/E{2,3,4}_*`, `results/step6/`).
+      A Windows Update restart (20:31:40, `MoUsoCoreWorker.exe`) stopped E4 after epoch 11; it resumed from `last.pt` (config
+      and split checked) and finished. Clean val ski PCK@0.1: **E1 89.5, E2 69.3, E3 77.4, E4 77.6**; body 96.1–97.9 for all.
+      **D16's rule picks E1** (no candidate beats it). **Recipe choice not made yet (Ruichao).**
+      - **Diagnosis (`results/step6/diagnostics.md`): convergence, not augmentation.** The whole ski deficit is in ski
+        **tails** (E2–E4, about 12–18% vs 65–77%) and, in E2 only, **tips** (64–66% vs 91–94%). E2–E4 put tails at the boot
+        **even on their own training images** (about 20% vs E1's 73–78%), although E3's training targets are bit-identical
+        to E1's. E2 and E4 share crops and jitter, yet only E2's tips fail. So whether a run learns the ski ends within
+        50 epochs (×0.1 at epochs 30 and 42) varies by run; the table doesn't measure augmentation.
 - [ ] **First GPU session (laptop, `docs/laptop_setup.md`):** ~~full `pytest` (torch + stack tests)~~ done → data (Ski 2DPose; the SkiTB val/test subset)
       → cross-check → (freeze split) → E0 → E1 tiny overfit → profile → full E1 → (freeze the crop-error set)
       → E2–E4 → evaluate and compare on val.
@@ -292,7 +301,8 @@ Current order (2026-10-24):
 
 A. ~~`[MANUAL][NET]` **Laptop setup and trial** (`docs/laptop_setup.md` Parts 1–4).~~ Done 2026-10-24; cross-check passed.
 B. ~~`[MANUAL]` **Overlay review (1F) → freeze the split → the crop-error set**~~ All done 2026-10-24 (D19; crop-error set above).
-C. `[GPU]` On the laptop: ~~E0 → E1 overfit → profile → full E1~~ done → **E2–E4** (next) → evaluate E1–E4 with the crop-error set → compare.
+C. `[GPU]` On the laptop: ~~E0 → E1 overfit → profile → full E1 → E2–E4 → evaluate → compare~~ done 2026-10-24.
+   **Next: decide how to handle the convergence confound** (`results/step6/diagnostics.md`) before choosing a recipe.
 D. `[MANUAL]` AWS: wait for account verification, then reapply for the quotas. Not blocking anything now (D17).
 
 The original Step 1 order, kept for reference (follow `skier_step_1_guide.md`):
