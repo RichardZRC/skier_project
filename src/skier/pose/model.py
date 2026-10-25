@@ -16,6 +16,7 @@ import numpy as np
 
 FINAL_LAYER_PREFIX = "head.final_layer."
 FINAL_LAYER_KEYS = {"head.final_layer.weight", "head.final_layer.bias"}
+PREPROCESSOR_PREFIX = "data_preprocessor."
 COCO_CONFIG = "td-hm_hrnet-w32_8xb64-210e_coco-256x192"
 
 
@@ -23,6 +24,20 @@ def filter_checkpoint(state_dict: Mapping[str, Any], drop_prefix: str = FINAL_LA
     """Split a state dict into (kept, sorted dropped keys) by key prefix."""
     kept = {k: v for k, v in state_dict.items() if not k.startswith(drop_prefix)}
     return kept, sorted(k for k in state_dict if k.startswith(drop_prefix))
+
+
+def check_preprocessor(state_dict: Mapping[str, Any]) -> None:
+    """MMPose checkpoints carry ``data_preprocessor.mean/std``; PoseNet has no preprocessor
+    (``skier.pose.preprocess`` normalizes), so they must equal its RGB ``MEAN``/``STD``."""
+    from skier.pose.preprocess import MEAN, STD
+
+    for name, ours in (("mean", MEAN), ("std", STD)):
+        key = PREPROCESSOR_PREFIX + name
+        if key not in state_dict:
+            continue
+        theirs = np.asarray(state_dict[key], dtype=np.float64).reshape(-1)
+        if theirs.shape != ours.shape or not np.allclose(theirs, ours, atol=1e-3):
+            raise RuntimeError(f"checkpoint {key} {theirs.tolist()} differs from preprocess {name} {ours.tolist()}")
 
 
 def check_load_result(missing: list[str], unexpected: list[str], replaced_head: bool) -> None:
@@ -76,6 +91,8 @@ def build_hrnet(num_keypoints: int, config_path: str | Path, checkpoint: str | P
     if checkpoint is not None:
         ckpt = torch.load(str(checkpoint), map_location="cpu", weights_only=False)  # MMPose checkpoints carry metadata
         state = ckpt.get("state_dict", ckpt)
+        check_preprocessor({k: v.cpu().numpy() for k, v in state.items() if k.startswith(PREPROCESSOR_PREFIX)})
+        state, _ = filter_checkpoint(state, PREPROCESSOR_PREFIX)
         kept, dropped = filter_checkpoint(state) if replaced else (dict(state), [])
         result = model.load_state_dict(kept, strict=False)
         check_load_result(list(result.missing_keys), list(result.unexpected_keys), replaced)

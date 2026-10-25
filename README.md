@@ -34,7 +34,7 @@ flowchart LR
 
 - **GPU machine:** a Windows laptop (RTX 4070, WSL2) for now (D17; `docs/laptop_setup.md`). The AWS account is still being verified and stays for heavier work later.
 - **SkiTB** data arrived 2026-10-18 and is audited. The frame rate of each sequence is still open.
-- The test suite has 249 passing tests; 8 more need PyTorch or mmpose and run on AWS.
+- The test suite has 250 passing tests; 9 more need PyTorch or mmpose and run on the GPU machine.
 - Detailed status and next actions: `PROJECT_NOTES.md`.
 
 ## Setup

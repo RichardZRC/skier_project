@@ -1,0 +1,31 @@
+{
+  "max_px": 1.1848670342968932,
+  "mean_px": 0.01396908260258926,
+  "n_nan": 0,
+  "passed": true,
+  "per_image_mean_px": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.139,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "sample_ids": [
+    "5UHRvqx1iuQ/0/5UHRvqx1iuQ_0_00017",
+    "5UHRvqx1iuQ/4/5UHRvqx1iuQ_4_00000",
+    "oKQFABiOTw8/10/oKQFABiOTw8_10_00002",
+    "oKQFABiOTw8/21/oKQFABiOTw8_21_00001",
+    "oKQFABiOTw8/27/oKQFABiOTw8_27_00000",
+    "oKQFABiOTw8/7/oKQFABiOTw8_7_00016",
+    "zW1bF2PsB0M/0/zW1bF2PsB0M_0_00008",
+    "zW1bF2PsB0M/13/zW1bF2PsB0M_13_00004",
+    "zW1bF2PsB0M/17/zW1bF2PsB0M_17_00000",
+    "zW1bF2PsB0M/6/zW1bF2PsB0M_6_00004"
+  ],
+  "threshold_px": 2.0
+}

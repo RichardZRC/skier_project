@@ -11,8 +11,9 @@ from skier.pose.crosscheck import compare_points, pick_pilot_records
 from skier.pose.eval_generic import score_e0, select_partition
 from skier.pose.heatmap import encode
 from skier.pose.infer import predict_records
-from skier.pose.model import FINAL_LAYER_KEYS, check_load_result, filter_checkpoint, packaged_coco_config
-from skier.pose.preprocess import INPUT_H, INPUT_W, pose_crop_box
+from skier.pose.model import (FINAL_LAYER_KEYS, check_load_result, check_preprocessor, filter_checkpoint,
+                              packaged_coco_config)
+from skier.pose.preprocess import INPUT_H, INPUT_W, MEAN, STD, pose_crop_box
 
 TEMPLATE = "{video_id}/{segment_id}/{image_id}.png"
 
@@ -126,6 +127,17 @@ def test_checkpoint_filter_and_load_check():
         check_load_result([], ["extra.weight"], replaced_head=False)
 
 
+def test_check_preprocessor():
+    # MMPose stores them as 1 x 3 x 1 x 1 float32 (RGB, since bgr_to_rgb=True)
+    good = {"data_preprocessor.mean": MEAN.reshape(3, 1, 1), "data_preprocessor.std": STD.reshape(3, 1, 1)}
+    check_preprocessor(good)
+    check_preprocessor({})  # our own checkpoints have none
+    with pytest.raises(RuntimeError, match="mean"):
+        check_preprocessor({**good, "data_preprocessor.mean": MEAN[::-1].copy()})  # BGR order
+    with pytest.raises(RuntimeError, match="std"):
+        check_preprocessor({**good, "data_preprocessor.std": STD + 1})
+
+
 @pytest.mark.stack
 @pytest.mark.parametrize("k", [17, 24])
 def test_build_hrnet_output_shape(k):
@@ -141,3 +153,29 @@ def test_build_hrnet_output_shape(k):
         out = model(torch.zeros(2, 3, 256, 192))
     assert tuple(out.shape) == (2, k, 64, 48)
     assert info["replaced_head"] == (k != 17)
+
+
+@pytest.mark.stack
+def test_build_hrnet_loads_mmpose_style_checkpoint(tmp_path):
+    """A COCO checkpoint also carries ``data_preprocessor.mean/std``, which PoseNet lacks."""
+    torch = pytest.importorskip("torch")
+    pytest.importorskip("mmpose")
+    config = packaged_coco_config()
+    if config is None:
+        pytest.skip("HRNet COCO config not found inside the mmpose package")
+    from skier.pose.model import build_hrnet
+
+    coco, _ = build_hrnet(17, config)
+    state = dict(coco.state_dict())
+    state["data_preprocessor.mean"] = torch.tensor(MEAN).view(1, 3, 1, 1)
+    state["data_preprocessor.std"] = torch.tensor(STD).view(1, 3, 1, 1)
+    torch.save({"state_dict": state, "meta": {}}, tmp_path / "coco.pth")
+    model, info = build_hrnet(24, config, tmp_path / "coco.pth")
+    assert info["replaced_head"] and info["skipped_tensors"] == sorted(FINAL_LAYER_KEYS)
+    assert info["loaded_tensors"] == len(state) - 4
+    torch.testing.assert_close(model.backbone.conv1.weight, coco.backbone.conv1.weight)
+
+    state["data_preprocessor.std"] = state["data_preprocessor.std"] * 2
+    torch.save({"state_dict": state}, tmp_path / "bad.pth")
+    with pytest.raises(RuntimeError, match="std"):
+        build_hrnet(24, config, tmp_path / "bad.pth")

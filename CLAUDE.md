@@ -26,7 +26,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 ## Environment
 
-- Run the tests with `.venv/bin/python -m pytest -q`. Currently **249 passed, 8 skipped**: 6 `torch` and 2 `stack` tests run on the GPU machine.
+- Run the tests with `.venv/bin/python -m pytest -q`. Currently **250 passed, 9 skipped**: 6 `torch` and 3 `stack` tests run on the GPU machine, where all 259 must pass.
   - Markers: `torch` needs PyTorch; `stack` needs the pinned torch, mmcv and mmpose; `gpu` needs CUDA.
 - **Paths:** code reads `SKIER_DATA` (default `~/skier_data`) and `SKIER_RESULTS` (default `~/skier_results`) through `skier.paths`. Never hard-code absolute paths.
 - **Data on this Mac:**
@@ -63,7 +63,8 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 - **Flip test in MMPose:** the COCO config enables it by default. The cross-check turns it off (`model.test_cfg.flip_test=False`) because our pipeline never flips.
 - **Decoder edges:** the decoder skips the quarter-pixel step in the outer heatmap pixels. Error bounds are ~1.4 input px inside and ~2.25 px at the edges.
 - **Acceleration tests:** evenly spaced timestamps can't catch a wrong acceleration formula. Keep the uneven-timestep test.
-- **Checkpoints:** load with `torch.load(..., weights_only=False)`, because our checkpoints carry config and metadata.
+- **Checkpoints:** load with `torch.load(..., weights_only=False)`, because our checkpoints carry config and metadata. MMPose's COCO checkpoint also carries `data_preprocessor.mean/std`; `build_hrnet` checks them against `preprocess.MEAN/STD` and leaves them out.
+- **Two clones on the laptop:** the Windows copy (`OneDrive\Desktop`) checks out with CRLF line endings. Files copied from it into the WSL clone need `sed -i 's/\r$//'`, or `git diff` shows every line changed.
 - **Minimum crop:** replay crops are at least `max(240 px, frame_h / 3)`, so design controller tests around that.
 - **SkiTB:**
   - `frames.txt` holds bare frame indices, and `frame_file` maps them (`197` → `00197.jpg`).

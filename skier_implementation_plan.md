@@ -11,7 +11,7 @@ Hyperparameters, runtimes and costs below are starting estimates, not measured v
 
 **Deadline: Friday 2026-11-20** (D14). The week-by-week schedule is in §4.
 
-The **offline code for Steps 1–6 is written and tested**, ahead of the schedule in §4. That covers 249 unit tests; 8 more (`torch`, `stack`) run on the GPU machine. Both datasets are on the Mac and audited:
+The **offline code for Steps 1–6 is written and tested**, ahead of the schedule in §4. That covers 250 unit tests; 9 more (`torch`, `stack`) run on the GPU machine. **The laptop gate, smoke test and MMPose cross-check passed on 2026-10-24** (259 tests; cross-check mean 0.014 px). Both datasets are on the Mac and audited:
 - Ski 2DPose: 0 problems (`docs/data_audit_ski2dpose.md`).
 - SkiTB `AL/`: arrived 2026-10-18, 0 format problems, reader layout confirmed (`docs/data_audit_skitb.md`, D15).
 
@@ -21,9 +21,9 @@ What's left needs the GPU or Ruichao, plus SkiTB's frame rate for each sequence.
 
 | Step | Code | Still to run | Blocked on |
 | --- | --- | --- | --- |
-| 1 | Done | Overlay review (1F), alignment check (1G), GPU smoke tests (1H), readiness note (1I) | Ruichao (1F); GPU laptop (1H) |
+| 1 | Done | Overlay review (1F), alignment check (1G), tracker smoke test (1H; the pose smoke test passed on the laptop 2026-10-24), readiness note (1I) | Ruichao (1F); SiamFC fork and weights (1H) |
 | 2 | Done | **Freeze the split** after the overlay review; review `docs/evaluation_protocol.md` | Ruichao |
-| 3 | Done | MMPose cross-check, E0 on val, SiamFC on pilot segments / SkiTB val | GPU laptop, frozen split; SkiTB frame rates (failure episodes) |
+| 3 | Done | ~~MMPose cross-check~~ passed 2026-10-24 (mean 0.014 px, max 1.19 px; `results/step3/crosscheck.json`); E0 on val, SiamFC on pilot segments / SkiTB val | Frozen split; SiamFC fork; SkiTB frame rates (failure episodes) |
 | 4 | Done | Replays of the pilot segments; τ/k grid on SkiTB val | Tracker output (GPU laptop); SkiTB frame rates |
 | 5 | Done | Tiny overfit → 200-step profile → full E1 | GPU laptop, frozen split |
 | 6 | Done | Crop-error set (after the freeze); train E2–E4; evaluate E0–E4 on val; compare; choose the recipe | GPU laptop, frozen split |
@@ -38,7 +38,7 @@ What's left needs the GPU or Ruichao, plus SkiTB's frame rate for each sequence.
 
 **First GPU session (the laptop for now, `docs/laptop_setup.md`; the same order on AWS later):**
 1. Install the pinned stack (laptop: `docs/laptop_setup.md` Part 2; AWS: guide 1C.7); `check_env.py --strict`.
-2. **The full `pytest`.** All 257 tests must pass, including the `torch` and `stack` tests, before any training (D13).
+2. **The full `pytest`.** All 259 tests must pass, including the `torch` and `stack` tests, before any training (D13).
 3. Get the data onto the GPU machine.
    - **Ski 2DPose:** download again and compare the SHA-256 values with `docs/data_audit_ski2dpose.md`, or copy it from the Mac.
    - **SkiTB:** copy only what's needed from the Mac, never `FS/`/`JP/`. Since nothing trains on SkiTB, that's the 6 val and 41 test sequences plus one train sequence for the smoke test, instead of all 15.5 GB of `AL/`. Then rerun `results/step1/skitb_audit/audit_skitb_al.py` and compare the per-sequence digests with `skitb_al_sequences.csv`.
@@ -209,7 +209,7 @@ End-of-week checkpoints:
 
 - **Week 1 (Oct 25):**
   - split frozen;
-  - AWS environment verified (all 257 tests pass);
+  - GPU environment verified (all 259 tests pass);
   - cross-check passes;
   - E0 val numbers;
   - E1 overfit passes.

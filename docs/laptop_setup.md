@@ -106,7 +106,7 @@ git config user.name "Ruichao Zhang" && git config user.email "ruichaoz@stanford
 ### 2.6 The gate: run this before anything else
 ```bash
 cd ~/skier_project
-pytest -q                                             # expect: 257 passed
+pytest -q                                             # expect: 259 passed
 mkdir -p $SKIER_RESULTS/step1/env
 python scripts/check_env.py --strict                  # expect: exit code 0 (every check OK, including the GPU)
 pip freeze > $SKIER_RESULTS/step1/env/pip-freeze.txt

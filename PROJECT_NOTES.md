@@ -24,12 +24,12 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
 
 | Machine | State |
 | --- | --- |
-| **Mac** | Repo at `~/Desktop/skier_project`; light `.venv` (249 passed, 8 skipped). Data in `~/skier_data`: Ski 2DPose, plus SkiTB (`AL/FS/JP`; only `AL` is used). Results in `~/skier_results`: `step1/audit`, `pose/aug_preview/e1–e4.png`, `replay/synthetic_demo`, `skitb_audit`. **The 1F overlay images aren't rendered yet.** No `skier-aws` entry in `~/.ssh/config` yet. |
-| **Laptop** | **Parts 1–2 done (2026-10-24).** WSL2 Ubuntu 22.04.5, Linux user `ruichaoz`; venv `~/venvs/skier` with the pinned stack plus D18's two pins; repo cloned at `~/skier_project` (GitHub SSH key added); `SKIER_DATA`/`SKIER_RESULTS` set in `~/.bashrc`. **Gate passed: 257 passed, `check_env --strict` exit 0**; `env.json` and `pip-freeze.txt` in `~/skier_results/step1/env/`. No data or weights yet. Next: Part 3 (Ski 2DPose, COCO weights), then Part 4 (smoke test, cross-check). |
+| **Mac** | Repo at `~/Desktop/skier_project`; light `.venv` (250 passed, 9 skipped). Data in `~/skier_data`: Ski 2DPose, plus SkiTB (`AL/FS/JP`; only `AL` is used). Results in `~/skier_results`: `step1/audit`, `pose/aug_preview/e1–e4.png`, `replay/synthetic_demo`, `skitb_audit`. **The 1F overlay images aren't rendered yet.** No `skier-aws` entry in `~/.ssh/config` yet. |
+| **Laptop** | **Parts 1–2 done (2026-10-24).** WSL2 Ubuntu 22.04.5, Linux user `ruichaoz`; venv `~/venvs/skier` with the pinned stack plus D18's two pins; repo cloned at `~/skier_project` (GitHub SSH key added); `SKIER_DATA`/`SKIER_RESULTS` set in `~/.bashrc`. **Gate passed: 257 passed, `check_env --strict` exit 0**; `env.json` and `pip-freeze.txt` in `~/skier_results/step1/env/` (copies in `results/step1/laptop/`). **Parts 3–4 done (2026-10-24):** Ski 2DPose in `~/skier_data/ski2dpose` (all 4 SHA-256 match the audit; 16 / 158 / 1,982), COCO HRNet-W32 config and checkpoint in `~/skier_data/pretrained`; pose smoke test OK (54.7 ms/image, 247 MB); **MMPose cross-check PASS** (mean 0.014 px, max 1.19 px; `results/step3/crosscheck.json`). Gate now 259 passed. No SkiTB, SiamFC or tracker yet. |
 | **AWS** | Account verification pending: the GPU-quota request was auto-rejected, the Standard quota is 1 vCPU, and CloudShell says "account verification is in progress". No instance yet. |
 
 ### Waiting on Ruichao, in priority order
-1. **Laptop setup and trial** (`docs/laptop_setup.md` Parts 1–4). Parts 1–2 and the gate are done (2026-10-24); Parts 3–4 are left.
+1. ~~**Laptop setup and trial** (`docs/laptop_setup.md` Parts 1–4).~~ Done 2026-10-24, cross-check passed.
    - A Claude session can also run on the laptop's **Windows side** (repo clone in `OneDrive\Desktop\skier_project`, used only for editing). It drives Ubuntu with `wsl -d Ubuntu-22.04 -- bash <script>`. Multi-line commands go in a script file, because PowerShell mangles `$` quoting. Root without a password: `wsl -d Ubuntu-22.04 -u root`, used once for the apt packages of 2.2.
 2. **Overlay review (1F), then freeze the split, then the crop-error set** (Mac). Claude renders the overlays on request (pilot videos only).
 3. **Read D16** (augmentation settings and the selection rule) before E2–E4 are trained, and `docs/evaluation_protocol.md` at the freeze.
@@ -251,6 +251,11 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
 - [x] **Laptop set up and gate passed** (2026-10-24, `docs/laptop_setup.md` Parts 1–2): 257 passed, `check_env --strict` OK on the
       RTX 4070 (8 GB). Two install fixes, recorded as D18: `mmdet==3.2.0` (mmpose can't load models without it) and
       `opencv-python<4.12` (mmcv pulled OpenCV 5.0, which needs numpy ≥ 2).
+- [x] **Ski 2DPose, COCO weights, smoke test and MMPose cross-check on the laptop** (2026-10-24, Parts 3–4). Checksums match;
+      cross-check **PASS**, mean 0.014 px, max 1.19 px over 10 pilot images (9 of 10 identical). First run failed: the COCO
+      checkpoint carries `data_preprocessor.mean/std`, which `PoseNet` lacks, and `build_hrnet`'s strict load check refused it.
+      Fix in `pose/model.py`: those two tensors are checked against `preprocess.MEAN/STD` (they match) and then left out.
+      +1 light, +1 `stack` test; mutation check 3/3 caught. This also unblocks `train_pose.py`, which loads the same checkpoint.
 - [ ] **First GPU session (laptop, `docs/laptop_setup.md`):** ~~full `pytest` (torch + stack tests)~~ done → data (Ski 2DPose; the SkiTB val/test subset)
       → cross-check → (freeze split) → E0 → E1 tiny overfit → profile → full E1 → (freeze the crop-error set)
       → E2–E4 → evaluate and compare on val.
@@ -259,8 +264,7 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
 
 Current order (2026-10-24):
 
-A. `[MANUAL][NET]` **Laptop setup and trial** (`docs/laptop_setup.md` Parts 1–4): the 257-test gate, `check_env --strict`,
-   Ski 2DPose, the COCO weights, the smoke test, the MMPose cross-check (≤ 2 px). Paste the outputs to Claude.
+A. ~~`[MANUAL][NET]` **Laptop setup and trial** (`docs/laptop_setup.md` Parts 1–4).~~ Done 2026-10-24; cross-check passed.
 B. `[MANUAL]` **Overlay review (1F) → freeze the split** on the Mac; then the crop-error set (Mac, committed).
 C. `[GPU]` On the laptop: E0 → E1 overfit → profile (send `profile.json`; batch-size decision if needed) → full E1 → E2–E4.
 D. `[MANUAL]` AWS: wait for account verification, then reapply for the quotas. Not blocking anything now (D17).
