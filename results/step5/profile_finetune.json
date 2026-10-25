@@ -1,0 +1,18 @@
+{
+  "data_wait_s": 0.396,
+  "data_wait_share": 0.046,
+  "epoch": 2,
+  "epoch_s": 8.559,
+  "estimated_full_run_h": 0.21,
+  "lr_backbone": 0.0001,
+  "lr_head": 0.0005,
+  "n_dropped": 0,
+  "n_steps": 50,
+  "peak_mem_mb": 2917.7,
+  "phase": "finetune",
+  "profile_steps": 200,
+  "s_per_step": 0.17118,
+  "steps_per_epoch": 75,
+  "train_loss": 0.00154292,
+  "val_s": 1.71
+}

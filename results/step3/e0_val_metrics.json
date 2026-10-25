@@ -1,0 +1,147 @@
+{
+  "approx_wrist_to_hand": {
+    "pck@0.05": {
+      "hits": 251,
+      "pct": 47.44801512287334,
+      "total": 529
+    },
+    "pck@0.1": {
+      "hits": 464,
+      "pct": 87.71266540642722,
+      "total": 529
+    }
+  },
+  "body_shared": {
+    "pck@0.05": {
+      "hits": 2256,
+      "pct": 85.22856063468078,
+      "total": 2647
+    },
+    "pck@0.1": {
+      "hits": 2517,
+      "pct": 95.08877975066113,
+      "total": 2647
+    }
+  },
+  "checkpoint": "td-hm_hrnet-w32_8xb64-210e_coco-256x192-81c58e40_20220909.pth",
+  "checkpoint_sha256": "81c58e403a1ba13a741eb02ba790b5b78bff2a45a9390feebf875f43b8502c8f",
+  "errors_body_shared": {
+    "mean_norm_error": 0.03183748065581192,
+    "missing_rate": 0.0,
+    "n_available": 2647,
+    "n_missing": 0
+  },
+  "excluded_records": [],
+  "experiment": "E0",
+  "load_info": {
+    "checkpoint": "td-hm_hrnet-w32_8xb64-210e_coco-256x192-81c58e40_20220909.pth",
+    "loaded_tensors": 1754,
+    "num_keypoints": 17,
+    "replaced_head": false,
+    "skipped_tensors": []
+  },
+  "n_samples": 293,
+  "partition": "val",
+  "per_joint_pck@0.1": {
+    "ankle_left": {
+      "hits": 234,
+      "pct": 92.4901185770751,
+      "total": 253
+    },
+    "ankle_right": {
+      "hits": 242,
+      "pct": 92.01520912547528,
+      "total": 263
+    },
+    "elbow_left": {
+      "hits": 228,
+      "pct": 95.39748953974896,
+      "total": 239
+    },
+    "elbow_right": {
+      "hits": 268,
+      "pct": 95.37366548042705,
+      "total": 281
+    },
+    "hand_left": {
+      "hits": 224,
+      "pct": 89.95983935742971,
+      "total": 249
+    },
+    "hand_right": {
+      "hits": 240,
+      "pct": 85.71428571428571,
+      "total": 280
+    },
+    "hip_left": {
+      "hits": 249,
+      "pct": 96.13899613899613,
+      "total": 259
+    },
+    "hip_right": {
+      "hits": 272,
+      "pct": 97.4910394265233,
+      "total": 279
+    },
+    "knee_left": {
+      "hits": 248,
+      "pct": 96.875,
+      "total": 256
+    },
+    "knee_right": {
+      "hits": 259,
+      "pct": 91.51943462897526,
+      "total": 283
+    },
+    "shoulder_left": {
+      "hits": 238,
+      "pct": 97.14285714285714,
+      "total": 245
+    },
+    "shoulder_right": {
+      "hits": 279,
+      "pct": 96.53979238754326,
+      "total": 289
+    }
+  },
+  "per_video_body_shared_pck@0.1": {
+    "SVYdH614G_M": {
+      "hits": 328,
+      "pct": 93.98280802292264,
+      "total": 349
+    },
+    "qxfgw1Kd98A": {
+      "hits": 2071,
+      "pct": 95.2621895124195,
+      "total": 2174
+    },
+    "v7PADD2_I00": {
+      "hits": 118,
+      "pct": 95.16129032258064,
+      "total": 124
+    }
+  },
+  "shared_joints": [
+    "shoulder_right",
+    "elbow_right",
+    "shoulder_left",
+    "elbow_left",
+    "hip_right",
+    "knee_right",
+    "ankle_right",
+    "hip_left",
+    "knee_left",
+    "ankle_left"
+  ],
+  "ski": "N/A (the COCO model predicts no ski landmarks)",
+  "split_sha256": "46bd127b0e51c1293859c7ab86dab1f0759511fbbdfd9dad270a632443bb2e98",
+  "timing": {
+    "crop_model_decode_s": 1.065,
+    "load_s": 0.623,
+    "ms_per_image_total": 5.76,
+    "ms_per_image_wall": 5.76,
+    "n_images": 293,
+    "peak_mem_mb": 442.1,
+    "wall_s": 1.688
+  }
+}

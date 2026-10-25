@@ -1,0 +1,42 @@
+{
+  "best_epoch": 43,
+  "best_val_ski_pct": 64.28571428571429,
+  "config": {
+    "aug": {
+      "blur": null,
+      "flip_p": 0.0,
+      "jitter": null,
+      "occlusion": null,
+      "rot_deg": 0.0,
+      "scale_range": [
+        1.0,
+        1.0
+      ]
+    },
+    "batch_size": 16,
+    "expand": 1.25,
+    "finetune_epochs": 50,
+    "lr_backbone": 0.0001,
+    "lr_head": 0.0005,
+    "lr_head_warm": 0.001,
+    "milestones": [
+      0.6,
+      0.85
+    ],
+    "num_workers": 4,
+    "seed": 230,
+    "sigma": 2.0,
+    "val_batch_size": 32,
+    "val_every": 1,
+    "val_partition": "val",
+    "warm_epochs": 3
+  },
+  "epochs_run": 53,
+  "git_commit": "54de280ca4c584e1c4f755da385594fbf2441c2d",
+  "n_train": 32,
+  "n_val": 32,
+  "num_keypoints": 24,
+  "schema_fingerprint": "803ab6a71c33386e",
+  "seed": 230,
+  "split_sha256": "46bd127b0e51c1293859c7ab86dab1f0759511fbbdfd9dad270a632443bb2e98"
+}

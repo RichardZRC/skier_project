@@ -1,0 +1,20 @@
+# configs/pose/e1.yaml with warm_epochs 0, for profiling only: all profiled steps are
+# fine-tune steps (backbone trainable), the phase that sets peak memory and run time.
+batch_size: 16
+warm_epochs: 0
+finetune_epochs: 53       # same total epochs as E1 (3 warm + 50), so the run-time estimate covers all of them
+lr_head_warm: 0.001
+lr_backbone: 0.0001
+lr_head: 0.0005
+milestones: [0.6, 0.85]
+seed: 230
+num_workers: 4
+val_every: 1
+val_partition: val
+val_batch_size: 32
+expand: 1.25
+sigma: 2.0
+aug:
+  flip_p: 0.5
+  rot_deg: 15.0
+  scale_range: [0.8, 1.2]

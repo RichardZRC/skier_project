@@ -25,13 +25,13 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
 | Machine | State |
 | --- | --- |
 | **Mac** | Repo at `~/Desktop/skier_project`; light `.venv` (250 passed, 9 skipped). Data in `~/skier_data`: Ski 2DPose, plus SkiTB (`AL/FS/JP`; only `AL` is used). Results in `~/skier_results`: `step1/audit`, `pose/aug_preview/e1–e4.png`, `replay/synthetic_demo`, `skitb_audit`. The 1F overlays were drawn and reviewed on the laptop instead (2026-10-24). No `skier-aws` entry in `~/.ssh/config` yet. |
-| **Laptop** | **Parts 1–2 done (2026-10-24).** WSL2 Ubuntu 22.04.5, Linux user `ruichaoz`; venv `~/venvs/skier` with the pinned stack plus D18's two pins; repo cloned at `~/skier_project` (GitHub SSH key added); `SKIER_DATA`/`SKIER_RESULTS` set in `~/.bashrc`. **Gate passed: 257 passed, `check_env --strict` exit 0**; `env.json` and `pip-freeze.txt` in `~/skier_results/step1/env/` (copies in `results/step1/laptop/`). **Parts 3–4 done (2026-10-24):** Ski 2DPose in `~/skier_data/ski2dpose` (all 4 SHA-256 match the audit; 16 / 158 / 1,982), COCO HRNet-W32 config and checkpoint in `~/skier_data/pretrained`; pose smoke test OK (54.7 ms/image, 247 MB); **MMPose cross-check PASS** (mean 0.014 px, max 1.19 px; `results/step3/crosscheck.json`). Gate now 259 passed. No SkiTB, SiamFC or tracker yet. |
+| **Laptop** | **Parts 1–2 done (2026-10-24).** WSL2 Ubuntu 22.04.5, Linux user `ruichaoz`; venv `~/venvs/skier` with the pinned stack plus D18's two pins; repo cloned at `~/skier_project` (GitHub SSH key added); `SKIER_DATA`/`SKIER_RESULTS` set in `~/.bashrc`. **Gate passed: 257 passed, `check_env --strict` exit 0**; `env.json` and `pip-freeze.txt` in `~/skier_results/step1/env/` (copies in `results/step1/laptop/`). **Parts 3–4 done (2026-10-24):** Ski 2DPose in `~/skier_data/ski2dpose` (all 4 SHA-256 match the audit; 16 / 158 / 1,982), COCO HRNet-W32 config and checkpoint in `~/skier_data/pretrained`; pose smoke test OK (54.7 ms/image, 247 MB); **MMPose cross-check PASS** (mean 0.014 px, max 1.19 px; `results/step3/crosscheck.json`). Gate now 259 passed. No SkiTB, SiamFC or tracker yet. **Later the same day:** 1F overlays reviewed, split frozen (D19), E0 on val, E1 overfit (standard and a 300-epoch diagnostic) and the E1 profile run; see Status. Full E1 not started. |
 | **AWS** | Account verification pending: the GPU-quota request was auto-rejected, the Standard quota is 1 vCPU, and CloudShell says "account verification is in progress". No instance yet. |
 
 ### Waiting on Ruichao, in priority order
 1. ~~**Laptop setup and trial** (`docs/laptop_setup.md` Parts 1–4).~~ Done 2026-10-24, cross-check passed.
    - A Claude session can also run on the laptop's **Windows side** (repo clone in `OneDrive\Desktop\skier_project`, used only for editing). It drives Ubuntu with `wsl -d Ubuntu-22.04 -- bash <script>`. Multi-line commands go in a script file, because PowerShell mangles `$` quoting. Root without a password: `wsl -d Ubuntu-22.04 -u root`, used once for the apt packages of 2.2.
-2. ~~**Overlay review (1F), then freeze the split**~~ Done 2026-10-24 on the laptop: the review passed and the split and protocol are frozen (D19). Still to do: the crop-error set (`make_crop_error_set.py`, D16), before E2–E4 are evaluated.
+2. ~~**Overlay review (1F), then freeze the split, then the crop-error set**~~ All done 2026-10-24 on the laptop (D19; crop-error set `1e9c0e1c9e7e…`).
 3. **Read D16** (augmentation settings and the selection rule) before E2–E4 are trained.
 4. **The SkiTB frame rate of each sequence.** It isn't in the files; it's about 25 or 30 fps by estimate. Look in the toolkit's source or the paper. Then the tracker and replay take a per-clip rate, a small fix within Steps 3–4.
 5. **The SiamFC fork's tracker class**, once the toolkit is cloned on the laptop, to complete the `FILL IN` block in `tracking/siamfc_adapter.py`.
@@ -259,6 +259,21 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
 - [x] **Overlay review (1F) passed; split and evaluation protocol frozen** (2026-10-24, D19). Ruichao reviewed 30 pilot
       overlays drawn on the laptop: all six checks OK. `data/manifests/pose_split_v1.json`, SHA-256 `46bd127b0e51…`:
       train 1,194 / val 293 / test 360 images (65/16/19), followcam 134; identical to the 2026-10-17 dry run.
+- [x] **E0, E1 overfit and E1 profile on the laptop** (2026-10-24; evidence in `results/step3/`, `results/step5/`):
+      - **E0 on val:** body (10 shared joints) PCK@0.1 **95.1%** (2,517 / 2,647), PCK@0.05 85.2%; ski N/A.
+      - **Overfit, standard (`--overfit 32`, 53 epochs = 106 steps):** body 97.2%, ski only 64.3%. In the overlays the ski
+        predictions sit on the boots: an undertrained new head, not a pipeline bug.
+      - **Overfit, diagnostic (`--epochs 300`):** body 100% by epoch 75, **ski 100% by epoch 200**, loss 0.0040 → 0.00019.
+        The pipeline is verified for ski points too. Ski PCK plateaus near 61% for epochs 10–50, then climbs.
+        **A future overfit check needs about 300 epochs**; 53 is too short at 2 steps per epoch.
+      - **Profile:** the default `--profile-steps 200` measures only warm-up steps (75 steps per epoch, 3 frozen epochs), giving
+        0.057 s/step and 0.34 GB. Profiled with `warm_epochs: 0` instead (`results/step5/profile_finetune_config.yaml`), the
+        fine-tune phase takes **0.171 s/step and 2.9 GB peak of 8 GB**, with 5% data wait; estimated full E1 **0.21 h**.
+        **Batch 16 fits; no batch-size change is needed** (D17). Ruichao chose to keep this as a documented workaround rather
+        than change `--profile-steps` in `train.py`, so E1–E4 all run on the same training code.
+- [x] **Crop-error set frozen** (2026-10-24, before any E1 result; Ruichao approved): `data/manifests/crop_error_set_v1.json`,
+      D16 defaults (val, seed 230, levels 0.05 / 0.10 / 0.20), 293 val images, content SHA-256 `1e9c0e1c9e7e…`, tied to split
+      `46bd127b0e51…`. It passes `check_crop_error_set`, and the tool refuses to overwrite it.
 - [ ] **First GPU session (laptop, `docs/laptop_setup.md`):** ~~full `pytest` (torch + stack tests)~~ done → data (Ski 2DPose; the SkiTB val/test subset)
       → cross-check → (freeze split) → E0 → E1 tiny overfit → profile → full E1 → (freeze the crop-error set)
       → E2–E4 → evaluate and compare on val.
@@ -268,8 +283,8 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
 Current order (2026-10-24):
 
 A. ~~`[MANUAL][NET]` **Laptop setup and trial** (`docs/laptop_setup.md` Parts 1–4).~~ Done 2026-10-24; cross-check passed.
-B. ~~`[MANUAL]` **Overlay review (1F) → freeze the split**~~ Done 2026-10-24 (D19). Next: the crop-error set (committed, like the split).
-C. `[GPU]` On the laptop: E0 → E1 overfit → profile (send `profile.json`; batch-size decision if needed) → full E1 → E2–E4.
+B. ~~`[MANUAL]` **Overlay review (1F) → freeze the split → the crop-error set**~~ All done 2026-10-24 (D19; crop-error set above).
+C. `[GPU]` On the laptop: ~~E0 → E1 overfit → profile~~ done → **full E1** (next) → E2–E4 → evaluate E1–E4 with the crop-error set → compare.
 D. `[MANUAL]` AWS: wait for account verification, then reapply for the quotas. Not blocking anything now (D17).
 
 The original Step 1 order, kept for reference (follow `skier_step_1_guide.md`):

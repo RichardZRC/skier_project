@@ -23,10 +23,10 @@ What's left needs the GPU or Ruichao, plus SkiTB's frame rate for each sequence.
 | --- | --- | --- | --- |
 | 1 | Done | ~~Overlay review (1F)~~ passed 2026-10-24; alignment check (1G), tracker smoke test (1H; the pose smoke test passed on the laptop 2026-10-24), readiness note (1I) | Ruichao (1F); SiamFC fork and weights (1H) |
 | 2 | Done | ~~Freeze the split~~ **frozen 2026-10-24** with the evaluation protocol (D19) | — |
-| 3 | Done | ~~MMPose cross-check~~ passed 2026-10-24 (mean 0.014 px, max 1.19 px; `results/step3/crosscheck.json`); E0 on val, SiamFC on pilot segments / SkiTB val | Frozen split; SiamFC fork; SkiTB frame rates (failure episodes) |
+| 3 | Done | ~~MMPose cross-check~~ passed 2026-10-24 (mean 0.014 px, max 1.19 px; `results/step3/crosscheck.json`); ~~E0 on val~~ body PCK@0.1 95.1% (2026-10-24); SiamFC on pilot segments / SkiTB val | SiamFC fork; SkiTB frame rates (failure episodes) |
 | 4 | Done | Replays of the pilot segments; τ/k grid on SkiTB val | Tracker output (GPU laptop); SkiTB frame rates |
-| 5 | Done | Tiny overfit → 200-step profile → full E1 | GPU laptop, frozen split |
-| 6 | Done | Crop-error set (after the freeze); train E2–E4; evaluate E0–E4 on val; compare; choose the recipe | GPU laptop, frozen split |
+| 5 | Done | ~~Tiny overfit~~ passed (300-epoch diagnostic: ski 100%) → ~~profile~~ 0.171 s/step, 2.9 GB, ~0.21 h; batch 16 fits (2026-10-24) → **full E1** | Ruichao's go-ahead |
+| 6 | Done | ~~Crop-error set~~ frozen 2026-10-24 (`1e9c0e1c9e7e…`); train E2–E4; evaluate E0–E4 on val; compare; choose the recipe | Full E1 |
 | 7–8 | Not started | — | Plan-mode plan first. Step 7 waits for the alignment check (1G) and the first GPU session |
 
 **Possible now, on the Mac, no GPU:**

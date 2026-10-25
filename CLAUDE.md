@@ -64,6 +64,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 - **Decoder edges:** the decoder skips the quarter-pixel step in the outer heatmap pixels. Error bounds are ~1.4 input px inside and ~2.25 px at the edges.
 - **Acceleration tests:** evenly spaced timestamps can't catch a wrong acceleration formula. Keep the uneven-timestep test.
 - **Checkpoints:** load with `torch.load(..., weights_only=False)`, because our checkpoints carry config and metadata. MMPose's COCO checkpoint also carries `data_preprocessor.mean/std`; `build_hrnet` checks them against `preprocess.MEAN/STD` and leaves them out.
+- **Profiling and overfit runs:** `--profile-steps` stops inside the frozen warm-up epochs. Profile the fine-tune phase with `results/step5/profile_finetune_config.yaml` instead. `--overfit 32` needs `--epochs 300` before ski PCK reaches ~100%.
 - **Two clones on the laptop:** the Windows copy (`OneDrive\Desktop`) checks out with CRLF line endings. Files copied from it into the WSL clone need `sed -i 's/\r$//'`, or `git diff` shows every line changed.
 - **Minimum crop:** replay crops are at least `max(240 px, frame_h / 3)`, so design controller tests around that.
 - **SkiTB:**

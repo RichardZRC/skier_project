@@ -188,7 +188,11 @@ python scripts/eval_generic_pose.py --config $CFG --checkpoint $COCO --split $SP
 python scripts/train_pose.py --split $SPLIT --hrnet-config $CFG --checkpoint $COCO --device cuda:0 --overfit 32
 python scripts/train_pose.py --split $SPLIT --hrnet-config $CFG --checkpoint $COCO --device cuda:0 --profile-steps 200
 ```
-**Stop after the profile and send Claude `$SKIER_RESULTS/pose/E1/profile.json`.** It shows the seconds per step, the share of time spent waiting for data, the peak GPU memory and the estimated length of the full run. If 8 GB is too tight for batch 16, the batch size changes, and that is a recorded decision applying to E1–E4 alike, before any full run.
+**Two caveats from the first laptop run (2026-10-24):**
+- `--overfit 32` runs only 106 steps. Skis stay near the boots until about epoch 100, so add `--epochs 300` (about 7 min) for a meaningful check.
+- `--profile-steps 200` stops inside the 3 warm-up epochs, when the backbone is frozen. That understates memory about 8× and time per step about 3×. Profile with `--config results/step5/profile_finetune_config.yaml` (E1 with `warm_epochs: 0`) and `--out $SKIER_RESULTS/pose/E1-profile-finetune`.
+
+**Stop after the profile and send Claude `profile.json`.** It shows the seconds per step, the share of time spent waiting for data, the peak GPU memory and the estimated length of the full run. If 8 GB is too tight for batch 16, the batch size changes, and that is a recorded decision applying to E1–E4 alike, before any full run.
 
 ```bash
 # full E1 (inside tmux)
