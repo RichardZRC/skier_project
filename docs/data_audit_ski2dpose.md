@@ -98,7 +98,11 @@ Per video:
 
 ## 1F. Overlay review
 
-Pending. Record `sample_id + check number + what you saw`. The checklist is in guide §1F.
+**Done 2026-10-24 (Ruichao): all 30 overlays pass all six checks; no problems recorded.**
+
+- Drawn on the laptop with `draw_gt_overlays.py --n 30 --seed 230`, pilot videos only: 8 `5UHRvqx1iuQ`, 15 `oKQFABiOTw8`, 7 `zW1bF2PsB0M`. The IDs are in `$SKIER_RESULTS/step1/overlays/overlay_ids.txt`.
+- **Check 6 refers to visible points only.** The reference box uses reliable (`visible = 1`) body and ski points (`geometry.reference_box`), so hidden guesses can lie outside it. Example: `oKQFABiOTw8/24/oKQFABiOTw8_24_00016`, where a TV graphic covers both ankles and all 8 ski points (`vis = 0`), so the box ends at the knees.
+- **How common that is, over all 799 usable pilot images:** 162 have a hidden body or ski point outside the padded (×1.25) crop, 161 of them involving a ski point. A visible point is never outside it, by construction. Hidden points are masked out of the loss and never scored, so the crop drops nothing that is trained or measured.
 
 ## 1G. Video-frame alignment
 

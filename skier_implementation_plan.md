@@ -21,8 +21,8 @@ What's left needs the GPU or Ruichao, plus SkiTB's frame rate for each sequence.
 
 | Step | Code | Still to run | Blocked on |
 | --- | --- | --- | --- |
-| 1 | Done | Overlay review (1F), alignment check (1G), tracker smoke test (1H; the pose smoke test passed on the laptop 2026-10-24), readiness note (1I) | Ruichao (1F); SiamFC fork and weights (1H) |
-| 2 | Done | **Freeze the split** after the overlay review; review `docs/evaluation_protocol.md` | Ruichao |
+| 1 | Done | ~~Overlay review (1F)~~ passed 2026-10-24; alignment check (1G), tracker smoke test (1H; the pose smoke test passed on the laptop 2026-10-24), readiness note (1I) | Ruichao (1F); SiamFC fork and weights (1H) |
+| 2 | Done | ~~Freeze the split~~ **frozen 2026-10-24** with the evaluation protocol (D19) | — |
 | 3 | Done | ~~MMPose cross-check~~ passed 2026-10-24 (mean 0.014 px, max 1.19 px; `results/step3/crosscheck.json`); E0 on val, SiamFC on pilot segments / SkiTB val | Frozen split; SiamFC fork; SkiTB frame rates (failure episodes) |
 | 4 | Done | Replays of the pilot segments; τ/k grid on SkiTB val | Tracker output (GPU laptop); SkiTB frame rates |
 | 5 | Done | Tiny overfit → 200-step profile → full E1 | GPU laptop, frozen split |
@@ -123,6 +123,7 @@ Pose runs on the **original frame** through its own crop. The replay crop is app
 | D16 | Step 6 settings | Jitter p 1 (±10%, ×0.9–1.1), blur p 0.5 (odd 3–9 px), occlusion p 0.5 (5–15%, points stay supervised); paired draws; crop-error set at 0.05/0.10/0.20; follow-cam not used in Step 6; pre-registered selection rule | 2026-10-18 |
 | D17 | GPU machine | Windows laptop (RTX 4070, WSL2) for now; AWS kept for heavier or parallel work once the account is verified; compared runs share machine type and batch size | 2026-10-24 |
 | D18 | Stack pins | Add `mmdet==3.2.0` (mmpose 1.3.2 needs it to load models) and `opencv-python<4.12` (OpenCV 5.x needs numpy ≥ 2) | 2026-10-24 |
+| D19 | Split frozen | `pose_split_v1.json` (SHA-256 `46bd127b0e51…`): train 4 videos / 1,194 images, val 3 / 293, test 3 / 360, followcam 6 / 134; evaluation protocol frozen with it | 2026-10-24 |
 
 Pinned software stack (MMPose 1.3.2 needs mmcv ≥ 2.0.1 and < 2.2.0; prebuilt wheels exist for this exact combination on Linux and Windows):
 

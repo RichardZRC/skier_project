@@ -155,3 +155,26 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
   - **OpenCV:** mmcv asks for `opencv-python>=3`, so pip installed 5.0.0.93, which declares `numpy>=2` and conflicts with our `numpy<2` pin (`pip check` failed). 4.11 is the newest line that accepts numpy 1.x.
   - Ruichao approved the mmdet install (2026-10-24).
 - Effect on evaluation: none. mmdet's code is imported but never runs in our pipeline. After both fixes the laptop gate passed (257 tests, `check_env --strict` exit 0).
+
+## D19 — Pose split and evaluation protocol frozen (2026-10-24)
+- Choice:
+  - `data/manifests/pose_split_v1.json` is frozen. Content SHA-256 `46bd127b0e51c1293859c7ab86dab1f0759511fbbdfd9dad270a632443bb2e98`, written by `make_pose_split.py --set-aside followcam=auto` (seed 230, targets 70/15/15).
+  - The partitions:
+
+    | Partition | Videos | Images |
+    | --- | --- | ---: |
+    | train | `5UHRvqx1iuQ`, `he3w2n9WvrI`, `oKQFABiOTw8`, `zW1bF2PsB0M` | 1,194 (65%) |
+    | val | `SVYdH614G_M`, `qxfgw1Kd98A`, `v7PADD2_I00` | 293 (16%) |
+    | test | `NrWcP1s3QC0`, `dpFlXMvvZ9E`, `uLW74013Wp0` | 360 (19%) |
+    | followcam | the 6 follow-cam videos (D11) | 134 |
+
+    1 record is excluded (`oKQFABiOTw8/27/oKQFABiOTw8_27_00020`, train).
+  - `docs/evaluation_protocol.md` is frozen with it.
+- Reason:
+  - The 1F overlay review passed: 30 pilot overlays, all six checks, no problems (`docs/data_audit_ski2dpose.md` §1F).
+  - The split equals the 2026-10-17 dry run, and the frozen file matches today's dry run.
+  - It meets D4 and D11: 3 videos each in val and test; at least 400 reliable ski points in each (val 1,752, test 2,197); pilots in train; follow-cam set aside.
+  - Ruichao approved it after seeing the summary.
+- Effect on evaluation:
+  - Every pose number from now on uses this manifest. Checkpoints and metrics record its SHA-256, and `eval_pose.py` refuses a checkpoint trained on another split.
+  - The 1G alignment check isn't needed for the freeze; only Step 7 waits for it.

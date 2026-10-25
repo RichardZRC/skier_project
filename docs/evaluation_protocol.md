@@ -1,6 +1,6 @@
 # Evaluation protocol
 
-**Status: DRAFT (2026-10-17). Ruichao reviews it and freezes it together with `data/manifests/pose_split_v1.json`.** After the freeze, changes go through `docs/decisions.md` with a reason, and never because of a score. Code: `src/skier/eval/`, `src/skier/splits.py`.
+**Status: FROZEN 2026-10-24 (approved by Ruichao), together with `data/manifests/pose_split_v1.json` (content SHA-256 `46bd127b0e51…`; D19).** Drafted 2026-10-17. Changes now go through `docs/decisions.md` with a reason, and never because of a score. Code: `src/skier/eval/`, `src/skier/splits.py`.
 
 ## 1. Coordinates and labels
 
