@@ -129,7 +129,9 @@ torchvision==0.16.2
 mmcv==2.1.0
 mmengine>=0.10,<0.11
 mmpose==1.3.2
+mmdet==3.2.0          # added 2026-10-24 (D18)
 numpy<2
+opencv-python<4.12    # added 2026-10-24 (D18)
 openmim
 got10k
 gdown

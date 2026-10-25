@@ -122,6 +122,7 @@ Pose runs on the **original frame** through its own crop. The replay crop is app
 | D15 | SkiTB data | `$SKIER_DATA/skitb/`, `AL/` only; split file `AL_train_val_test_athlete_60-40.json` (53/6/41 sequences); D1 option A confirmed | 2026-10-18 |
 | D16 | Step 6 settings | Jitter p 1 (±10%, ×0.9–1.1), blur p 0.5 (odd 3–9 px), occlusion p 0.5 (5–15%, points stay supervised); paired draws; crop-error set at 0.05/0.10/0.20; follow-cam not used in Step 6; pre-registered selection rule | 2026-10-18 |
 | D17 | GPU machine | Windows laptop (RTX 4070, WSL2) for now; AWS kept for heavier or parallel work once the account is verified; compared runs share machine type and batch size | 2026-10-24 |
+| D18 | Stack pins | Add `mmdet==3.2.0` (mmpose 1.3.2 needs it to load models) and `opencv-python<4.12` (OpenCV 5.x needs numpy ≥ 2) | 2026-10-24 |
 
 Pinned software stack (MMPose 1.3.2 needs mmcv ≥ 2.0.1 and < 2.2.0; prebuilt wheels exist for this exact combination on Linux and Windows):
 
@@ -133,6 +134,8 @@ Pinned software stack (MMPose 1.3.2 needs mmcv ≥ 2.0.1 and < 2.2.0; prebuilt w
 | mmengine | 0.10.x (record the exact version installed) |
 | mmpose | 1.3.2 |
 | numpy | < 2 (torch 2.1 is built against NumPy 1.x) |
+| mmdet | 3.2.0 (mmpose 1.3.2 can't load models without it; D18) |
+| opencv-python | < 4.12 (OpenCV 5.x needs numpy ≥ 2; D18) |
 
 Install commands are in Step 1C of the guide.
 

@@ -25,11 +25,12 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
 | Machine | State |
 | --- | --- |
 | **Mac** | Repo at `~/Desktop/skier_project`; light `.venv` (249 passed, 8 skipped). Data in `~/skier_data`: Ski 2DPose, plus SkiTB (`AL/FS/JP`; only `AL` is used). Results in `~/skier_results`: `step1/audit`, `pose/aug_preview/e1–e4.png`, `replay/synthetic_demo`, `skitb_audit`. **The 1F overlay images aren't rendered yet.** No `skier-aws` entry in `~/.ssh/config` yet. |
-| **Laptop** | Not set up yet. Next: `docs/laptop_setup.md` Parts 1–4, which end with the 257-test gate, the smoke test and the cross-check. |
+| **Laptop** | **Parts 1–2 done (2026-10-24).** WSL2 Ubuntu 22.04.5, Linux user `ruichaoz`; venv `~/venvs/skier` with the pinned stack plus D18's two pins; repo cloned at `~/skier_project` (GitHub SSH key added); `SKIER_DATA`/`SKIER_RESULTS` set in `~/.bashrc`. **Gate passed: 257 passed, `check_env --strict` exit 0**; `env.json` and `pip-freeze.txt` in `~/skier_results/step1/env/`. No data or weights yet. Next: Part 3 (Ski 2DPose, COCO weights), then Part 4 (smoke test, cross-check). |
 | **AWS** | Account verification pending: the GPU-quota request was auto-rejected, the Standard quota is 1 vCPU, and CloudShell says "account verification is in progress". No instance yet. |
 
 ### Waiting on Ruichao, in priority order
-1. **Laptop setup and trial** (`docs/laptop_setup.md` Parts 1–4). Paste the outputs to Claude.
+1. **Laptop setup and trial** (`docs/laptop_setup.md` Parts 1–4). Parts 1–2 and the gate are done (2026-10-24); Parts 3–4 are left.
+   - A Claude session can also run on the laptop's **Windows side** (repo clone in `OneDrive\Desktop\skier_project`, used only for editing). It drives Ubuntu with `wsl -d Ubuntu-22.04 -- bash <script>`. Multi-line commands go in a script file, because PowerShell mangles `$` quoting. Root without a password: `wsl -d Ubuntu-22.04 -u root`, used once for the apt packages of 2.2.
 2. **Overlay review (1F), then freeze the split, then the crop-error set** (Mac). Claude renders the overlays on request (pilot videos only).
 3. **Read D16** (augmentation settings and the selection rule) before E2–E4 are trained, and `docs/evaluation_protocol.md` at the freeze.
 4. **The SkiTB frame rate of each sequence.** It isn't in the files; it's about 25 or 30 fps by estimate. Look in the toolkit's source or the paper. Then the tracker and replay take a per-clip rate, a small fix within Steps 3–4.
@@ -247,7 +248,10 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
       generator; checkpoint evaluator (clean, strata, crop-error, cut-off share); comparison table with the
       pre-registered selection rule; augmentation preview; `train_pose.py --seed`. 249 tests pass; mutation check
       10/10 caught. Pilot augmentation sheets checked visually (`~/skier_results/pose/aug_preview/`).
-- [ ] **First GPU session (laptop, `docs/laptop_setup.md`):** full `pytest` (torch + stack tests) → data (Ski 2DPose; the SkiTB val/test subset)
+- [x] **Laptop set up and gate passed** (2026-10-24, `docs/laptop_setup.md` Parts 1–2): 257 passed, `check_env --strict` OK on the
+      RTX 4070 (8 GB). Two install fixes, recorded as D18: `mmdet==3.2.0` (mmpose can't load models without it) and
+      `opencv-python<4.12` (mmcv pulled OpenCV 5.0, which needs numpy ≥ 2).
+- [ ] **First GPU session (laptop, `docs/laptop_setup.md`):** ~~full `pytest` (torch + stack tests)~~ done → data (Ski 2DPose; the SkiTB val/test subset)
       → cross-check → (freeze split) → E0 → E1 tiny overfit → profile → full E1 → (freeze the crop-error set)
       → E2–E4 → evaluate and compare on val.
 

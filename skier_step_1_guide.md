@@ -162,8 +162,9 @@ pip install "numpy<2"
 pip install mmcv==2.1.0 -f https://download.openmmlab.com/mmcv/dist/cu121/torch2.1/index.html
 pip install "mmengine>=0.10,<0.11"
 pip install mmpose==1.3.2
+pip install mmdet==3.2.0                     # mmpose can't load models without it (D18)
 pip install openmim pandas pyyaml tqdm pytest got10k gdown
-pip install "numpy<2"                        # re-pin in case anything upgraded it
+pip install "numpy<2" "opencv-python<4.12"   # re-pin; OpenCV 5.x needs numpy>=2 (D18)
 
 pip check
 python -c "import numpy, torch, mmcv, mmcv.ops, mmpose; print(numpy.__version__, torch.__version__, torch.cuda.is_available())"

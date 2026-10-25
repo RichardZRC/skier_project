@@ -36,7 +36,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
   - **Mac** (macOS, repo in `~/Desktop/skier_project`): coding, the light tests, reviews, the split freeze. No installs (D13); the sandbox rules above apply.
   - **Laptop** (WSL2 Ubuntu, repo in `~/skier_project`): GPU runs. The pinned stack is installed there as in `docs/laptop_setup.md`; ask before installing anything else. Data lives only in `~/skier_data` inside WSL (SkiTB: just the val/test subset). Never commit images, labels, checkpoints or `.npz` files.
 - **GPU machines (D17):** Ruichao's Windows laptop (RTX 4070, WSL2 Ubuntu 22.04) for now, set up as in `docs/laptop_setup.md`. AWS g5.xlarge (guide 1C.7) is kept for later; its account verification is still pending. Ruichao runs the commands there and pastes the output; code moves through GitHub.
-- **Pinned GPU stack** (GPU machines only): Python 3.10, torch 2.1.2 + cu121, mmcv 2.1.0, mmengine 0.10.x, mmpose 1.3.2, numpy < 2.
+- **Pinned GPU stack** (GPU machines only): Python 3.10, torch 2.1.2 + cu121, mmcv 2.1.0, mmengine 0.10.x, mmpose 1.3.2, mmdet 3.2.0, numpy < 2, opencv-python < 4.12 (D18).
 - The repo sits in `~/Desktop`, which iCloud syncs. Data and results live outside it, as they should.
 
 ## Code conventions

@@ -144,3 +144,14 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
   - **Runs compared in one table come from the same kind of machine with the same batch size.** If seeds move to AWS later, E1 is retrained there too.
   - If 8 GB can't fit batch 16, the batch size changes before any full run, applies to E1–E4 alike, and is recorded as a new decision.
   - Each run records its GPU (`check_env.py`'s `env.json`).
+
+## D18 — Two pins added to the GPU stack: mmdet 3.2.0, opencv-python < 4.12 (2026-10-24)
+- Choice:
+  - Install **`mmdet==3.2.0`** after mmpose.
+  - Re-pin **`opencv-python<4.12`** together with `numpy<2` (the laptop got 4.11.0.86).
+  - Both are now in `requirements-pose.txt`, the laptop guide (2.3) and guide 1C.7.
+- Reason:
+  - **mmdet:** mmpose 1.3.2 imports its RTMO head whenever `mmpose.models` loads, and that head imports mmdet. mmpose lists mmdet only as an optional extra (`>=3.0.0,<3.3.0`). Without it, every `mmpose.apis` import fails, and so do `build_hrnet`, the smoke test, the cross-check, E0 and training. On the laptop, 2 HRNet tests failed in the gate. mmdet 3.2.0 supports mmcv 2.1.0, is pure Python, and adds only pycocotools and terminaltables; no pinned package changed (dry run).
+  - **OpenCV:** mmcv asks for `opencv-python>=3`, so pip installed 5.0.0.93, which declares `numpy>=2` and conflicts with our `numpy<2` pin (`pip check` failed). 4.11 is the newest line that accepts numpy 1.x.
+  - Ruichao approved the mmdet install (2026-10-24).
+- Effect on evaluation: none. mmdet's code is imported but never runs in our pipeline. After both fixes the laptop gate passed (257 tests, `check_env --strict` exit 0).
