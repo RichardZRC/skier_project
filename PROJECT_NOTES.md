@@ -274,6 +274,14 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
 - [x] **Crop-error set frozen** (2026-10-24, before any E1 result; Ruichao approved): `data/manifests/crop_error_set_v1.json`,
       D16 defaults (val, seed 230, levels 0.05 / 0.10 / 0.20), 293 val images, content SHA-256 `1e9c0e1c9e7e…`, tied to split
       `46bd127b0e51…`. It passes `check_crop_error_set`, and the tool refuses to overwrite it.
+- [x] **Full E1 trained** (2026-10-24, laptop, `configs/pose/e1.yaml` unchanged, commit `4de9902`; `results/step5/E1_*`):
+      best epoch 47 by val ski PCK@0.1: **ski 89.50% (1,568 / 1,752), body 96.89% (3,642 / 3,759)**. Ski PCK climbs from
+      about 47% after warm-up to about 89% by epoch 32, then stays flat. Re-validating `best.pt` reproduces 89.50% exactly.
+      Val overlays: ski lines follow the labels even in fog and motion blur. Pole baskets are often placed at the hands or
+      skis (supplementary only, D7), and left/right overlap in side views.
+      - **Run time:** 12.9 min of compute (0.17 s/step, 2.9 GB peak, as profiled), but **34.8 min wall clock**: Windows
+        entered **Modern Standby from 19:20:25 to 19:42:20** (Kernel-Power events 506/507), which paused WSL. The run resumed
+        unharmed. Keep the laptop from sleeping during runs (`docs/laptop_setup.md` Part 6).
 - [ ] **First GPU session (laptop, `docs/laptop_setup.md`):** ~~full `pytest` (torch + stack tests)~~ done → data (Ski 2DPose; the SkiTB val/test subset)
       → cross-check → (freeze split) → E0 → E1 tiny overfit → profile → full E1 → (freeze the crop-error set)
       → E2–E4 → evaluate and compare on val.
@@ -284,7 +292,7 @@ Current order (2026-10-24):
 
 A. ~~`[MANUAL][NET]` **Laptop setup and trial** (`docs/laptop_setup.md` Parts 1–4).~~ Done 2026-10-24; cross-check passed.
 B. ~~`[MANUAL]` **Overlay review (1F) → freeze the split → the crop-error set**~~ All done 2026-10-24 (D19; crop-error set above).
-C. `[GPU]` On the laptop: ~~E0 → E1 overfit → profile~~ done → **full E1** (next) → E2–E4 → evaluate E1–E4 with the crop-error set → compare.
+C. `[GPU]` On the laptop: ~~E0 → E1 overfit → profile → full E1~~ done → **E2–E4** (next) → evaluate E1–E4 with the crop-error set → compare.
 D. `[MANUAL]` AWS: wait for account verification, then reapply for the quotas. Not blocking anything now (D17).
 
 The original Step 1 order, kept for reference (follow `skier_step_1_guide.md`):
