@@ -178,3 +178,23 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
 - Effect on evaluation:
   - Every pose number from now on uses this manifest. Checkpoints and metrics record its SHA-256, and `eval_pose.py` refuses a checkpoint trained on another split.
   - The 1G alignment check isn't needed for the freeze; only Step 7 waits for it.
+
+## D20 — A convergence trial before any recipe choice (2026-10-25)
+- Choice: run two diagnostic trainings before choosing a recipe or rerunning E1–E4. Written down before either has run.
+  - **E1-seed231:** `configs/pose/e1.yaml` with `--seed 231`, everything else unchanged. It asks whether E1 learns the ski tails reliably or got lucky.
+  - **E3-ft150:** `configs/pose/e3.yaml` with `--epochs 150` (150 fine-tune epochs instead of 50; the ×0.1 steps move with it to epochs 90 and 127). It asks whether longer training lets an augmented run learn the tails.
+  - **Measured:** per-joint PCK@0.1 of each `best.pt` on the training images (no augmentation) and on clean val, with the ski tails as the main readout. `results/step6/train_fit.py` gives the E1–E4 reference values.
+  - **Reading, fixed in advance.** A run "learns the tails" if its training-image tail PCK@0.1 is at least 60% on both sides (E1: 73 / 78%; E2–E4: about 20%).
+
+    | E1-seed231 | E3-ft150 | Then |
+    | --- | --- | --- |
+    | learns | learns | Rerun E1–E4 with the longer schedule (a new decision). |
+    | fails | learns | Same, and treat seed variance as large: 2+ seeds per recipe. |
+    | learns or fails | fails | Longer training isn't enough; investigate further before any rerun. |
+
+  - **Neither run joins the Step 6 table.** They are diagnostics, kept in `results/step6/`. The D16 rule and settings are unchanged.
+- Reason:
+  - The Step 6 comparison is confounded by convergence (`results/step6/diagnostics.md`). E2–E4 miss the ski tails even on their own training images, and E3's training targets are bit-identical to E1's.
+  - A cheap trial first (working rule): 2 runs, about 1 h, before a 2.5 h rerun of all four.
+  - Ruichao chose this option (A) on 2026-10-25.
+- Effect on evaluation: none yet. Val is used only for the diagnostic readout, and test is untouched. Any schedule change it leads to will apply to E1–E4 alike, through its own decision.

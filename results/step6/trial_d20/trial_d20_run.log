@@ -1,0 +1,50 @@
+19:21:24 up since 2026-10-25 19:20:17; 0563abb Step 6 runs: E2-E4 trained, E1-E4 evaluated on val; convergence diagnosis
+19:21:24 === E1-seed231: resuming from last.pt (8 epochs logged)
+19:21:30 train 1194 images (1 excluded), val 293; loaded 1752 tensors, new head: True
+19:22:15 epoch 10 (finetune): loss 0.00123901, val ski PCK@0.1 62.44292237442922 (best)
+19:24:39 epoch 20 (finetune): loss 0.00105147, val ski PCK@0.1 65.92465753424658 (best)
+19:27:04 epoch 30 (finetune): loss 0.00098655, val ski PCK@0.1 68.66438356164383 (best)
+19:29:32 epoch 40 (finetune): loss 0.00095782, val ski PCK@0.1 69.17808219178082
+19:32:03 epoch 50 (finetune): loss 0.00095038, val ski PCK@0.1 69.0068493150685
+19:32:35 best epoch 34: val ski PCK@0.1 69.40639269406392; 20 overlays
+19:32:36 E1-seed231 exit=0, epochs logged: 53
+19:32:36 === E3-ft150: starting fresh
+19:32:39 train 1194 images (1 excluded), val 293; loaded 1752 tensors, new head: True
+19:32:46 epoch 0 (warm): loss 0.00298865, val ski PCK@0.1 32.077625570776256 (best)
+19:35:00 epoch 10 (finetune): loss 0.00136917, val ski PCK@0.1 63.41324200913242 (best)
+19:37:30 epoch 20 (finetune): loss 0.00119978, val ski PCK@0.1 71.06164383561644 (best)
+19:39:58 epoch 30 (finetune): loss 0.00106147, val ski PCK@0.1 74.31506849315069 (best)
+19:42:34 epoch 40 (finetune): loss 0.00100135, val ski PCK@0.1 78.5958904109589 (best)
+19:45:05 epoch 50 (finetune): loss 0.00090651, val ski PCK@0.1 79.96575342465754
+19:47:36 epoch 60 (finetune): loss 0.00086437, val ski PCK@0.1 81.84931506849315
+19:50:03 epoch 70 (finetune): loss 0.00082981, val ski PCK@0.1 84.53196347031964 (best)
+19:52:31 epoch 80 (finetune): loss 0.00076462, val ski PCK@0.1 89.32648401826484 (best)
+19:55:00 epoch 90 (finetune): loss 0.00071001, val ski PCK@0.1 89.95433789954338
+19:57:26 epoch 100 (finetune): loss 0.00068881, val ski PCK@0.1 90.75342465753425 (best)
+19:59:51 epoch 110 (finetune): loss 0.00067705, val ski PCK@0.1 90.75342465753425
+20:02:16 epoch 120 (finetune): loss 0.00067209, val ski PCK@0.1 91.26712328767124 (best)
+20:04:41 epoch 130 (finetune): loss 0.00067307, val ski PCK@0.1 90.8675799086758
+20:07:07 epoch 140 (finetune): loss 0.0006641, val ski PCK@0.1 91.26712328767124
+20:09:30 epoch 150 (finetune): loss 0.00067109, val ski PCK@0.1 91.55251141552512
+20:10:01 best epoch 144: val ski PCK@0.1 91.78082191780823; 20 overlays
+20:10:01 E3-ft150 exit=0, epochs logged: 153
+20:10:01 === readout
+joint                   E1 tr        E1 val E1-seed23 tr E1-seed23 val        E3 tr        E3 val  E3-ft150 tr  E3-ft150 val
+ski_tail_right          73.2%         76.8%        19.8%         11.6%        20.7%         12.1%        95.0%         88.9%
+ski_tail_left           78.0%         64.5%        19.6%         15.2%        20.5%         13.8%        79.6%         60.9%
+ski_tip_right           95.9%         90.8%        65.6%         67.0%        97.2%         92.0%       100.0%         93.5%
+ski_tip_left            98.4%         93.6%        60.1%         63.2%        97.7%         92.4%        99.8%         94.0%
+toes_right             100.0%         93.8%        99.9%         94.6%        99.4%         94.6%       100.0%         96.1%
+heel_right              99.3%         96.0%        97.7%         91.2%        95.0%         90.3%        99.6%         95.6%
+toes_left               99.9%         93.7%        99.7%         92.4%        99.8%         94.5%       100.0%         95.4%
+heel_left               98.6%         94.2%        96.7%         88.9%        91.7%         88.9%       100.0%         96.8%
+ski                     93.9%         89.5%        72.2%         69.4%        81.1%         77.4%        97.2%         91.8%
+body                    99.9%         96.9%       100.0%         96.7%        99.9%         97.9%       100.0%         96.6%
+best epoch                               47                         34                         49                        144
+
+E1: training-image tails 73.2% / 78.0% -> LEARNS the tails (D20 threshold 60%)
+E1-seed231: training-image tails 19.8% / 19.6% -> FAILS on the tails (D20 threshold 60%)
+E3: training-image tails 20.7% / 20.5% -> FAILS on the tails (D20 threshold 60%)
+E3-ft150: training-image tails 95.0% / 79.6% -> LEARNS the tails (D20 threshold 60%)
+wrote /home/ruichaoz/skier_results/pose/trial_d20.json
+20:11:00 === D20_DONE

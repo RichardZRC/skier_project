@@ -291,6 +291,11 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
         **even on their own training images** (about 20% vs E1's 73–78%), although E3's training targets are bit-identical
         to E1's. E2 and E4 share crops and jitter, yet only E2's tips fail. So whether a run learns the ski ends within
         50 epochs (×0.1 at epochs 30 and 42) varies by run; the table doesn't measure augmentation.
+- [x] **D20 convergence trial** (2026-10-25; `results/step6/diagnostics.md` §5, `results/step6/trial_d20/`). The reading was
+      fixed in advance. **E1-seed231 fails on the tails** (training images about 20%; val ski 69.4%), so plain E1 fails under
+      another seed. **E3-ft150 (150 fine-tune epochs) learns them** (95 / 80%; val ski 91.8%, best epoch 144). D20's row
+      "E1-seed231 fails, E3-ft150 learns" → **rerun E1–E4 with the longer schedule and 2+ seeds per recipe (new decision
+      needed; Ruichao).** The session interruption at 19:17 shut WSL down; E1-seed231 resumed from epoch 8.
 - [ ] **First GPU session (laptop, `docs/laptop_setup.md`):** ~~full `pytest` (torch + stack tests)~~ done → data (Ski 2DPose; the SkiTB val/test subset)
       → cross-check → (freeze split) → E0 → E1 tiny overfit → profile → full E1 → (freeze the crop-error set)
       → E2–E4 → evaluate and compare on val.
@@ -302,7 +307,8 @@ Current order (2026-10-24):
 A. ~~`[MANUAL][NET]` **Laptop setup and trial** (`docs/laptop_setup.md` Parts 1–4).~~ Done 2026-10-24; cross-check passed.
 B. ~~`[MANUAL]` **Overlay review (1F) → freeze the split → the crop-error set**~~ All done 2026-10-24 (D19; crop-error set above).
 C. `[GPU]` On the laptop: ~~E0 → E1 overfit → profile → full E1 → E2–E4 → evaluate → compare~~ done 2026-10-24.
-   **Next: decide how to handle the convergence confound** (`results/step6/diagnostics.md`) before choosing a recipe.
+   ~~Decide how to handle the convergence confound~~ → D20 trial done 2026-10-25. **Next: approve the rerun (D21): E1–E4 at
+   150 fine-tune epochs, 2 seeds each, with the D16 rule applied to the seed means.**
 D. `[MANUAL]` AWS: wait for account verification, then reapply for the quotas. Not blocking anything now (D17).
 
 The original Step 1 order, kept for reference (follow `skier_step_1_guide.md`):
