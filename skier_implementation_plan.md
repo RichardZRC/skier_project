@@ -23,8 +23,8 @@ What's left needs the GPU or Ruichao, plus SkiTB's frame rate for each sequence.
 | --- | --- | --- | --- |
 | 1 | Done | ~~Overlay review (1F)~~ passed 2026-10-24; ~~alignment check (1G)~~ exact, offset 0 (2026-10-26); ~~smoke tests (1H)~~ pose 2026-10-24, tracker 2026-10-26 (works, but drifts to the broadcast logo after about 3 s); readiness note (1I) | — |
 | 2 | Done | ~~Freeze the split~~ **frozen 2026-10-24** with the evaluation protocol (D19) | — |
-| 3 | Done | ~~MMPose cross-check~~ passed 2026-10-24 (mean 0.014 px, max 1.19 px; `results/step3/crosscheck.json`); ~~E0 on val~~ body PCK@0.1 95.1% (2026-10-24); SiamFC on SkiTB val (adapter filled in 2026-10-26) | SkiTB subset on the laptop (copy in progress); SkiTB frame rates (failure episodes) |
-| 4 | Done | Replays of the pilot segments; τ/k grid on SkiTB val | Tracker output (GPU laptop); SkiTB frame rates |
+| 3 | Done | ~~MMPose cross-check~~ passed 2026-10-24 (mean 0.014 px, max 1.19 px; `results/step3/crosscheck.json`); ~~E0 on val~~ body PCK@0.1 95.1% (2026-10-24); SiamFC on SkiTB val (adapter filled in 2026-10-26; running) | — (SkiTB on the laptop and verified; frame rates settled, D22) |
+| 4 | Done | Replays of the pilot segments; τ/k grid on SkiTB val (per-sequence fps, D22) | Tracker output on SkiTB val (running) |
 | 5 | Done | ~~Tiny overfit~~ passed (300-epoch diagnostic: ski 100%) → ~~profile~~ 0.171 s/step, 2.9 GB, ~0.21 h; batch 16 fits (2026-10-24) → ~~full E1~~ done 2026-10-24: val ski PCK@0.1 89.5%, body 96.9% (`results/step5/E1_*`) | — |
 | 6 | Done | ~~Crop-error set~~ frozen 2026-10-24 (`1e9c0e1c9e7e…`); ~~train E2–E4; evaluate; compare~~ done 2026-10-24 (rule picks E1, but runs are confounded by convergence: `results/step6/diagnostics.md`); D20 trial done 2026-10-25 (longer schedule fixes it; seed variance is large); rerun E1–E4 at 150 epochs × 2 seeds; choose the recipe | Ruichao: approve the rerun (D21) |
 | 7–8 | Not started | — | Plan-mode plan first. Step 7's prerequisites (1G, the first GPU session) are done; it waits for the recipe choice and the tracker on SkiTB val |

@@ -108,3 +108,36 @@ def test_run_skitb_end_to_end(tmp_path):
     assert s["n_clips"] == 1 and s["pooled_mean_iou"] == pytest.approx(1.0)  # fake moves exactly like GT
     assert s["n_failure_episodes"] == 0
     assert json.loads((out / "summary.json").read_text())["partition"] == "train"
+
+
+class StillTracker(ShiftTracker):
+    def update(self, frame_bgr):
+        return self.box, 0.5
+
+
+def test_run_skitb_uses_each_sequences_frame_rate(tmp_path):
+    """Two identical sequences at 25 and 30 fps (D22): the same failing frames give different durations."""
+    root, n = tmp_path / "skitb", 40
+    for seq in ("001", "002"):
+        d = root / "AL" / seq
+        (d / "frames").mkdir(parents=True)
+        for i in range(n):
+            cv2.imwrite(str(d / "frames" / f"{i:05d}.jpg"), np.zeros((40, 60, 3), np.uint8))
+        clip = d / "SC" / "0"
+        clip.mkdir(parents=True)
+        (clip / "boxes.txt").write_text("".join(f"{2 * i},0,10,10\n" for i in range(n)))  # GT moves away
+        (clip / "frames.txt").write_text("".join(f"{i}\n" for i in range(n)))
+        (clip / "visibilities.txt").write_text("1\n" * n)
+    split = root / "split.json"
+    split.write_text(json.dumps({"val": ["001", "002"]}))
+    out = tmp_path / "out"
+    out.mkdir()
+    s = run_skitb(StillTracker, root, split, "val", out, fps={"001": 25.0, "002": 30.0})
+    # IoU of the still box with GT is 0 from frame 5 on: frames 5..39 fail (35 frames)
+    ep = {k: v["failure_episodes"] for k, v in s["per_clip"].items()}
+    assert ep["001__0"] == [{"start_frame": 5, "end_frame": 39, "duration_s": round(35 / 25, 4)}]
+    assert ep["002__0"] == [{"start_frame": 5, "end_frame": 39, "duration_s": round(35 / 30, 4)}]
+    assert s["per_clip"]["002__0"]["fps"] == 30.0 and s["fps"] == "per sequence (D22)"
+    with pytest.raises(KeyError, match="002"):
+        run_skitb(StillTracker, root, split, "val", out, fps={"001": 25.0})
+    assert run_skitb(StillTracker, root, split, "val", out, fps=25)["per_clip"]["002__0"]["fps"] == 25.0

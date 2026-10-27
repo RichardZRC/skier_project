@@ -1,0 +1,72 @@
+{
+  "clip": "AL0027__3",
+  "config": {
+    "aspect": 1.7777777777777777,
+    "k": 2.0,
+    "lost_score": null,
+    "lost_zoom_out_per_s": 0.5,
+    "max_zoom": 3.0,
+    "min_crop_h_px": 240.0,
+    "reset_gap_s": 1.0,
+    "tau_grow": 0.1,
+    "tau_pos": 0.2,
+    "tau_shrink": 0.6,
+    "tau_urgent": 0.03,
+    "urgent_margin": 0.05
+  },
+  "debug_frames": 226,
+  "fps": 25.0,
+  "frame_size": [
+    1280.0,
+    720.0
+  ],
+  "replay_frames": 226,
+  "smoothed": {
+    "acceleration": {
+      "mean": 0.6628329092736199,
+      "n": 224,
+      "p95": 1.3487746827309346
+    },
+    "box_containment": {
+      "frac_fully_inside": 1.0,
+      "mean": 1.0,
+      "min": 1.0,
+      "n_frames": 226
+    },
+    "centering_error": {
+      "mean": 0.06870016274952148,
+      "n_frames": 226,
+      "p95": 0.14680893243469717
+    },
+    "n_frames": 226,
+    "target": "ground truth",
+    "zoom": {
+      "area_fraction_mean": 0.11111111111111109,
+      "log_zoom_rate_mean": 0.0
+    }
+  },
+  "unsmoothed_baseline": {
+    "acceleration": {
+      "mean": 2.86617478391078,
+      "n": 224,
+      "p95": 7.381851393364889
+    },
+    "box_containment": {
+      "frac_fully_inside": 1.0,
+      "mean": 1.0,
+      "min": 1.0,
+      "n_frames": 226
+    },
+    "centering_error": {
+      "mean": 0.02714846938147341,
+      "n_frames": 226,
+      "p95": 0.05817100950497294
+    },
+    "n_frames": 226,
+    "target": "ground truth",
+    "zoom": {
+      "area_fraction_mean": 0.11111111111111109,
+      "log_zoom_rate_mean": 0.0
+    }
+  }
+}

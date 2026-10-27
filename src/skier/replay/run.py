@@ -20,7 +20,7 @@ import numpy as np
 
 from skier.eval.replay_metrics import replay_summary
 from skier.io_utils import ensure_dir, write_csv, write_json
-from skier.paths import configs_dir, results_root
+from skier.paths import configs_dir, repo_root, results_root
 from skier.replay.controller import CropTrack, ReplayConfig, run_controller
 from skier.replay.render import render_debug, render_replay, write_crops_csv
 from skier.schema import Schema, load_schema
@@ -150,7 +150,9 @@ def ski2dpose_landmarks(rows, video_id: str, segment_id: str, offset: int = 0):
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Smoothed, centered replay from tracker output (plan Step 4).")
     p.add_argument("--config", type=Path, help="default: configs/replay/default.yaml")
-    p.add_argument("--fps", type=float, help="frame rate (default: the video's; required for image frames)")
+    p.add_argument("--fps", type=float, help="frame rate (default: the video's; for SkiTB, the D22 table)")
+    p.add_argument("--fps-table", type=Path, help="per-sequence SkiTB frame rates; default: "
+                                                  "data/manifests/skitb_fps_v1.csv (D22)")
     p.add_argument("--out", type=Path)
     one = p.add_argument_group("single clip")
     one.add_argument("--track-csv", type=Path)
@@ -176,9 +178,21 @@ def main(argv: list[str] | None = None) -> int:
     cfg = ReplayConfig.from_yaml(args.config or configs_dir() / "replay" / "default.yaml")
     schema = load_schema()
 
+    if args.fps is not None and args.fps_table is not None:
+        print("error: give --fps or --fps-table, not both", file=sys.stderr)
+        return 1
+
+    def skitb_fps(sequence_id: str) -> float:
+        """``--fps`` if given, else the sequence's rate from the D22 table."""
+        from skier.data.skitb import FPS_TABLE, fps_for, load_fps_table
+
+        if args.fps is not None:
+            return args.fps
+        return fps_for(load_fps_table(args.fps_table or repo_root() / FPS_TABLE), sequence_id)
+
     if args.grid:
-        if not (args.track_dir and args.skitb_root and args.split_json and args.fps):
-            print("error: --grid needs --track-dir, --skitb-root, --split-json and --fps", file=sys.stderr)
+        if not (args.track_dir and args.skitb_root and args.split_json):
+            print("error: --grid needs --track-dir, --skitb-root and --split-json", file=sys.stderr)
             return 1
         if args.partition == "test":
             print("error: never tune on test", file=sys.stderr)
@@ -194,7 +208,7 @@ def main(argv: list[str] | None = None) -> int:
             pos = np.array([r["frame_index"] for r in rows])
             gt = np.where(c.visible[pos][:, None], c.boxes_xyxy[pos], np.nan)
             first = cv2.imread(str(c.frames_dir / frame_file(c.frame_files[0])))
-            clips.append(ClipInput(csv.stem, rows, args.fps, _frame_size_of(first), gt))
+            clips.append(ClipInput(csv.stem, rows, skitb_fps(c.sequence_id), _frame_size_of(first), gt))
         table = run_grid(clips, cfg, schema)
         out = ensure_dir(args.out or results_root() / "replay" / f"grid-{args.partition}")
         write_csv(table, out / "grid.csv", GRID_COLUMNS)
@@ -209,11 +223,13 @@ def main(argv: list[str] | None = None) -> int:
     if args.video is not None:
         factory, fps, size = video_source(args.video, args.fps)
     else:
-        if args.frames_list is None or args.fps is None:
-            print("error: --frames-dir needs --frames-list and --fps", file=sys.stderr)
+        if args.frames_list is None or (args.fps is None and args.gt_clip_dir is None):
+            print("error: --frames-dir needs --frames-list, and --fps unless --gt-clip-dir names a SkiTB clip",
+                  file=sys.stderr)
             return 1
         files = [line.strip() for line in args.frames_list.read_text().splitlines() if line.strip()]
-        factory, fps, size = image_source(args.frames_dir, files, args.fps)
+        fps = args.fps if args.fps is not None else skitb_fps(args.gt_clip_dir.parents[1].name)
+        factory, fps, size = image_source(args.frames_dir, files, fps)
 
     gt = landmarks = keypoints = None
     if args.gt_clip_dir is not None:

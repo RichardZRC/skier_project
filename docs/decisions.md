@@ -215,3 +215,18 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
   - Same machine (the RTX 4070 laptop) and batch size 16 for every run (D17).
   - Cost: 7 runs × about 38 min ≈ 4.5 h.
   - D14's cut order changes: a second seed is now needed for a trustworthy comparison, so if time is short, E2 and E3 are cut before the second seed.
+
+## D22 — SkiTB frame rate per sequence: the estimate snapped to 25 or 30 FPS (2026-10-26)
+- Choice:
+  - Each AL sequence gets the frame rate in **`data/manifests/skitb_fps_v1.csv`**: the nearer of 25 and 30 to (last − first `MC/` frame index) ÷ official `AthleteTime` (`results/step3/skitb_fps_estimate.py`). The result: 18 sequences at 25 and 82 at 30. Val has AL0027 at 25 and the other 5 at 30; test has 8 at 25 and 33 at 30.
+  - `run_tracker.py` (`--skitb-root`) and `make_replay.py` (`--grid`, or a single SkiTB clip via `--gt-clip-dir`) use this table by default. `--fps` stays as an explicit override for one rate for all clips. A sequence missing from the table raises, and a value other than 25 or 30 is refused.
+  - The manifest is frozen like the split. Changing it needs a new decision.
+- Reason:
+  - The files don't store the frame rate, and the toolkit doesn't either (its "fps" is tracker speed).
+  - The SkiTB paper states "The videos have a framerate of 25/30 FPS" (arXiv 2312.09723, §4), but no per-video rate.
+  - The estimates fall in two well-separated groups, 23.4–25.8 and 29.1–31.5. Nothing lies between 25.83 and 29.08, so snapping is unambiguous. AL0098 (37.9, a race-time/span mismatch) goes to 30, the nearer allowed value.
+  - The alternative, 30 for every clip as the toolkit's own time metrics assume, would make durations in the 18 slower sequences 20% too short.
+  - Ruichao approved this on 2026-10-26.
+- Effect on evaluation:
+  - Only time-based numbers change: failure-episode durations (≥ 0.5 s), and all replay timing (τ in seconds, acceleration per s²). IoU, the success curve and AUC count frames and don't depend on it.
+  - The report states the rates as estimates ("25 or 30 FPS per sequence, from frame span ÷ race time") and names the manifest.

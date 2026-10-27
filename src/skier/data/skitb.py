@@ -14,7 +14,7 @@ from pathlib import Path
 
 import numpy as np
 
-from skier.io_utils import read_json
+from skier.io_utils import read_csv, read_json
 
 # --- Layout, confirmed on the real AL files (2026-10-18; code spec §13) -------------
 # <root>/<discipline>/<sequence>/{frames/, MC/, SC/<camera index>/}. Single-camera clips
@@ -41,6 +41,32 @@ def frame_file(entry: str) -> str:
     if not re.fullmatch(r"[0-9]{1,5}", entry):
         raise ValueError(f"frames.txt entry {entry!r} is not a frame index of at most 5 digits")
     return f"{int(entry):05d}.jpg"
+# -------------------------------------------------------------------------------
+
+# --- Frame rate per sequence (D22, 2026-10-26) -------------------------------------
+# The files don't store it. The SkiTB paper gives 25/30 FPS; the manifest assigns each
+# sequence the nearer of the two to (MC frame span / official race time).
+FPS_TABLE = "data/manifests/skitb_fps_v1.csv"  # relative to the repo root
+ALLOWED_FPS = (25.0, 30.0)
+
+
+def load_fps_table(path: str | Path) -> dict[str, float]:
+    """``sequence -> fps`` from the D22 manifest. Every value must be one of ``ALLOWED_FPS``."""
+    table: dict[str, float] = {}
+    for r in read_csv(path):
+        seq, fps = r["sequence"], float(r["fps"])
+        if fps not in ALLOWED_FPS:
+            raise ValueError(f"{path}: sequence {seq!r} has fps {fps}, not one of {ALLOWED_FPS}")
+        if seq in table:
+            raise ValueError(f"{path}: sequence {seq!r} is listed twice")
+        table[seq] = fps
+    return table
+
+
+def fps_for(table: dict[str, float], sequence_id: str) -> float:
+    if sequence_id not in table:
+        raise KeyError(f"no frame rate for sequence {sequence_id!r} in the fps table (D22)")
+    return table[sequence_id]
 # -------------------------------------------------------------------------------
 
 

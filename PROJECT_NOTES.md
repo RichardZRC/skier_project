@@ -43,8 +43,8 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
 1. ~~**Laptop setup and trial** (`docs/laptop_setup.md` Parts 1–4).~~ Done 2026-10-24, cross-check passed.
    - A Claude session can also run on the laptop's **Windows side** (repo clone in `OneDrive\Desktop\skier_project`, used only for editing). It drives Ubuntu with `wsl -d Ubuntu-22.04 -- bash <script>`. Multi-line commands go in a script file, because PowerShell mangles `$` quoting. Root without a password: `wsl -d Ubuntu-22.04 -u root`, used once for the apt packages of 2.2.
 2. ~~**Overlay review (1F), then freeze the split, then the crop-error set**~~ All done 2026-10-24 on the laptop (D19; crop-error set `1e9c0e1c9e7e…`).
-3. **Copy the SkiTB subset to the laptop** (in progress 2026-10-26): the 6 val and 41 test sequences, one train sequence and the `AL_*` files, into `~/skier_data/skitb/AL/`. Claude then verifies the digests and runs the tracker on val.
-4. **The SkiTB frame rate of each sequence.** It isn't in the files or in the toolkit (checked 2026-10-26); estimated at about 25 or 30 fps. Remaining sources: the SkiTB paper, or the source videos (YouTube links in `AL_data.csv`). Then the tracker and replay take a per-clip rate, a small fix within Steps 3–4.
+3. ~~**Copy SkiTB to the laptop**~~ Done and verified 2026-10-26. Optional: delete the unused `FS/` and `JP/` there.
+4. ~~**The SkiTB frame rate of each sequence**~~ Settled as D22 (2026-10-26).
 5. **After D21:** read the seed-mean comparison and choose the recipe (D16 rule, D21).
 6. ~~**SiamFC tracker class** and the **1G alignment check**~~ Done 2026-10-26.
 7. **Pause Windows Update** before long runs.
@@ -323,6 +323,26 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
         That's a fixed-tracker failure, not an adapter bug (stills checked). Step 7 should plan for it.
 - [x] **1G alignment done** (2026-10-26): `5UHRvqx1iuQ/0` and `oKQFABiOTw8/22`, all 94 images at offset 0, NCC ≥ 0.9999.
       `frame_idx` = 0-based clip frame. `MIN_SCORE` 0.99, `MIN_MARGIN` 0.02 (`docs/data_audit_ski2dpose.md` §1G).
+- [x] **SkiTB on the laptop, verified** (2026-10-26): Ruichao copied all of `skitb/` (AL, FS, JP) into WSL. 363,486 macOS
+      `._*` sidecars removed (all verified AppleDouble). All 100 AL sequence digests and the tree digest match the Mac
+      audit (`docs/data_audit_skitb.md`). `FS/` and `JP/` (7.4 GB) are unused; deleting them is Ruichao's call.
+- [x] **D22: per-sequence SkiTB frame rate** (2026-10-26, approved). The paper says 25/30 FPS. The estimate (MC span ÷ race
+      time) snaps cleanly to 18 × 25 and 82 × 30 (`data/manifests/skitb_fps_v1.csv`, frozen). `run_tracker.py` and
+      `make_replay.py` use it by default; `--fps` is an override. 264 tests pass; mutation check 5/5.
+- [x] **Tracker on SkiTB val** (2026-10-26, 75 clips, 12,925 frames, 3.5 min; `results/step3/skitb_val_tracking_summary.json`).
+      Fixed pretrained SiamFC, D22 frame rates. **Pooled mean IoU 0.363, AUC 0.364**; success at IoU 0.1/0.3/0.5/0.7 =
+      0.71/0.59/0.37/0.13. Per-clip mean IoU: 12% of clips below 0.1, 33% at or above 0.5. **46 failure episodes** (IoU < 0.1
+      for ≥ 0.5 s) in 40 of 75 clips; median 1.6 s, max 9.5 s. By sequence, frame-weighted IoU ranges from 0.25 (AL0026) to
+      0.55 (AL0044). These are our metrics; the toolkit's official ones are separate (Step 8).
+      **Step 7 consequence:** pose crops from these boxes will often miss the skier. Plan the integration around that
+      (score-based gating, reporting tracker-crop vs. reference-crop pose separately).
+- [x] **Replay τ/k grid on SkiTB val** (2026-10-26, 75 clips, 8 s; `results/step4/grid_val.csv`). GT-box containment is
+      0.82–0.87 everywhere. It depends on k, not τ, and is capped by tracker failures. Smoothing cuts crop acceleration
+      3–4× at equal containment: τ 0.2, k 2.0 gives containment 0.841, acceleration 1.65 vs. 5.49 unsmoothed, crop area 28%
+      of the frame. τ 0.4 raises centering error and, at small k, p95 acceleration.
+      **Review set for Ruichao:** `$SKIER_RESULTS/replay/review/`. Side-by-side smoothed vs. unsmoothed, plus the debug
+      view, for AL0027 cam 3 (well tracked, IoU 0.70) and AL0073 cam 7 (tracker lost within 5 frames, IoU 0.005).
+      **Defaults not chosen yet (Ruichao, plan §9 review block).**
 - [ ] **First GPU session (laptop, `docs/laptop_setup.md`):** ~~full `pytest` (torch + stack tests)~~ done → data (Ski 2DPose; the SkiTB val/test subset)
       → cross-check → (freeze split) → E0 → E1 tiny overfit → profile → full E1 → (freeze the crop-error set)
       → E2–E4 → evaluate and compare on val.

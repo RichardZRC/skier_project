@@ -12,11 +12,11 @@ import argparse
 import math
 import sys
 from pathlib import Path
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Mapping
 
 import numpy as np
 
-from skier.data.skitb import frame_file, load_skitb_clips
+from skier.data.skitb import FPS_TABLE, fps_for, frame_file, load_fps_table, load_skitb_clips
 from skier.eval.track_metrics import clip_iou, failure_episodes, frame_ious, pooled_iou, success_curve
 from skier.io_utils import ensure_dir, read_csv, read_id_list, write_csv, write_json
 from skier.paths import data_root, repo_root, results_root
@@ -83,7 +83,7 @@ def summarize(clip_stats: dict[str, dict]) -> dict:
     return {
         **pooled,
         "success": success_curve(all_ious),
-        "per_clip": {k: {"mean_iou": s["mean_iou"], "n_frames": s["n_frames"],
+        "per_clip": {k: {"mean_iou": s["mean_iou"], "n_frames": s["n_frames"], "fps": s.get("fps"),
                          "failure_episodes": s["failure_episodes"]} for k, s in clip_stats.items()},
         "n_failure_episodes": sum(len(s["failure_episodes"]) for s in clip_stats.values()),
         "note": "our metrics; the SkiTB toolkit's official metrics are reported separately",
@@ -91,21 +91,27 @@ def summarize(clip_stats: dict[str, dict]) -> dict:
 
 
 def run_skitb(tracker_factory: Callable[[], Tracker], skitb_root: Path, split_json: Path, partition: str,
-              out: Path, fps: float, discipline: str = "AL", max_frames: int | None = None) -> dict:
-    """Every SC clip of a partition: init at its first visible frame with the GT box."""
+              out: Path, fps: float | Mapping[str, float], discipline: str = "AL",
+              max_frames: int | None = None) -> dict:
+    """Every SC clip of a partition: init at its first visible frame with the GT box.
+
+    ``fps`` is one rate for all clips, or a per-sequence table (D22).
+    """
     clip_stats = {}
     for clip in load_skitb_clips(skitb_root, split_json, partition, discipline):
         visible = np.flatnonzero(clip.visible)
         if len(visible) == 0:
             continue
+        clip_fps = fps_for(fps, clip.sequence_id) if isinstance(fps, Mapping) else float(fps)
         init_pos = int(visible[0])
-        frames = ImageFrames(clip.frames_dir, [frame_file(e) for e in clip.frame_files], fps=fps)
+        frames = ImageFrames(clip.frames_dir, [frame_file(e) for e in clip.frame_files], fps=clip_fps)
         rows = track_clip(tracker_factory(), frames, init_pos, clip.boxes_xyxy[init_pos], max_frames)
         name = f"{clip.sequence_id}__{clip.clip_id}"
         write_track_csv(rows, out / f"{name}.csv")
-        clip_stats[name] = evaluate_clip(rows, clip.boxes_xyxy, clip.visible, init_pos, fps)
+        clip_stats[name] = {**evaluate_clip(rows, clip.boxes_xyxy, clip.visible, init_pos, clip_fps), "fps": clip_fps}
     summary = summarize(clip_stats)
-    summary.update(dataset="skitb", discipline=discipline, partition=partition, fps=fps)
+    summary.update(dataset="skitb", discipline=discipline, partition=partition,
+                   fps="per sequence (D22)" if isinstance(fps, Mapping) else float(fps))
     write_json(summary, out / "summary.json")
     return summary
 
@@ -135,11 +141,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--siamfc-repo", type=Path, required=True)
     p.add_argument("--weights", type=Path, required=True)
     src = p.add_mutually_exclusive_group(required=True)
-    src.add_argument("--skitb-root", type=Path, help="SkiTB root (with --split-json, --partition, --fps)")
+    src.add_argument("--skitb-root", type=Path, help="SkiTB root (with --split-json, --partition)")
     src.add_argument("--pilot-segments", action="store_true", help="all segments of the pilot videos (Ski 2DPose)")
     p.add_argument("--split-json", type=Path)
     p.add_argument("--partition", default="val")
-    p.add_argument("--fps", type=float, help="SkiTB frame rate (required with --skitb-root)")
+    p.add_argument("--fps-table", type=Path, help=f"per-sequence SkiTB frame rates; default: {FPS_TABLE} (D22)")
+    p.add_argument("--fps", type=float, help="one SkiTB frame rate for every clip, instead of the table")
     p.add_argument("--max-frames", type=int)
     p.add_argument("--out", type=Path, help="default: $SKIER_RESULTS/tracking/<skitb-PARTITION | pilots>")
     return p
@@ -153,11 +160,15 @@ def main(argv: list[str] | None = None) -> int:
         return SiamFCTracker(args.siamfc_repo, args.weights)
 
     if args.skitb_root:
-        if args.split_json is None or args.fps is None:
-            print("error: --skitb-root needs --split-json and --fps", file=sys.stderr)
+        if args.split_json is None:
+            print("error: --skitb-root needs --split-json", file=sys.stderr)
             return 1
+        if args.fps is not None and args.fps_table is not None:
+            print("error: give --fps or --fps-table, not both", file=sys.stderr)
+            return 1
+        fps = args.fps if args.fps is not None else load_fps_table(args.fps_table or repo_root() / FPS_TABLE)
         out = ensure_dir(args.out or results_root() / "tracking" / f"skitb-{args.partition}")
-        s = run_skitb(factory, args.skitb_root, args.split_json, args.partition, out, args.fps,
+        s = run_skitb(factory, args.skitb_root, args.split_json, args.partition, out, fps,
                       max_frames=args.max_frames)
         print(f"{s['n_clips']} clips, pooled mean IoU {s['pooled_mean_iou']}, AUC {s['success']['auc']} → {out}")
         return 0

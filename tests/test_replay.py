@@ -173,3 +173,12 @@ def test_grid_table(tmp_path, schema):
     by = {(r["tau"], r["k"]): r for r in table}
     assert by[(0.2, 2.5)]["acceleration_mean"] < by[(0.0, 2.5)]["acceleration_mean"]
     assert by[(0.0, 2.5)]["area_fraction_mean"] >= by[(0.0, 1.5)]["area_fraction_mean"]
+
+
+def test_replay_cli_fps_options(capsys):
+    from skier.replay.run import main
+
+    assert main(["--grid", "--fps", "30", "--fps-table", "t.csv"]) == 1
+    assert "not both" in capsys.readouterr().err
+    assert main(["--grid"]) == 1  # no --fps needed any more, but the clip inputs still are
+    assert "--track-dir" in capsys.readouterr().err

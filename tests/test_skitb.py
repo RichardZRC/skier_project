@@ -3,7 +3,8 @@ import json
 import numpy as np
 import pytest
 
-from skier.data.skitb import frame_file, load_skitb_clips, parse_boxes_txt
+from skier.data.skitb import FPS_TABLE, fps_for, frame_file, load_fps_table, load_skitb_clips, parse_boxes_txt
+from skier.paths import repo_root
 
 
 def make_tree(root, clips_per_seq=None):
@@ -79,3 +80,26 @@ def test_missing_clip_file(tmp_path):
     (tmp_path / "AL" / "002" / "SC" / "0" / "boxes.txt").unlink()
     with pytest.raises(FileNotFoundError, match="boxes.txt"):
         load_skitb_clips(tmp_path, split, "test")
+
+
+def test_fps_table(tmp_path):
+    p = tmp_path / "fps.csv"
+    p.write_text("sequence,fps,fps_estimate\nAL0001,30,30.45\nAL0002,25,25.18\n")
+    table = load_fps_table(p)
+    assert table == {"AL0001": 30.0, "AL0002": 25.0} and fps_for(table, "AL0002") == 25.0
+    with pytest.raises(KeyError, match="AL0003"):
+        fps_for(table, "AL0003")
+    p.write_text("sequence,fps\nAL0001,24\n")
+    with pytest.raises(ValueError, match="not one of"):
+        load_fps_table(p)
+    p.write_text("sequence,fps\nAL0001,30\nAL0001,25\n")
+    with pytest.raises(ValueError, match="twice"):
+        load_fps_table(p)
+
+
+def test_committed_fps_manifest():
+    """D22: every AL sequence has a rate; 18 at 25 fps (e.g. AL0027 in val); the 37.9 outlier AL0098 at 30."""
+    table = load_fps_table(repo_root() / FPS_TABLE)
+    assert sorted(table) == [f"AL{i:04d}" for i in range(1, 101)]
+    assert sum(v == 25.0 for v in table.values()) == 18
+    assert table["AL0027"] == 25.0 and table["AL0098"] == 30.0

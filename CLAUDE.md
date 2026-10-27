@@ -4,7 +4,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 **Deadline: Fri 2026-11-20** (D14; plan §4). If the schedule slips, cut stretch goals first, then extra seeds, then E2/E3.
 
-**Read first:** `PROJECT_NOTES.md` (start with its **Handoff** section: machine state, what's waiting, AWS lessons; then status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D21; append only).
+**Read first:** `PROJECT_NOTES.md` (start with its **Handoff** section: machine state, what's waiting, AWS lessons; then status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D22; append only).
 
 ## Working rules (Ruichao's instructions; follow them exactly)
 
@@ -26,7 +26,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 ## Environment
 
-- Run the tests with `.venv/bin/python -m pytest -q`. Currently **251 passed, 9 skipped**: 6 `torch` and 3 `stack` tests run on the GPU machine, where all 260 must pass.
+- Run the tests with `.venv/bin/python -m pytest -q`. Currently **255 passed, 9 skipped**: 6 `torch` and 3 `stack` tests run on the GPU machine, where all 264 must pass.
   - Markers: `torch` needs PyTorch; `stack` needs the pinned torch, mmcv and mmpose; `gpu` needs CUDA.
 - **Paths:** code reads `SKIER_DATA` (default `~/skier_data`) and `SKIER_RESULTS` (default `~/skier_results`) through `skier.paths`. Never hard-code absolute paths.
 - **Data on this Mac:**
@@ -76,7 +76,8 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 - **Minimum crop:** replay crops are at least `max(240 px, frame_h / 3)`, so design controller tests around that.
 - **SkiTB:**
   - `frames.txt` holds bare frame indices, and `frame_file` maps them (`197` → `00197.jpg`).
-  - The frame rate isn't in the files and differs by sequence (about 25 or 30 fps).
+  - The frame rate isn't in the files or the toolkit, and differs by sequence. Use the frozen per-sequence table `data/manifests/skitb_fps_v1.csv` (D22: 25 or 30 fps), which `run_tracker.py` and `make_replay.py` load by default.
+  - Copies made from the Mac onto a non-Mac drive bring macOS `._*` sidecar files; remove them before auditing.
   - Frame sizes vary, mostly 1280×720.
   - The "athlete" split shares 5 athletes between train and test.
 

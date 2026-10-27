@@ -1,0 +1,2 @@
+good AL0027__3 frames 226 mean IoU 0.697 fps 25.0 failures [] frames_dir /home/ruichaoz/skier_data/skitb/AL/AL0027/frames clip_dir /home/ruichaoz/skier_data/skitb/AL/AL0027/SC/3
+bad AL0073__7 frames 290 mean IoU 0.005 fps 30.0 failures [{'duration_s': 9.5, 'end_frame': 289, 'start_frame': 5}] frames_dir /home/ruichaoz/skier_data/skitb/AL/AL0073/frames clip_dir /home/ruichaoz/skier_data/skitb/AL/AL0073/SC/7

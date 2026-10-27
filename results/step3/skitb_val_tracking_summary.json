@@ -1,0 +1,783 @@
+{
+  "dataset": "skitb",
+  "discipline": "AL",
+  "fps": "per sequence (D22)",
+  "n_clips": 75,
+  "n_failure_episodes": 46,
+  "n_frames": 12925,
+  "note": "our metrics; the SkiTB toolkit's official metrics are reported separately",
+  "partition": "val",
+  "per_clip": {
+    "AL0026__0": {
+      "failure_episodes": [
+        {
+          "duration_s": 0.6,
+          "end_frame": 152,
+          "start_frame": 135
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.4399706032726392,
+      "n_frames": 106
+    },
+    "AL0026__1": {
+      "failure_episodes": [
+        {
+          "duration_s": 4.9667,
+          "end_frame": 161,
+          "start_frame": 13
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.03995879776931824,
+      "n_frames": 161
+    },
+    "AL0026__10": {
+      "failure_episodes": [
+        {
+          "duration_s": 0.5,
+          "end_frame": 158,
+          "start_frame": 144
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.2689515602852786,
+      "n_frames": 188
+    },
+    "AL0026__11": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.4879497506314776,
+      "n_frames": 318
+    },
+    "AL0026__12": {
+      "failure_episodes": [
+        {
+          "duration_s": 7.8333,
+          "end_frame": 261,
+          "start_frame": 27
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.05791696088217702,
+      "n_frames": 261
+    },
+    "AL0026__13": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.48210282625070006,
+      "n_frames": 174
+    },
+    "AL0026__14": {
+      "failure_episodes": [
+        {
+          "duration_s": 0.8333,
+          "end_frame": 76,
+          "start_frame": 52
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.3436941642376561,
+      "n_frames": 67
+    },
+    "AL0026__2": {
+      "failure_episodes": [
+        {
+          "duration_s": 2.1,
+          "end_frame": 179,
+          "start_frame": 117
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.2837126499175083,
+      "n_frames": 179
+    },
+    "AL0026__3": {
+      "failure_episodes": [
+        {
+          "duration_s": 7.0,
+          "end_frame": 226,
+          "start_frame": 17
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.034013851908123456,
+      "n_frames": 226
+    },
+    "AL0026__4": {
+      "failure_episodes": [
+        {
+          "duration_s": 5.3667,
+          "end_frame": 176,
+          "start_frame": 16
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.03702336145529072,
+      "n_frames": 176
+    },
+    "AL0026__5": {
+      "failure_episodes": [
+        {
+          "duration_s": 7.6667,
+          "end_frame": 232,
+          "start_frame": 3
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.0060853340999787,
+      "n_frames": 232
+    },
+    "AL0026__6": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.5302732861166795,
+      "n_frames": 205
+    },
+    "AL0026__7": {
+      "failure_episodes": [
+        {
+          "duration_s": 1.0333,
+          "end_frame": 147,
+          "start_frame": 117
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.28523976109694454,
+      "n_frames": 194
+    },
+    "AL0026__8": {
+      "failure_episodes": [
+        {
+          "duration_s": 2.2333,
+          "end_frame": 98,
+          "start_frame": 32
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.14393239484879522,
+      "n_frames": 98
+    },
+    "AL0026__9": {
+      "failure_episodes": [
+        {
+          "duration_s": 1.8,
+          "end_frame": 186,
+          "start_frame": 133
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.3286855459094501,
+      "n_frames": 186
+    },
+    "AL0027__0": {
+      "failure_episodes": [
+        {
+          "duration_s": 1.48,
+          "end_frame": 69,
+          "start_frame": 33
+        }
+      ],
+      "fps": 25.0,
+      "mean_iou": 0.18528070507117458,
+      "n_frames": 69
+    },
+    "AL0027__1": {
+      "failure_episodes": [],
+      "fps": 25.0,
+      "mean_iou": 0.5584540534548675,
+      "n_frames": 191
+    },
+    "AL0027__2": {
+      "failure_episodes": [],
+      "fps": 25.0,
+      "mean_iou": 0.5945410166355303,
+      "n_frames": 255
+    },
+    "AL0027__3": {
+      "failure_episodes": [],
+      "fps": 25.0,
+      "mean_iou": 0.6971490752045459,
+      "n_frames": 225
+    },
+    "AL0027__4": {
+      "failure_episodes": [],
+      "fps": 25.0,
+      "mean_iou": 0.3372580446918985,
+      "n_frames": 141
+    },
+    "AL0027__5": {
+      "failure_episodes": [],
+      "fps": 25.0,
+      "mean_iou": 0.47320538106731114,
+      "n_frames": 230
+    },
+    "AL0027__6": {
+      "failure_episodes": [],
+      "fps": 25.0,
+      "mean_iou": 0.6224177740040812,
+      "n_frames": 124
+    },
+    "AL0027__7": {
+      "failure_episodes": [],
+      "fps": 25.0,
+      "mean_iou": 0.6325725349546535,
+      "n_frames": 50
+    },
+    "AL0035__0": {
+      "failure_episodes": [
+        {
+          "duration_s": 1.2333,
+          "end_frame": 81,
+          "start_frame": 45
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.27818878506386513,
+      "n_frames": 81
+    },
+    "AL0035__1": {
+      "failure_episodes": [
+        {
+          "duration_s": 0.5333,
+          "end_frame": 44,
+          "start_frame": 29
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.3703257410419925,
+      "n_frames": 206
+    },
+    "AL0035__2": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.40624321923083195,
+      "n_frames": 186
+    },
+    "AL0035__3": {
+      "failure_episodes": [
+        {
+          "duration_s": 3.6333,
+          "end_frame": 219,
+          "start_frame": 111
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.12783901747841322,
+      "n_frames": 219
+    },
+    "AL0035__4": {
+      "failure_episodes": [
+        {
+          "duration_s": 0.6333,
+          "end_frame": 27,
+          "start_frame": 9
+        },
+        {
+          "duration_s": 6.8667,
+          "end_frame": 292,
+          "start_frame": 87
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.12042890109874194,
+      "n_frames": 292
+    },
+    "AL0035__5": {
+      "failure_episodes": [
+        {
+          "duration_s": 1.3,
+          "end_frame": 49,
+          "start_frame": 11
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.29453992401185125,
+      "n_frames": 204
+    },
+    "AL0035__6": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.4810196862644378,
+      "n_frames": 385
+    },
+    "AL0035__7": {
+      "failure_episodes": [
+        {
+          "duration_s": 3.8,
+          "end_frame": 197,
+          "start_frame": 84
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.19392595133243826,
+      "n_frames": 197
+    },
+    "AL0035__8": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.5720833410371086,
+      "n_frames": 311
+    },
+    "AL0035__9": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.7585615865228653,
+      "n_frames": 27
+    },
+    "AL0044__0": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.4708628837736965,
+      "n_frames": 66
+    },
+    "AL0044__1": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.5454626785565017,
+      "n_frames": 195
+    },
+    "AL0044__2": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.5306695941647755,
+      "n_frames": 167
+    },
+    "AL0044__3": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.6410540237889746,
+      "n_frames": 346
+    },
+    "AL0044__4": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.5536062639614442,
+      "n_frames": 120
+    },
+    "AL0044__5": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.5016770771487744,
+      "n_frames": 171
+    },
+    "AL0044__6": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.6229297209483553,
+      "n_frames": 188
+    },
+    "AL0044__7": {
+      "failure_episodes": [
+        {
+          "duration_s": 2.4333,
+          "end_frame": 82,
+          "start_frame": 10
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.2843418639942803,
+      "n_frames": 185
+    },
+    "AL0044__8": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.6965529296502073,
+      "n_frames": 92
+    },
+    "AL0073__0": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.5670694273372068,
+      "n_frames": 47
+    },
+    "AL0073__1": {
+      "failure_episodes": [
+        {
+          "duration_s": 1.2333,
+          "end_frame": 80,
+          "start_frame": 44
+        },
+        {
+          "duration_s": 1.3333,
+          "end_frame": 131,
+          "start_frame": 92
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.24839851565065602,
+      "n_frames": 134
+    },
+    "AL0073__10": {
+      "failure_episodes": [
+        {
+          "duration_s": 6.3,
+          "end_frame": 192,
+          "start_frame": 4
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.007082301277063966,
+      "n_frames": 192
+    },
+    "AL0073__11": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.567772786540431,
+      "n_frames": 137
+    },
+    "AL0073__12": {
+      "failure_episodes": [
+        {
+          "duration_s": 2.3,
+          "end_frame": 185,
+          "start_frame": 117
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.2926086794662444,
+      "n_frames": 185
+    },
+    "AL0073__13": {
+      "failure_episodes": [
+        {
+          "duration_s": 1.2333,
+          "end_frame": 92,
+          "start_frame": 56
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.2984125774724537,
+      "n_frames": 92
+    },
+    "AL0073__14": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.6690143661963143,
+      "n_frames": 74
+    },
+    "AL0073__2": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.33449893256537416,
+      "n_frames": 171
+    },
+    "AL0073__3": {
+      "failure_episodes": [
+        {
+          "duration_s": 0.9,
+          "end_frame": 90,
+          "start_frame": 64
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.3953565625565619,
+      "n_frames": 104
+    },
+    "AL0073__4": {
+      "failure_episodes": [
+        {
+          "duration_s": 0.8333,
+          "end_frame": 83,
+          "start_frame": 59
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.2637240592282333,
+      "n_frames": 132
+    },
+    "AL0073__5": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.564743057388422,
+      "n_frames": 152
+    },
+    "AL0073__6": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.5829316438476045,
+      "n_frames": 126
+    },
+    "AL0073__7": {
+      "failure_episodes": [
+        {
+          "duration_s": 9.5,
+          "end_frame": 289,
+          "start_frame": 5
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.0047576829027754335,
+      "n_frames": 289
+    },
+    "AL0073__8": {
+      "failure_episodes": [
+        {
+          "duration_s": 1.2,
+          "end_frame": 148,
+          "start_frame": 113
+        },
+        {
+          "duration_s": 1.5,
+          "end_frame": 198,
+          "start_frame": 154
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.20938521694142423,
+      "n_frames": 198
+    },
+    "AL0073__9": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.48889113814178736,
+      "n_frames": 151
+    },
+    "AL0081__0": {
+      "failure_episodes": [
+        {
+          "duration_s": 2.6333,
+          "end_frame": 189,
+          "start_frame": 111
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.3987735751445187,
+      "n_frames": 164
+    },
+    "AL0081__1": {
+      "failure_episodes": [
+        {
+          "duration_s": 1.6,
+          "end_frame": 119,
+          "start_frame": 72
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.3265306653349432,
+      "n_frames": 119
+    },
+    "AL0081__10": {
+      "failure_episodes": [
+        {
+          "duration_s": 1.6,
+          "end_frame": 50,
+          "start_frame": 3
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.02311792931287355,
+      "n_frames": 50
+    },
+    "AL0081__11": {
+      "failure_episodes": [
+        {
+          "duration_s": 1.7667,
+          "end_frame": 173,
+          "start_frame": 121
+        },
+        {
+          "duration_s": 0.6,
+          "end_frame": 378,
+          "start_frame": 361
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.44614999057535903,
+      "n_frames": 378
+    },
+    "AL0081__12": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.5137844046292788,
+      "n_frames": 106
+    },
+    "AL0081__13": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.507748534544025,
+      "n_frames": 79
+    },
+    "AL0081__14": {
+      "failure_episodes": [
+        {
+          "duration_s": 4.4333,
+          "end_frame": 213,
+          "start_frame": 81
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.19885217746428924,
+      "n_frames": 213
+    },
+    "AL0081__15": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.5423205466195298,
+      "n_frames": 93
+    },
+    "AL0081__16": {
+      "failure_episodes": [
+        {
+          "duration_s": 0.9,
+          "end_frame": 117,
+          "start_frame": 91
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.3901397179562646,
+      "n_frames": 117
+    },
+    "AL0081__17": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.5151286183412054,
+      "n_frames": 57
+    },
+    "AL0081__2": {
+      "failure_episodes": [
+        {
+          "duration_s": 2.2,
+          "end_frame": 201,
+          "start_frame": 136
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.35238353613373347,
+      "n_frames": 201
+    },
+    "AL0081__3": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.604128156816037,
+      "n_frames": 212
+    },
+    "AL0081__4": {
+      "failure_episodes": [
+        {
+          "duration_s": 0.7667,
+          "end_frame": 157,
+          "start_frame": 135
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.34946010838681585,
+      "n_frames": 157
+    },
+    "AL0081__5": {
+      "failure_episodes": [
+        {
+          "duration_s": 0.7,
+          "end_frame": 238,
+          "start_frame": 218
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.3470967260769451,
+      "n_frames": 238
+    },
+    "AL0081__6": {
+      "failure_episodes": [],
+      "fps": 30.0,
+      "mean_iou": 0.42451799867933737,
+      "n_frames": 137
+    },
+    "AL0081__7": {
+      "failure_episodes": [
+        {
+          "duration_s": 6.7,
+          "end_frame": 217,
+          "start_frame": 17
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.04791178596038785,
+      "n_frames": 217
+    },
+    "AL0081__8": {
+      "failure_episodes": [
+        {
+          "duration_s": 1.5,
+          "end_frame": 149,
+          "start_frame": 105
+        },
+        {
+          "duration_s": 1.9,
+          "end_frame": 212,
+          "start_frame": 156
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.26251105951907244,
+      "n_frames": 212
+    },
+    "AL0081__9": {
+      "failure_episodes": [
+        {
+          "duration_s": 3.5333,
+          "end_frame": 147,
+          "start_frame": 42
+        },
+        {
+          "duration_s": 1.3333,
+          "end_frame": 297,
+          "start_frame": 258
+        }
+      ],
+      "fps": 30.0,
+      "mean_iou": 0.2869745837174997,
+      "n_frames": 297
+    }
+  },
+  "per_clip_mean_iou": 0.37803839580747073,
+  "pooled_mean_iou": 0.3632059286804029,
+  "success": {
+    "auc": 0.3644358478401032,
+    "success": [
+      0.7672727272727272,
+      0.7307543520309477,
+      0.7046808510638298,
+      0.6813926499032882,
+      0.6575628626692457,
+      0.6268471953578336,
+      0.5863056092843327,
+      0.5438297872340425,
+      0.4960154738878143,
+      0.4393810444874275,
+      0.372147001934236,
+      0.3088588007736944,
+      0.24495164410058026,
+      0.18707930367504835,
+      0.13036750483558995,
+      0.0871953578336557,
+      0.05206963249516441,
+      0.02584139264990329,
+      0.009516441005802708,
+      0.0010831721470019341,
+      0.0
+    ],
+    "thresholds": [
+      0.0,
+      0.05,
+      0.1,
+      0.15,
+      0.2,
+      0.25,
+      0.3,
+      0.35,
+      0.4,
+      0.45,
+      0.5,
+      0.55,
+      0.6,
+      0.65,
+      0.7,
+      0.75,
+      0.8,
+      0.85,
+      0.9,
+      0.95,
+      1.0
+    ]
+  }
+}
