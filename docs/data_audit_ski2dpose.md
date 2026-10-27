@@ -106,4 +106,15 @@ Per video:
 
 ## 1G. Video-frame alignment
 
-Pending. Record the segments checked, the offsets, and the index convention (0- or 1-based).
+**Done 2026-10-26 (laptop; pilot segments only). Labels and clips align exactly, with no offset.**
+
+| Segment | Clip | Labelled images | Best match | Offset | Verified |
+| --- | --- | ---: | --- | --- | ---: |
+| `5UHRvqx1iuQ/0` | 1920×1080, 25 fps, 521 frames (20.84 s) | 63 (`frame_idx` 4–520) | NCC 0.9999–1.0 | 0 for all | 54 |
+| `oKQFABiOTw8/22` | 1920×1080, 25 fps, 384 frames (15.36 s) | 31 (`frame_idx` 6–381) | NCC 0.9999–1.0 | 0 for all | 27 |
+
+- **Index convention:** `frame_idx` is the **0-based decode index within the segment's own clip** (`videos/Videos/{video_id}/{segment_id}.mp4`). `locate_segment` returns start 0, which is correct.
+- **The labelled images are frames of these clips:** every best match scores 0.9999–1.0, and the clip lengths agree with the info file's `delta_t` (20.80 s, 15.34 s).
+- **Unverified rows (13 of 94):** they fail only the margin rule (`MIN_MARGIN` 0.02). In near-static stretches, such as the start gate, neighbouring frames score almost as high, yet the best match is still the exact frame. `MIN_SCORE` is set to 0.99 from these results.
+- Evidence: `results/step1/alignment/`. A `gt_clip.mp4` for each segment is in `$SKIER_RESULTS/step1/alignment/<video>__<segment>/`. Watching it is optional, given exact pixel matches.
+- **Effect:** Step 7 can place labelled frames on the video timeline exactly, so the temporal comparison isn't a limitation.

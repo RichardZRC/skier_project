@@ -63,6 +63,51 @@ def test_box_conversion():
     np.testing.assert_allclose(xywh1_to_xyxy(xyxy_to_xywh1(box)), box)
 
 
+FAKE_FORK = '''
+import numpy as np
+
+class TrackerSiamFC:
+    """Mimics matteo-dunnhofer/siamfc-pytorch @ a87f140: the same box arithmetic, a target that never moves."""
+
+    def __init__(self, net_path, return_conf=False):
+        self.net_path, self.return_conf, self.seen = net_path, return_conf, []
+
+    def init(self, img, box):
+        self.seen.append(np.array(img))
+        self.center = np.array([box[1] - 1 + (box[3] - 1) / 2, box[0] - 1 + (box[2] - 1) / 2])
+        self.target_sz = np.array([box[3], box[2]], dtype=float)
+
+    def update(self, img):
+        self.seen.append(np.array(img))
+        box = np.array([self.center[1] + 1 - (self.target_sz[1] - 1) / 2,
+                        self.center[0] + 1 - (self.target_sz[0] - 1) / 2, self.target_sz[1], self.target_sz[0]])
+        return (box, 0.0123) if self.return_conf else box
+'''
+
+
+def test_siamfc_adapter_against_the_forks_conventions(tmp_path, monkeypatch):
+    import sys
+
+    from skier.tracking.siamfc_adapter import SiamFCTracker
+
+    (tmp_path / "siamfc").mkdir()
+    (tmp_path / "siamfc" / "__init__.py").write_text(FAKE_FORK)
+    monkeypatch.delitem(sys.modules, "siamfc", raising=False)
+    monkeypatch.setattr(sys, "path", list(sys.path))
+    tracker = SiamFCTracker(tmp_path, tmp_path / "w.pth")
+    assert tracker._tracker.return_conf and tracker._tracker.net_path == str(tmp_path / "w.pth")
+
+    frame = np.zeros((40, 60, 3), np.uint8)
+    frame[..., 0] = 255  # blue in BGR
+    box = np.array([12.5, 7.25, 30.0, 33.75])
+    tracker.init(frame, box)
+    out, score = tracker.update(frame)
+    np.testing.assert_allclose(out, box)  # a still target comes back as the same xyxy box
+    assert score == pytest.approx(0.0123)
+    assert all((img[..., 2] == 255).all() and (img[..., 0] == 0).all() for img in tracker._tracker.seen)  # RGB in
+    monkeypatch.delitem(sys.modules, "siamfc", raising=False)
+
+
 def test_render_track(tmp_path, video):
     import cv2
 

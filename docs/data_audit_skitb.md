@@ -18,7 +18,9 @@ Evidence for guide steps 1D–1E for SkiTB (the tracking data). Ski 2DPose (the 
 | `AL/AL_visual_attributes.csv` | 1 | 16,716 | `aea10dc5e45a9bea1816ed07d7f6a0485ccb3ae0a2ae69ba467cd606126b7445` | Not used (see Layout) |
 | `README.md` | 1 | 6,923 | `e0e2a001f3d3161c35fd3c1cf27fa40058c828bca7bbc29b3385b350a668f4cc` | Read only |
 | `FS/` (4.7 GB), `JP/` (2.0 GB) | | | | Not used. Don't copy them to AWS. |
-| SiamFC fork + `siamfc_alexnet_e50.pth` (GOT-10k-pretrained) | | | | Pending (AWS). The links are in the toolkit README, which GitHub hosts and this session can't reach. |
+| SkiTB toolkit (code), `$SKIER_DATA/vendor/SkiTB-toolkit` | | | commit `b402f9a5e59f0c3a3edb2f46a68d1522b6c03a0d` | Cloned on the laptop 2026-10-26 |
+| SiamFC fork `matteo-dunnhofer/siamfc-pytorch`, `$SKIER_DATA/vendor/siamfc_pytorch` | | | commit `a87f140ab96a3c78c26d54ece42bf6f304bf06df` | Cloned 2026-10-26; `siamfc.TrackerSiamFC` (adapter filled in) |
+| `siamfc_alexnet_e50.pth` (Google Drive id `1UdxuBQ1qtisoWYFZxLgMFJ9mJtGVw6n4`, from the toolkit README) | 1 | 9,359,658 | `2b3df5c66c814f3a3e0ade83c8fd68ff9c714574a4dc17292317ee11f7e717f6` | OK. GOT-10k-pretrained: the toolkit README calls it "the GOT-10k pre-trained SiamFC", and the fork's `tools/train.py` trains on GOT-10k. |
 
 **The tree digest:**
 - Per sequence: SHA-256 over the lines `relative/path<TAB>sha256(file)`, sorted by path, with `.DS_Store` skipped.
@@ -32,6 +34,8 @@ Evidence for guide steps 1D–1E for SkiTB (the tracking data). Ski 2DPose (the 
 - Frames and annotation files are never committed to this repo. The committed evidence holds only counts and digests.
 
 The total frame count across `AL/`, `FS/` and `JP/` is 352,978 JPGs.
+
+**Laptop copy (2026-10-26):** Ruichao copied the whole `skitb/` folder (`AL/`, `FS/`, `JP/`) from the Mac into WSL `~/skier_data/skitb/`. The copy brought **363,486 macOS AppleDouble sidecars** (`._*`, the signature `00 05 16 07` on every one), which broke the audit script. Claude deleted only those files. Then `audit_skitb_al.py` was rerun on the laptop: **all 100 per-sequence digests and the tree digest `f4d14340…` match**; 219,217 files, 15,537,744,392 bytes, 0 problems (`results/step1/skitb_audit/laptop_skitb_al_summary.json`). 4 `.DS_Store` files remain; the digest skips them by design.
 
 ## 1E. Layout and audit
 
@@ -101,7 +105,7 @@ A 1-frame clip has nothing to score after initialization.
 
    - Val shares no athlete with train or test.
    - AL0058 lists Hirscher with gender `W`, presumably a metadata typo.
-   - **Effect: no leakage.** We never train the tracker, and `siamfc_alexnet_e50.pth` is GOT-10k-pretrained, not trained on skiing (`PROJECT_NOTES.md`, verified 2026-10-17). Reconfirm that when the fork's README is at hand on AWS.
+   - **Effect: no leakage.** We never train the tracker, and `siamfc_alexnet_e50.pth` is GOT-10k-pretrained, not trained on skiing (`PROJECT_NOTES.md`, verified 2026-10-17). Reconfirmed 2026-10-26 from the toolkit README and the fork's `tools/train.py`.
    - We tune only the replay, on val, and val shares no athlete with test.
    - D8's "athlete-disjoint" describes the file's intent, not the metadata; the report should say "the official athlete split".
 2. **The frame rate isn't in the files, and it differs between sequences.**
@@ -109,4 +113,7 @@ A 1-frame clip has nothing to score after initialization.
    - It's only an estimate: the `MC/` span isn't exactly the race.
    - `run_tracker.py --fps` takes one value for all clips, but the failure episodes (≥ 0.5 s) and all replay timing (τ in seconds, acceleration) depend on it.
    - **Open:** get the real per-sequence frame rate (from the toolkit or the source videos' metadata) and pass it per clip.
+   - **2026-10-26: the toolkit doesn't have it either.** At commit `b402f9a`, its only "fps" values are tracker speed (`speed_fps = 1 / time per frame` in `toolkit/experiments/skitb.py`), not video frame rate, and its metrics are frame-based. Remaining sources: the source videos (YouTube links in `AL_data.csv`) or the SkiTB paper. The README's `--split-file` is `--split_file` in `example_skitb.py`, as noted on 2026-10-17.
+   - **The paper** ([arXiv 2312.09723](https://arxiv.org/html/2312.09723v1), §4): "The videos have a framerate of 25/30 FPS". Its own time metrics use 30 frames = 1 s ("1 frame (0.03s) … 30 frames (1s)"). It gives no per-video rate.
+   - **Per-sequence estimate** (`results/step3/skitb_fps_estimate.csv`, script `skitb_fps_estimate.py`): the MC span ÷ `AthleteTime` falls in two well-separated groups. 18 sequences lie at 23.4–25.8 and 82 at 29.1–31.5, plus AL0098 at 37.9. Nothing lies between 25.83 and 29.08. Snapped to the nearer of 25 and 30: val has 1 × 25 (AL0027) and 5 × 30; test has 8 × 25 and 33 × 30. **Proposed as D22.**
 3. **Mixed frame sizes** (see the audit result above).

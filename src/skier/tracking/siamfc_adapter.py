@@ -37,21 +37,24 @@ def xywh1_to_xyxy(box) -> np.ndarray:
 class SiamFCTracker:
     """Pretrained SiamFC (GOT-10k weights). The device is chosen by the tracker itself."""
 
-    # --- FILL IN AT 1D/1H (code spec §13): confirm against the fork's source -------
+    # --- Filled in 2026-10-26 from matteo-dunnhofer/siamfc-pytorch @ a87f140 (siamfc/siamfc.py) ---
+    # ``TrackerSiamFC(net_path, return_conf)``: ``init(rgb, xywh1)``; ``update(rgb)`` returns the
+    # 1-based xywh box, or ``(box, conf)`` with ``return_conf=True``. ``conf`` is the peak of the
+    # sum-normalized, Hann-windowed response map: a relative score, not a probability.
     MODULE = "siamfc"
     CLASS = "TrackerSiamFC"
-    SCORE_ATTR: str | None = None  # attribute holding the last response-map peak, if the fork keeps one
-    # --------------------------------------------------------------------------------
+    RETURN_CONF = True
+    # ------------------------------------------------------------------------------------------------
 
     def __init__(self, siamfc_repo: Path, weights: Path):
         sys.path.insert(0, str(Path(siamfc_repo).resolve()))
         cls = getattr(importlib.import_module(self.MODULE), self.CLASS)
-        self._tracker = cls(net_path=str(weights))
+        self._tracker = cls(net_path=str(weights), return_conf=self.RETURN_CONF)
 
     def init(self, frame_bgr: np.ndarray, box_xyxy: np.ndarray) -> None:
         self._tracker.init(cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB), xyxy_to_xywh1(box_xyxy))
 
     def update(self, frame_bgr: np.ndarray) -> tuple[np.ndarray, float]:
-        box = xywh1_to_xyxy(self._tracker.update(cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)))
-        score = getattr(self._tracker, self.SCORE_ATTR, math.nan) if self.SCORE_ATTR else math.nan
-        return box, float(score)
+        out = self._tracker.update(cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB))
+        box, score = out if self.RETURN_CONF else (out, math.nan)
+        return xywh1_to_xyxy(box), float(score)

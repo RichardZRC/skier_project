@@ -6,15 +6,26 @@ Companion docs: `README.md` (setup and commands), `CLAUDE.md` (rules for Claude 
 `skier_proposal.pdf`, `skier_implementation_plan.md` (status table at the top), `skier_step_1_guide.md`,
 `skier_step_1_code_spec.md`, `docs/decisions.md`.
 
-Last updated: 2026-10-24
+Last updated: 2026-10-26
 
 ---
 
-## Handoff: where things stand (2026-10-24)
+## Handoff: where things stand (2026-10-26)
 
 Start here in a new session, on any machine. Claude's own notes stay on the machine they were written on, so everything a new session needs is in the repo: this section, `CLAUDE.md`, the decisions log and the plan's status table.
 
-### Done since 2026-10-18
+### Done 2026-10-24 to 2026-10-26 (all on the laptop; details under Status)
+- **Laptop set up** (D18 pins); the gate passes (now 260 tests).
+- **Cross-check passed;** the COCO-checkpoint loading bug fixed.
+- **1F overlay review passed;** split, protocol and crop-error set frozen (D19).
+- **Runs:** E0, E1, E2–E4 at 50 epochs. The comparison was **confounded by convergence**: the ski tails aren't learned reliably in 50 epochs (`results/step6/diagnostics.md`). D20 trial: 150 epochs fixes it, and seed variance is large.
+- **D21 rerun running:** E1–E4 at 150 epochs × seeds 230/231, in tmux session `d21` (`~/d21_run.sh`, log `~/setup_logs/d21.log`). Restartable: rerun `bash ~/d21_run.sh` and finished runs are skipped.
+- **Tracker set up:** toolkit and SiamFC fork cloned, weights downloaded, the adapter's `FILL IN` block done.
+  - **Smoke test** on pilot `5UHRvqx1iuQ/0`: it tracks for about 3 s, then drifts to the crowd and locks onto the broadcast logo.
+- **1G alignment done:** labels match their clip frames exactly, offset 0 (`docs/data_audit_ski2dpose.md` §1G).
+- **SkiTB frame rate:** the toolkit doesn't have it either (`docs/data_audit_skitb.md` finding 2).
+
+### Done 2026-10-18 to 2026-10-24
 - **SkiTB:** the alpine set (`AL/`) arrived and is audited (D15, `docs/data_audit_skitb.md`), and its reader is filled in. The data-audit doc is split per dataset.
 - **Step 6 code** (D16): augmentations with paired draws, E2–E4 configs, the crop-error set, the checkpoint evaluator, the comparison table with the pre-registered selection rule, and the augmentation preview.
 - **AWS:** credits redeemed, budget alert set, key pair `skier-aws` created in us-west-2. The key is at `~/.ssh/skier-aws.pem` on the Mac. **The account is still being verified**, so nothing is launched (see Status and "AWS lessons" below).
@@ -25,18 +36,19 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
 | Machine | State |
 | --- | --- |
 | **Mac** | Repo at `~/Desktop/skier_project`; light `.venv` (250 passed, 9 skipped). Data in `~/skier_data`: Ski 2DPose, plus SkiTB (`AL/FS/JP`; only `AL` is used). Results in `~/skier_results`: `step1/audit`, `pose/aug_preview/e1–e4.png`, `replay/synthetic_demo`, `skitb_audit`. The 1F overlays were drawn and reviewed on the laptop instead (2026-10-24). No `skier-aws` entry in `~/.ssh/config` yet. |
-| **Laptop** | **Parts 1–2 done (2026-10-24).** WSL2 Ubuntu 22.04.5, Linux user `ruichaoz`; venv `~/venvs/skier` with the pinned stack plus D18's two pins; repo cloned at `~/skier_project` (GitHub SSH key added); `SKIER_DATA`/`SKIER_RESULTS` set in `~/.bashrc`. **Gate passed: 257 passed, `check_env --strict` exit 0**; `env.json` and `pip-freeze.txt` in `~/skier_results/step1/env/` (copies in `results/step1/laptop/`). **Parts 3–4 done (2026-10-24):** Ski 2DPose in `~/skier_data/ski2dpose` (all 4 SHA-256 match the audit; 16 / 158 / 1,982), COCO HRNet-W32 config and checkpoint in `~/skier_data/pretrained`; pose smoke test OK (54.7 ms/image, 247 MB); **MMPose cross-check PASS** (mean 0.014 px, max 1.19 px; `results/step3/crosscheck.json`). Gate now 259 passed. No SkiTB, SiamFC or tracker yet. **Later the same day:** 1F overlays reviewed, split frozen (D19), E0 on val, E1 overfit (standard and a 300-epoch diagnostic) and the E1 profile run; see Status. Full E1 not started. |
+| **Laptop (2026-10-26)** | `~/skier_data`: `ski2dpose`, `pretrained` (COCO HRNet), `vendor/` (SkiTB toolkit `b402f9a`, SiamFC fork `a87f140` + `siamfc_alexnet_e50.pth`). **SkiTB subset: being copied from the Mac by Ruichao.** `~/skier_results/pose/`: E0–E4 (50 epochs), the D20 runs `E1-seed231` and `E3-ft150`, and `d21/` (the rerun, in progress). The WSL clone may carry uncommitted copies of the Windows clone's edits (configs etc.); `git checkout -- <files>` before `git pull`. Windows: sleep on AC is Never; **Windows Update isn't paused**, and it restarted the laptop on 2026-10-24. History: **Parts 1–2 done (2026-10-24).** WSL2 Ubuntu 22.04.5, Linux user `ruichaoz`; venv `~/venvs/skier` with the pinned stack plus D18's two pins; repo cloned at `~/skier_project` (GitHub SSH key added); `SKIER_DATA`/`SKIER_RESULTS` set in `~/.bashrc`. **Gate passed: 257 passed, `check_env --strict` exit 0**; `env.json` and `pip-freeze.txt` in `~/skier_results/step1/env/` (copies in `results/step1/laptop/`). **Parts 3–4 done (2026-10-24):** Ski 2DPose in `~/skier_data/ski2dpose` (all 4 SHA-256 match the audit; 16 / 158 / 1,982), COCO HRNet-W32 config and checkpoint in `~/skier_data/pretrained`; pose smoke test OK (54.7 ms/image, 247 MB); **MMPose cross-check PASS** (mean 0.014 px, max 1.19 px; `results/step3/crosscheck.json`). Gate now 259 passed. No SkiTB, SiamFC or tracker yet. **Later the same day:** 1F overlays reviewed, split frozen (D19), E0 on val, E1 overfit (standard and a 300-epoch diagnostic) and the E1 profile run; see Status. Full E1 not started. |
 | **AWS** | Account verification pending: the GPU-quota request was auto-rejected, the Standard quota is 1 vCPU, and CloudShell says "account verification is in progress". No instance yet. |
 
 ### Waiting on Ruichao, in priority order
 1. ~~**Laptop setup and trial** (`docs/laptop_setup.md` Parts 1–4).~~ Done 2026-10-24, cross-check passed.
    - A Claude session can also run on the laptop's **Windows side** (repo clone in `OneDrive\Desktop\skier_project`, used only for editing). It drives Ubuntu with `wsl -d Ubuntu-22.04 -- bash <script>`. Multi-line commands go in a script file, because PowerShell mangles `$` quoting. Root without a password: `wsl -d Ubuntu-22.04 -u root`, used once for the apt packages of 2.2.
 2. ~~**Overlay review (1F), then freeze the split, then the crop-error set**~~ All done 2026-10-24 on the laptop (D19; crop-error set `1e9c0e1c9e7e…`).
-3. **Read D16** (augmentation settings and the selection rule) before E2–E4 are trained.
-4. **The SkiTB frame rate of each sequence.** It isn't in the files; it's about 25 or 30 fps by estimate. Look in the toolkit's source or the paper. Then the tracker and replay take a per-clip rate, a small fix within Steps 3–4.
-5. **The SiamFC fork's tracker class**, once the toolkit is cloned on the laptop, to complete the `FILL IN` block in `tracking/siamfc_adapter.py`.
-6. **The alignment check (1G),** which fills in `MIN_SCORE`/`MIN_MARGIN`. Step 7 waits for it and for the first GPU session.
-7. **AWS, after verification:** reapply for the quotas: G and VT at 4 vCPUs in us-west-2 (and us-east-1), Standard at 8. If the account is on AWS's "Free plan", upgrading to the Paid plan keeps the credits and may be required for GPUs; that's Ruichao's call.
+3. **Copy the SkiTB subset to the laptop** (in progress 2026-10-26): the 6 val and 41 test sequences, one train sequence and the `AL_*` files, into `~/skier_data/skitb/AL/`. Claude then verifies the digests and runs the tracker on val.
+4. **The SkiTB frame rate of each sequence.** It isn't in the files or in the toolkit (checked 2026-10-26); estimated at about 25 or 30 fps. Remaining sources: the SkiTB paper, or the source videos (YouTube links in `AL_data.csv`). Then the tracker and replay take a per-clip rate, a small fix within Steps 3–4.
+5. **After D21:** read the seed-mean comparison and choose the recipe (D16 rule, D21).
+6. ~~**SiamFC tracker class** and the **1G alignment check**~~ Done 2026-10-26.
+7. **Pause Windows Update** before long runs.
+8. **AWS, after verification:** reapply for the quotas: G and VT at 4 vCPUs in us-west-2 (and us-east-1), Standard at 8. If the account is on AWS's "Free plan", upgrading to the Paid plan keeps the credits and may be required for GPUs; that's Ruichao's call.
 
 ### AWS lessons (so they aren't rediscovered)
 - **"Global" in the region menu** means an account-wide page (Billing, IAM, Budgets, EC2 Global View). EC2, key pairs and quotas are per region, so use us-west-2: https://us-west-2.console.aws.amazon.com/ec2/home?region=us-west-2
@@ -49,6 +61,8 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
 
 ### How Ruichao likes to work (in addition to the working rules)
 - Step-by-step walkthroughs for console and infrastructure tasks. Ruichao runs the commands in their own terminal and pastes the output.
+  - **Exception (2026-10-24):** when Claude runs on the laptop's Windows side, Ruichao wants Claude to **run the commands itself** through `wsl -d Ubuntu-22.04 -- bash <script>`. Stop only for what needs Ruichao: GitHub web settings, passwords, approvals, visual reviews, and copying data from the Mac.
+- **Long runs:** start them in tmux inside Ubuntu, with an Ubuntu window left open. Interrupting a Claude session that holds the only `wsl` connection shut WSL down once (2026-10-25).
 - A cheap trial run before any compute-heavy work.
 - Keep options open: don't drop plans (AWS, experiments). Move doable work to whatever machine is available.
 - When Ruichao says "don't do anything yet, just tell me", answer only.
@@ -296,6 +310,19 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
       another seed. **E3-ft150 (150 fine-tune epochs) learns them** (95 / 80%; val ski 91.8%, best epoch 144). D20's row
       "E1-seed231 fails, E3-ft150 learns" → **rerun E1–E4 with the longer schedule and 2+ seeds per recipe (new decision
       needed; Ruichao).** The session interruption at 19:17 shut WSL down; E1-seed231 resumed from epoch 8.
+- [~] **D21 rerun started** (2026-10-26 19:44, Ruichao approved): all four configs at `finetune_epochs: 150` (also the code
+      default, so `e1.yaml` stays the default); seeds 230/231; E3-ft150 reused as `E3-s230` (config, seed and split
+      checked identical). Order: E1, E2, E4 at seed 230, then E1–E4 at 231; then all 8 evaluated on val. About 4.5 h.
+      **Not committed yet** (configs, D21, `train.py` default, test updates).
+- [x] **Tracker set up and smoke-tested** (2026-10-26, laptop; `docs/data_audit_skitb.md` 1D table):
+      - SiamFC adapter `FILL IN` filled in from the fork's source: `siamfc.TrackerSiamFC`, with `return_conf=True` giving
+        `(box, conf)`. Box conventions round-trip exactly. A new torch-free test with a fake fork module catches 3/3
+        planted bugs; the suite has 260 passed.
+      - **Smoke test** (`5UHRvqx1iuQ/0`, started on labelled frame 70): it tracks for about 3 s (IoU vs. label boxes 0.67
+        at frame 79, 0.40 at 129), then **drifts to the course crew and locks onto the static broadcast logo** (frames 180+).
+        That's a fixed-tracker failure, not an adapter bug (stills checked). Step 7 should plan for it.
+- [x] **1G alignment done** (2026-10-26): `5UHRvqx1iuQ/0` and `oKQFABiOTw8/22`, all 94 images at offset 0, NCC ≥ 0.9999.
+      `frame_idx` = 0-based clip frame. `MIN_SCORE` 0.99, `MIN_MARGIN` 0.02 (`docs/data_audit_ski2dpose.md` §1G).
 - [ ] **First GPU session (laptop, `docs/laptop_setup.md`):** ~~full `pytest` (torch + stack tests)~~ done → data (Ski 2DPose; the SkiTB val/test subset)
       → cross-check → (freeze split) → E0 → E1 tiny overfit → profile → full E1 → (freeze the crop-error set)
       → E2–E4 → evaluate and compare on val.

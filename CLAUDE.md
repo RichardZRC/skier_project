@@ -4,7 +4,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 **Deadline: Fri 2026-11-20** (D14; plan §4). If the schedule slips, cut stretch goals first, then extra seeds, then E2/E3.
 
-**Read first:** `PROJECT_NOTES.md` (start with its **Handoff** section: machine state, what's waiting, AWS lessons; then status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D17; append only).
+**Read first:** `PROJECT_NOTES.md` (start with its **Handoff** section: machine state, what's waiting, AWS lessons; then status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D21; append only).
 
 ## Working rules (Ruichao's instructions; follow them exactly)
 
@@ -26,7 +26,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 ## Environment
 
-- Run the tests with `.venv/bin/python -m pytest -q`. Currently **250 passed, 9 skipped**: 6 `torch` and 3 `stack` tests run on the GPU machine, where all 259 must pass.
+- Run the tests with `.venv/bin/python -m pytest -q`. Currently **251 passed, 9 skipped**: 6 `torch` and 3 `stack` tests run on the GPU machine, where all 260 must pass.
   - Markers: `torch` needs PyTorch; `stack` needs the pinned torch, mmcv and mmpose; `gpu` needs CUDA.
 - **Paths:** code reads `SKIER_DATA` (default `~/skier_data`) and `SKIER_RESULTS` (default `~/skier_results`) through `skier.paths`. Never hard-code absolute paths.
 - **Data on this Mac:**
@@ -34,7 +34,11 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
   - SkiTB (audited 2026-10-18, 0 format problems): `~/skier_data/skitb/{AL,FS,JP}`; only `AL/` is used. Digests and findings: `docs/data_audit_skitb.md`.
 - **Which machine is this session on?**
   - **Mac** (macOS, repo in `~/Desktop/skier_project`): coding, the light tests, reviews, the split freeze. No installs (D13); the sandbox rules above apply.
-  - **Laptop** (WSL2 Ubuntu, repo in `~/skier_project`): GPU runs. The pinned stack is installed there as in `docs/laptop_setup.md`; ask before installing anything else. Data lives only in `~/skier_data` inside WSL (SkiTB: just the val/test subset). Never commit images, labels, checkpoints or `.npz` files.
+  - **Laptop** (WSL2 Ubuntu, repo in `~/skier_project`): GPU runs. The pinned stack is installed there as in `docs/laptop_setup.md`; ask before installing anything else. Data lives only in `~/skier_data` inside WSL (SkiTB: just the val/test subset; vendor code in `~/skier_data/vendor`). Never commit images, labels, checkpoints or `.npz` files.
+  - **Laptop, Windows side** (PowerShell, repo in `OneDrive\Desktop\skier_project`): the usual setup since 2026-10-24.
+    - **Running commands:** Claude edits here, and runs commands in Ubuntu itself via `wsl -d Ubuntu-22.04 -- bash <script>`. Ruichao asked for this, so there are no walkthroughs here. Put multi-line commands in a script file in the scratchpad, because PowerShell mangles `$` and quotes.
+    - **Committing:** commits happen in this clone. Copy edited files into the WSL clone with `sed -i 's/\r$//'`, and `git checkout -- <files>` there before `git pull`.
+    - **Long runs** go in tmux inside Ubuntu.
 - **GPU machines (D17):** Ruichao's Windows laptop (RTX 4070, WSL2 Ubuntu 22.04) for now, set up as in `docs/laptop_setup.md`. AWS g5.xlarge (guide 1C.7) is kept for later; its account verification is still pending. Ruichao runs the commands there and pastes the output; code moves through GitHub.
 - **Pinned GPU stack** (GPU machines only): Python 3.10, torch 2.1.2 + cu121, mmcv 2.1.0, mmengine 0.10.x, mmpose 1.3.2, mmdet 3.2.0, numpy < 2, opencv-python < 4.12 (D18).
 - The repo sits in `~/Desktop`, which iCloud syncs. Data and results live outside it, as they should.
@@ -66,6 +70,9 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 - **Checkpoints:** load with `torch.load(..., weights_only=False)`, because our checkpoints carry config and metadata. MMPose's COCO checkpoint also carries `data_preprocessor.mean/std`; `build_hrnet` checks them against `preprocess.MEAN/STD` and leaves them out.
 - **Profiling and overfit runs:** `--profile-steps` stops inside the frozen warm-up epochs. Profile the fine-tune phase with `results/step5/profile_finetune_config.yaml` instead. `--overfit 32` needs `--epochs 300` before ski PCK reaches ~100%.
 - **Two clones on the laptop:** the Windows copy (`OneDrive\Desktop`) checks out with CRLF line endings. Files copied from it into the WSL clone need `sed -i 's/\r$//'`, or `git diff` shows every line changed.
+- **Training schedule (D20, D21):** at 50 fine-tune epochs the ski tails (and sometimes tips) are learned only in some runs, depending on the seed. Use 150 epochs and 2 seeds for comparisons. Check convergence per joint on training images (`results/step6/trial_eval.py`), not only val ski PCK.
+- **SiamFC on broadcast video:** after a few seconds it can drift to clutter and lock onto static on-screen graphics such as the logo (tracker smoke test, 2026-10-26).
+- **Laptop interruptions:** Windows sleep (Modern Standby), Windows Update restarts and closing the last `wsl` connection have each stopped a run. Every epoch is checkpointed; resume with `--resume <run>/last.pt` and the same arguments.
 - **Minimum crop:** replay crops are at least `max(240 px, frame_h / 3)`, so design controller tests around that.
 - **SkiTB:**
   - `frames.txt` holds bare frame indices, and `frame_file` maps them (`197` → `00197.jpg`).

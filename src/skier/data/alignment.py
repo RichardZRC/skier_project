@@ -22,8 +22,12 @@ from skier.paths import data_root, results_root
 from skier.schema import Schema, load_schema
 from skier.viz import FONT, render_gt_overlay
 
-# --- PARTLY FILLED IN AT 1G (2026-10-17; code spec §13) ----------------------
-MIN_SCORE = 0.8  # starting values; adjust on the first real segment and record them
+# --- FILLED IN AT 1G (2026-10-26, laptop; code spec §13; docs/data_audit_ski2dpose.md §1G) ------
+# On 5UHRvqx1iuQ/0 and oKQFABiOTw8/22 all 94 labeled images match their frame exactly (NCC
+# 0.9999-1.0, offset 0): the images are frames of these clips. In near-static stretches the
+# neighbouring frames score almost as high, so the margin rule leaves those unverified even
+# though the best match is the exact frame.
+MIN_SCORE = 0.99
 MIN_MARGIN = 0.02
 
 
@@ -31,8 +35,8 @@ def locate_segment(videos_root: Path, video_id: str, segment_id: str, info: Any 
     """Return (video file, decode index of the segment's frame_idx 0).
 
     The videos zip holds one clip per segment at ``Videos/{video_id}/{segment_id}.mp4``
-    (158 files). Start index 0 assumes ``frame_idx`` counts from the clip's first
-    frame; the alignment check confirms or corrects that.
+    (158 files). ``frame_idx`` is the 0-based decode index within that clip: confirmed in
+    1G (2026-10-26) on two pilot segments, offset 0 for all 94 labeled images.
     """
     path = Path(videos_root) / "Videos" / video_id / f"{segment_id}.mp4"
     if not path.is_file():

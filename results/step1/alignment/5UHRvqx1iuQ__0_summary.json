@@ -1,0 +1,15 @@
+{
+  "consistent": false,
+  "min_margin": 0.02,
+  "min_score": 0.99,
+  "n_labeled": 63,
+  "n_verified": 54,
+  "offsets": {
+    "0": 63
+  },
+  "segment_id": "0",
+  "start_frame": 0,
+  "video": "/home/ruichaoz/skier_data/ski2dpose/videos/Videos/5UHRvqx1iuQ/0.mp4",
+  "video_id": "5UHRvqx1iuQ",
+  "window": 8
+}
