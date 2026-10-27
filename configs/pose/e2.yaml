@@ -1,7 +1,7 @@
 # E2: as E1 plus crop jitter (plan Step 6, D16). Only the aug block differs from e1.yaml.
 batch_size: 16            # 8 if memory requires
 warm_epochs: 3            # backbone frozen (weights and BatchNorm statistics), head only
-finetune_epochs: 50
+finetune_epochs: 150       # D21 (was 50; D20 trial)
 lr_head_warm: 0.001
 lr_backbone: 0.0001
 lr_head: 0.0005

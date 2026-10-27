@@ -198,3 +198,20 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
   - A cheap trial first (working rule): 2 runs, about 1 h, before a 2.5 h rerun of all four.
   - Ruichao chose this option (A) on 2026-10-25.
 - Effect on evaluation: none yet. Val is used only for the diagnostic readout, and test is untouched. Any schedule change it leads to will apply to E1–E4 alike, through its own decision.
+
+## D21 — Step 6 rerun: 150 fine-tune epochs, two seeds per recipe, selection on the seed means (2026-10-26)
+- Choice, fixed before any rerun result exists:
+  - **Schedule:** `finetune_epochs: 150` in all of `configs/pose/e1.yaml`–`e4.yaml`. The ×0.1 steps move with it, to fine-tune epochs 90 and 127. Nothing else changes, and E2–E4 still differ from E1 only in augmentation (the test still checks this). This supersedes the 50-epoch schedule for every Step 6 number.
+  - **Seeds:** 230 and 231 for every recipe; the paired design (D16) holds within each seed. Runs go to `$SKIER_RESULTS/pose/d21/E{n}-s{seed}/`, seed 230 first.
+  - **Reuse:** the D20 run E3-ft150 is exactly E3 seed 230 under this schedule (same config, seed, split and code), so it serves as `E3-s230`. That leaves 7 new runs.
+  - **Selection:** D16's rule, unchanged, applied to the **mean over the two seeds** of each metric. All seeds see the same val samples, so the mean equals pooling the hits and totals of both seeds. Each seed is also reported on its own.
+  - **The 50-epoch E1–E4 runs and the D20 runs** stay in `results/step5/` and `results/step6/` as the record of the convergence problem. They don't enter the final table.
+- Reason:
+  - D20's pre-registered outcome: E1-seed231 fails on the ski tails and E3-ft150 learns them. So the 50-epoch schedule is unreliable for every recipe, and seed variance is large (`results/step6/diagnostics.md` §5).
+  - In E3-ft150 the tails were learned between epochs 60 and 80, before its first LR step at epoch 93. With 50 epochs, the first step comes at epoch 33.
+  - Ruichao approved this on 2026-10-26.
+- Effect on evaluation:
+  - The Step 6 table reports the seed means, with per-seed values next to them. The D16 rule and the crop-error set are unchanged.
+  - Same machine (the RTX 4070 laptop) and batch size 16 for every run (D17).
+  - Cost: 7 runs × about 38 min ≈ 4.5 h.
+  - D14's cut order changes: a second seed is now needed for a trustworthy comparison, so if time is short, E2 and E3 are cut before the second seed.

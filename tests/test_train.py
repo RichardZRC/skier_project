@@ -59,7 +59,9 @@ def test_loss_all_masked_is_zero():
 def test_e1_yaml_is_the_default_config():
     cfg = TrainConfig.from_yaml(configs_dir() / "pose" / "e1.yaml")
     assert cfg == TrainConfig()
-    assert cfg.total_epochs == 53 and cfg.aug == AugConfig()
+    assert cfg.total_epochs == 153 and cfg.aug == AugConfig()  # D21
+    assert [3 + e for e in (90, 127)] == [e for e in range(cfg.total_epochs)
+                                          if e > 3 and lr_for(e, cfg) != lr_for(e - 1, cfg)]
     assert TrainConfig.from_dict(cfg.to_dict()) == cfg
 
 
@@ -78,7 +80,7 @@ def test_run_name():
 
 
 def test_lr_schedule_boundaries():
-    cfg = TrainConfig()  # 3 warm + 50 fine-tune; milestones at fine-tune epochs 30 and 42
+    cfg = TrainConfig(finetune_epochs=50)  # 3 warm + 50 fine-tune; milestones at fine-tune epochs 30 and 42
     assert lr_for(0, cfg) == (0.0, 1e-3) and lr_for(2, cfg) == (0.0, 1e-3)
     assert lr_for(3, cfg) == (1e-4, 5e-4)
     assert lr_for(3 + 29, cfg) == (1e-4, 5e-4)

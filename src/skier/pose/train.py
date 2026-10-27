@@ -43,7 +43,7 @@ LOG_COLUMNS = ["epoch", "phase", "lr_backbone", "lr_head", "train_loss", "n_step
 class TrainConfig:
     batch_size: int = 16
     warm_epochs: int = 3
-    finetune_epochs: int = 50
+    finetune_epochs: int = 150  # D21 (50 until 2026-10-26)
     lr_head_warm: float = 1e-3
     lr_backbone: float = 1e-4
     lr_head: float = 5e-4
