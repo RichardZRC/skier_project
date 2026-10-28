@@ -1,6 +1,6 @@
-# Replay crop controller defaults (plan Step 4.1). Starting values, not tuned:
-# choose final values on validation clips only (plan §9 review block).
-k: 2.0                    # tracker box expansion before fitting to 16:9
+# Replay crop controller defaults (plan Step 4.1). Chosen on the SkiTB val grid (D23, 2026-10-27):
+# tau 0.2 s (tau_pos; tau_grow and tau_shrink keep the 1/2 and 3x ratios) and k 2.5.
+k: 2.5                    # tracker box expansion before fitting to 16:9 (D23; was 2.0)
 aspect: 1.7777777777777777  # 16:9
 tau_pos: 0.2              # s, crop centre smoothing
 tau_grow: 0.1             # s, size smoothing when the crop must get bigger

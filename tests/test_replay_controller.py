@@ -25,9 +25,12 @@ def test_default_yaml_matches_dataclass():
     assert ReplayConfig.from_yaml(configs_dir() / "replay" / "default.yaml") == ReplayConfig()
 
 
+K2 = ReplayConfig(k=2.0)  # the geometry tests below assume k = 2 (the default until D23)
+
+
 def test_constant_box_gives_constant_crop():
     boxes = [box_at(900, 500)] * 30
-    tr = run_controller(boxes, np.arange(30) / 25, FRAME)
+    tr = run_controller(boxes, np.arange(30) / 25, FRAME, K2)
     assert np.allclose(tr.crops, tr.crops[0])
     w, h = tr.crops[0][2] - tr.crops[0][0], height(tr.crops[0])
     assert w / h == pytest.approx(16 / 9) and h == pytest.approx(400)  # k=2 on a 200 px tall box
@@ -46,7 +49,7 @@ def test_small_step_follows_exponential_with_tau_pos():
 
 
 def test_grow_fast_shrink_slow():
-    cfg = ReplayConfig()
+    cfg = K2
     fps = 25
     # base crop 600 px tall (k=2 on a 300 px box): 0.7x = 420 stays above the 360 px minimum
     for scale, tau in [(1.3, cfg.tau_grow), (0.7, cfg.tau_shrink)]:
@@ -87,7 +90,7 @@ def test_same_motion_at_25_and_50_fps_matches():
 
 
 def test_lost_holds_centre_and_zooms_out():
-    cfg = ReplayConfig()
+    cfg = K2
     fps = 25
     boxes = [box_at(900, 500)] * 5 + [[np.nan] * 4] * 100
     tr = run_controller(boxes, np.arange(105) / fps, FRAME, cfg)

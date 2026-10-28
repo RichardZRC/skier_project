@@ -4,7 +4,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 **Deadline: Fri 2026-11-20** (D14; plan §4). If the schedule slips, cut stretch goals first, then extra seeds, then E2/E3.
 
-**Read first:** `PROJECT_NOTES.md` (start with its **Handoff** section: machine state, what's waiting, AWS lessons; then status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D22; append only).
+**Read first:** `PROJECT_NOTES.md` (start with its **Handoff** section: machine state, what's waiting, AWS lessons; then status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D24; append only).
 
 ## Working rules (Ruichao's instructions; follow them exactly)
 
@@ -26,7 +26,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 ## Environment
 
-- Run the tests with `.venv/bin/python -m pytest -q`. Currently **259 passed, 9 skipped**: 6 `torch` and 3 `stack` tests run on the GPU machine, where all 268 must pass.
+- Run the tests with `.venv/bin/python -m pytest -q`. Currently **285 passed, 10 skipped**: 6 `torch` and 4 `stack` tests run on the GPU machine, where all 295 must pass.
   - Markers: `torch` needs PyTorch; `stack` needs the pinned torch, mmcv and mmpose; `gpu` needs CUDA.
 - **Paths:** code reads `SKIER_DATA` (default `~/skier_data`) and `SKIER_RESULTS` (default `~/skier_results`) through `skier.paths`. Never hard-code absolute paths.
 - **Data on this Mac:**
@@ -71,7 +71,9 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 - **Profiling and overfit runs:** `--profile-steps` stops inside the frozen warm-up epochs. Profile the fine-tune phase with `results/step5/profile_finetune_config.yaml` instead. `--overfit 32` needs `--epochs 300` before ski PCK reaches ~100%.
 - **Two clones on the laptop:** the Windows copy (`OneDrive\Desktop`) checks out with CRLF line endings. Files copied from it into the WSL clone need `sed -i 's/\r$//'`, or `git diff` shows every line changed.
 - **Training schedule (D20, D21):** at 50 fine-tune epochs the ski tails (and sometimes tips) are learned only in some runs, depending on the seed. Use 150 epochs and 2 seeds for comparisons. Check convergence per joint on training images (`results/step6/trial_eval.py`), not only val ski PCK.
-- **SiamFC on broadcast video:** after a few seconds it can drift to clutter and lock onto static on-screen graphics such as the logo (tracker smoke test, 2026-10-26).
+- **SiamFC on broadcast video:** after a few seconds it can drift to clutter and lock onto static on-screen graphics such as the logo (tracker smoke test, 2026-10-26). It also drifts to spectators, and its box can grow 8–10× too large (Step 7 failure review).
+- **SiamFC's score** is the peak of a sum-normalized response map, about 1e-5. Track CSVs keep 7 significant digits; 5 decimals collapsed it to about 7 values. The gating threshold (D24) is on this raw scale.
+- **`wsl -- bash -c "..."`** expands `$VAR` before bash sees it, whether called from PowerShell or Git Bash. Put anything with variables in a script file.
 - **Laptop interruptions:** Windows sleep (Modern Standby), Windows Update restarts and closing the last `wsl` connection have each stopped a run. Every epoch is checkpointed; resume with `--resume <run>/last.pt` and the same arguments.
 - **Minimum crop:** replay crops are at least `max(240 px, frame_h / 3)`, so design controller tests around that.
 - **SkiTB:**
@@ -89,5 +91,6 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 | Geometry and drawing | `geometry.py`, `viz.py`, `schema.py` (+ `configs/ski24_schema.json`) |
 | Pose | `pose/preprocess.py`, `pose/heatmap.py`, `pose/infer.py`, `pose/model.py`, `pose/coco_map.py`, `pose/eval_generic.py` (E0), `pose/crosscheck.py`, `pose/augment.py`, `pose/dataset.py`, `pose/loss.py`, `pose/train.py`, `pose/crop_error.py`, `pose/evaluate.py`, `pose/compare.py`, `pose/aug_preview.py` |
 | Tracking and replay | `tracking/siamfc_adapter.py`, `tracking/frames.py`, `tracking/run.py`, `replay/controller.py`, `replay/render.py`, `replay/run.py` |
+| Integration (Step 7) | `integration/config.py` (+ `configs/integration/default.yaml`), `integration/confidence.py`, `integration/propagation.py`, `integration/process.py` |
 | Metrics | `eval/pose_metrics.py`, `eval/track_metrics.py`, `eval/replay_metrics.py` |
 | Tools | `envcheck.py`, `io_utils.py`, `paths.py` |

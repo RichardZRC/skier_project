@@ -51,6 +51,22 @@ def test_track_clip_inits_once_and_marks_status():
         track_clip(ShiftTracker(), fake_frames(3), init_index=5, init_box=(0, 0, 1, 1))
 
 
+def test_track_csv_keeps_small_scores(tmp_path):
+    """SiamFC's scores lie around 1e-5; neighbours must stay distinct through the CSV (Step 7)."""
+    rows = [{"frame_index": i, "x1": 0.0, "y1": 0.0, "x2": 1.0, "y2": 1.0, "score": s, "status": st}
+            for i, (s, st) in enumerate([(math.nan, "init"), (2.345678e-05, "track"), (2.345679e-05, "track")])]
+    write_track_csv(rows, tmp_path / "c.csv")
+    back = read_track_csv(tmp_path / "c.csv")
+    assert back[1]["score"] == pytest.approx(2.345678e-05, rel=1e-7) and back[1]["score"] < back[2]["score"]
+
+
+def test_ski2dpose_partition_refuses_held_out_sets():
+    from skier.tracking.run import main
+
+    assert main(["--siamfc-repo", "x", "--weights", "y", "--ski2dpose-partition", "test"]) == 1
+    assert main(["--siamfc-repo", "x", "--weights", "y", "--ski2dpose-partition", "followcam"]) == 1
+
+
 def test_track_csv_round_trip(tmp_path):
     rows = track_clip(ShiftTracker(), fake_frames(4), 0, (1.2345, 2, 3, 4))
     write_track_csv(rows, tmp_path / "c.csv")

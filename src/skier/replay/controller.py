@@ -34,7 +34,7 @@ from skier.geometry import box_center_size, expand_box, fit_aspect
 
 @dataclass(frozen=True)
 class ReplayConfig:
-    k: float = 2.0
+    k: float = 2.5  # D23 (2.0 until 2026-10-27)
     aspect: float = 16 / 9
     tau_pos: float = 0.2
     tau_grow: float = 0.1

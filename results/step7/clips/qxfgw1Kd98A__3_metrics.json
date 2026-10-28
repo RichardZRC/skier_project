@@ -1,0 +1,68 @@
+{
+  "checkpoint": "/home/ruichaoz/skier_results/pose/d21/E2-s230/best.pt",
+  "checkpoint_epoch": 112,
+  "checkpoint_sha256": "1385fe1615ca965f89e13891732964ef222c87df0aef82643111664cf77b1b71",
+  "config_sha256": "1de4f47c253a60902bd33f27256e2e4e57778f6656e025e0afa97f7330d37557",
+  "debug_frames": 269,
+  "expand": 1.25,
+  "fps": 25.0,
+  "frame_size": [
+    1280.0,
+    720.0
+  ],
+  "integration_config": {
+    "conf_signal": "raw",
+    "conf_threshold": 3.944619e-05,
+    "k_pose": 1.1,
+    "replay_uses_status": true
+  },
+  "n_frames": 269,
+  "overlay_frames": 219,
+  "partition": "val",
+  "replay": {
+    "acceleration": {
+      "mean": 1.4192992676399248,
+      "n": 267,
+      "p95": 7.138345635799285
+    },
+    "box_containment": {
+      "frac_fully_inside": 0.8475836431226765,
+      "mean": 0.9832072414784534,
+      "min": 0.7760558139063912,
+      "n_frames": 269
+    },
+    "centering_error": {
+      "mean": 0.10266196375800694,
+      "n_frames": 269,
+      "p95": 0.34533772767740056
+    },
+    "n_frames": 269,
+    "target": "tracker",
+    "zoom": {
+      "area_fraction_mean": 0.8784812731303588,
+      "log_zoom_rate_mean": 0.1388488736058638
+    }
+  },
+  "replay_config": {
+    "aspect": 1.7777777777777777,
+    "k": 2.5,
+    "lost_score": null,
+    "lost_zoom_out_per_s": 0.5,
+    "max_zoom": 3.0,
+    "min_crop_h_px": 240.0,
+    "reset_gap_s": 1.0,
+    "tau_grow": 0.1,
+    "tau_pos": 0.2,
+    "tau_shrink": 0.6,
+    "tau_urgent": 0.03,
+    "urgent_margin": 0.05
+  },
+  "replay_frames": 269,
+  "status_counts": {
+    "init": 1,
+    "low_conf": 50,
+    "track": 218
+  },
+  "track_csv": "/home/ruichaoz/skier_results/tracking/ski2dpose-val/qxfgw1Kd98A__3.csv",
+  "video_id": "ski2dpose/qxfgw1Kd98A/3"
+}

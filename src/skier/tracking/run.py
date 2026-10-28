@@ -18,12 +18,14 @@ import numpy as np
 
 from skier.data.skitb import FPS_TABLE, fps_for, frame_file, load_fps_table, load_skitb_clips
 from skier.eval.track_metrics import clip_iou, failure_episodes, frame_ious, pooled_iou, success_curve
-from skier.io_utils import ensure_dir, read_csv, read_id_list, write_csv, write_json
+from skier.io_utils import ensure_dir, read_csv, read_id_list, read_json, write_csv, write_json
 from skier.paths import data_root, repo_root, results_root
+from skier.pose.crop_error import FINAL_ONLY
 from skier.tracking.frames import ImageFrames, VideoFrames
 from skier.tracking.siamfc_adapter import Tracker
 
 TRACK_COLUMNS = ["frame_index", "x1", "y1", "x2", "y2", "score", "status"]
+POSE_SPLIT = "data/manifests/pose_split_v1.json"
 
 
 def track_clip(tracker: Tracker, frames: Iterable[tuple[int, np.ndarray]], init_index: int, init_box,
@@ -51,8 +53,9 @@ def _row(idx: int, box, score: float, status: str) -> dict:
 
 
 def write_track_csv(rows: list[dict], path: Path) -> None:
+    # scores keep 7 significant digits: SiamFC's lie around 1e-5 (Step 7 confidence check)
     fmt = [{**r, **{k: f"{r[k]:.3f}" for k in ("x1", "y1", "x2", "y2")},
-            "score": "" if math.isnan(r["score"]) else f"{r['score']:.5f}"} for r in rows]
+            "score": "" if math.isnan(r["score"]) else f"{r['score']:.6e}"} for r in rows]
     write_csv(fmt, path, TRACK_COLUMNS)
 
 
@@ -118,7 +121,7 @@ def run_skitb(tracker_factory: Callable[[], Tracker], skitb_root: Path, split_js
 
 def run_ski2dpose_segments(tracker_factory: Callable[[], Tracker], records, segments: list[tuple[str, str]],
                            videos_root: Path, out: Path, max_frames: int | None = None) -> list[str]:
-    """Pilot segments: init at the first labeled frame with its reference box. CSVs only."""
+    """Ski 2DPose segments: init at the first labeled frame with its reference box. CSVs only."""
     from skier.data.alignment import locate_segment
 
     written = []
@@ -143,12 +146,17 @@ def build_parser() -> argparse.ArgumentParser:
     src = p.add_mutually_exclusive_group(required=True)
     src.add_argument("--skitb-root", type=Path, help="SkiTB root (with --split-json, --partition)")
     src.add_argument("--pilot-segments", action="store_true", help="all segments of the pilot videos (Ski 2DPose)")
+    src.add_argument("--ski2dpose-partition", metavar="PARTITION",
+                     help="all segments of one pose-split partition (Ski 2DPose; Step 7), e.g. val")
     p.add_argument("--split-json", type=Path)
+    p.add_argument("--pose-split", type=Path, help=f"default: {POSE_SPLIT} (with --ski2dpose-partition)")
+    p.add_argument("--final-test", action="store_true", help="allow test/followcam (Step 8, once)")
     p.add_argument("--partition", default="val")
     p.add_argument("--fps-table", type=Path, help=f"per-sequence SkiTB frame rates; default: {FPS_TABLE} (D22)")
     p.add_argument("--fps", type=float, help="one SkiTB frame rate for every clip, instead of the table")
     p.add_argument("--max-frames", type=int)
-    p.add_argument("--out", type=Path, help="default: $SKIER_RESULTS/tracking/<skitb-PARTITION | pilots>")
+    p.add_argument("--out", type=Path,
+                   help="default: $SKIER_RESULTS/tracking/<skitb-PARTITION | pilots | ski2dpose-PARTITION>")
     return p
 
 
@@ -175,11 +183,25 @@ def main(argv: list[str] | None = None) -> int:
 
     from skier.data.ski2dpose import load_records
 
+    part = args.ski2dpose_partition
+    if part in FINAL_ONLY and not args.final_test:
+        print(f"error: {part!r} is used once, in Step 8; pass --final-test then", file=sys.stderr)
+        return 1
     s2d = data_root() / "ski2dpose"
     records = load_records(s2d / "labels/ski2dpose_labels.json", s2d / "images")
-    pilots = set(read_id_list(repo_root() / "data/manifests/pilot_videos.txt"))
-    segments = sorted({(r.source_video_id, r.segment_id) for r in records if r.source_video_id in pilots})
-    out = ensure_dir(args.out or results_root() / "tracking" / "pilots")
+    if part is None:
+        pilots = set(read_id_list(repo_root() / "data/manifests/pilot_videos.txt"))
+        segments = sorted({(r.source_video_id, r.segment_id) for r in records if r.source_video_id in pilots})
+    else:
+        from skier.splits import apply_split
+
+        manifest = read_json(args.pose_split or repo_root() / POSE_SPLIT)
+        if part not in manifest["partitions"]:
+            print(f"error: no partition {part!r} in the pose split", file=sys.stderr)
+            return 1
+        apply_split(records, manifest)
+        segments = sorted({(r.source_video_id, r.segment_id) for r in records if r.split == part})
+    out = ensure_dir(args.out or results_root() / "tracking" / ("pilots" if part is None else f"ski2dpose-{part}"))
     names = run_ski2dpose_segments(factory, records, segments, s2d / "videos", out, args.max_frames)
-    print(f"tracked {len(names)} pilot segments → {out}")
+    print(f"tracked {len(names)} {'pilot' if part is None else part} segments → {out}")
     return 0

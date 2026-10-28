@@ -230,3 +230,50 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
 - Effect on evaluation:
   - Only time-based numbers change: failure-episode durations (≥ 0.5 s), and all replay timing (τ in seconds, acceleration per s²). IoU, the success curve and AUC count frames and don't depend on it.
   - The report states the rates as estimates ("25 or 30 FPS per sequence, from frame span ÷ race time") and names the manifest.
+
+## D23 — Pose recipe E2 (crop jitter); replay defaults τ 0.2 s, k 2.5 (2026-10-27)
+- Choice:
+  - **Pose recipe: E2** (`configs/pose/e2.yaml`: E1 + crop jitter, 150 fine-tune epochs). Both seed checkpoints (`$SKIER_RESULTS/pose/d21/E2-s230/`, `E2-s231/`) are kept. The Step 7 and Step 8 plans say which checkpoint each later step uses.
+  - **Replay defaults:** τ 0.2 s (`tau_pos` 0.2; `tau_grow` 0.1 and `tau_shrink` 0.6 keep the grid's 1/2 and 3× ratios; `tau_urgent` unchanged) and **k 2.5** (was 2.0), in `configs/replay/default.yaml` and the `ReplayConfig` defaults. `lost_score` stays off; Step 7 sets the tracker-confidence handling.
+- Reason:
+  - **Recipe:** D16's pre-registered rule, applied to the seed means as D21 requires, picks E2 (`results/step6/d21/compare_val_seedmean/`). Val PCK@0.1 seed means, E2 vs. E1: ski 93.1 vs. 91.9, body 95.5 vs. 95.2, moderate crop-error ski 92.9 vs. 90.4. Each seed alone also picks E2. All 8 runs learn the ski tails on training images (`results/step6/d21/train_fit_d21.txt`), so the comparison isn't confounded by convergence.
+  - **Replay** (SkiTB val grid, 75 clips, `results/step4/grid_val.csv`), τ 0.2 with k 2.5 vs. k 2.0:
+    - box containment 0.857 vs. 0.841, fully inside 78% vs. 75%;
+    - mean acceleration 1.21 vs. 1.65 (p95 3.56 vs. 6.47), centering error 0.179 vs. 0.190;
+    - cost: the crop covers 34% of the frame instead of 28%, so the skier looks smaller.
+    - Unsmoothed at k 2.5, mean acceleration is 4.72. τ 0.4 worsened centering.
+  - Ruichao accepted both recommendations on 2026-10-27.
+- Effect on evaluation:
+  - The Step 8 pose table reports E0, E1 and E2. E3 and E4 stay in the val comparison as the augmentation study.
+  - Replay numbers from now on use these defaults. The grid stays as the record of the trade-off.
+  - Both choices were made on val only. They are frozen with everything else before the single test run (Step 8).
+
+## D24 — Step 7 integration settings: confidence gating on the raw SiamFC score, k_pose 1.1 (2026-10-27)
+- Choice, each by a rule written into the approved Step 7 plan before its run. All are in `configs/integration/default.yaml`.
+  - **Tracker confidence:**
+    - `conf_signal: raw`, `conf_threshold: 3.944619e-05`. A tracked frame whose SiamFC score is below it is `low_conf`.
+    - The rule: ROC AUC for predicting failure (IoU < 0.1) on SkiTB val visible frames, excluding the init frame. Take the better of the two pre-registered signals; threshold at Youden's J; gate only if AUC ≥ 0.70.
+    - Result: raw AUC 0.83, relative (score ÷ median of the clip's first 10 tracked frames) 0.63. At the threshold, TPR 0.80 and FPR 0.29. 12,925 frames, 3,817 failures (`results/step7/confidence_val.json`).
+  - **Replay:** `replay_uses_status: true`. Low-confidence frames drive the replay as lost: hold the centre, zoom out.
+    - The rule: only if that raises mean GT-box containment on SkiTB val. It does: 0.943 vs. 0.857, fully inside 89% vs. 78%.
+    - The cost, reported alongside: the crop covers 46% of the frame instead of 34%, and mean acceleration is 1.82 instead of 1.21. 44% of val frames are `low_conf`.
+    - `ReplayConfig.lost_score` stays off; the status carries the gating.
+  - **Pose crop from the tracker box:** `k_pose: 1.1`, i.e. `expand_box(tracker_box, 1.1)` and then the model's 1.25 padding.
+    - The rule: the highest mean of tracked body and ski PCK@0.1 for E2 over both seeds; within 0.5 points is a tie, and a tie goes to the smaller value.
+    - The grid {1.0, 1.1, 1.2, 1.35, 1.5} gave 77.2 / **78.3** / 77.9 / 77.4 / 76.9.
+  - **Checkpoints:** E2-s230 for `process_clip` and the demos (the primary seed, fixed in advance). The propagation table reports E1 and E2, both seeds.
+  - **Track CSV scores** are written with 7 significant digits (`.6e`; they were 5 decimals). The SkiTB val rerun reproduced every Step 3 box exactly (pooled IoU 0.363).
+- Reason:
+  - The approved Step 7 plan (2026-10-27) fixed every rule above before its run. All runs used val only.
+  - The val alignment check passed for all 32 segments: all 293 labels are their own clip frame at offset 0, and 271 also pass the margin rule. All clips are 1280×720 at 25 fps.
+- Effect on evaluation:
+  - **Propagation on val** (261 scored labels in 32 segments; E2 seed means; PCK@0.1, reference → tracked crop):
+    - body 95.9 → 81.1, ski 93.8 → 75.4; the tracker crop cuts off 16.8% of the reliable ski labels;
+    - E1: body 95.1 → 80.2, ski 92.3 → 73.0.
+  - **By tracker IoU vs. the reference box**, E2 ski:
+    - IoU ≥ 0.5 (99 labels): 93.2 → 92.5;
+    - 0.1–0.5 (129): 94.6 → 76.8;
+    - IoU < 0.1 (33): 92.7 → 0.9.
+    - So the loss is tracker drift, not a train/inference crop mismatch.
+  - **By status**, E2 ski: `low_conf` 57.9 (70 labels), ok 81.8 (191).
+  - Step 8 runs these settings unchanged on test. A later tracker change (7b) needs its own decision and a rerun of the confidence check.

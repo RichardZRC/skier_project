@@ -1,0 +1,6 @@
+skitb good AL0027/3 0.697
+skitb good AL0044/3 0.641
+skitb bad AL0073/7 0.005
+skitb bad AL0026/12 0.058
+ski2dpose longest qxfgw1Kd98A/3 33
+ski2dpose longest qxfgw1Kd98A/6 20

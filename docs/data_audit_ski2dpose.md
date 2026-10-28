@@ -118,3 +118,7 @@ Per video:
 - **Unverified rows (13 of 94):** they fail only the margin rule (`MIN_MARGIN` 0.02). In near-static stretches, such as the start gate, neighbouring frames score almost as high, yet the best match is still the exact frame. `MIN_SCORE` is set to 0.99 from these results.
 - Evidence: `results/step1/alignment/`. A `gt_clip.mp4` for each segment is in `$SKIER_RESULTS/step1/alignment/<video>__<segment>/`. Watching it is optional, given exact pixel matches.
 - **Effect:** Step 7 can place labelled frames on the video timeline exactly, so the temporal comparison isn't a limitation.
+- **Val segments checked too** (2026-10-27, Step 7 R2; `eval_propagation.py --check-alignment`; `results/step7/propagation_val_alignment_*.csv`):
+  - All 32 val segments are usable: every one of the 293 labelled images is best matched by its own clip frame at offset 0 (NCC ≥ 0.99). 271 also pass the margin rule.
+  - Every clip is 1280×720 at 25 fps, the same size as its images.
+  - Test segments are not checked until Step 8.

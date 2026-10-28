@@ -1,0 +1,6 @@
+# Integration settings (plan Step 7). Each is chosen on val by a rule written down before the
+# run (Step 7 plan) and recorded in D24. null = not chosen yet: the tools refuse it.
+k_pose: 1.1               # tracker box expansion before the model's 1.25 crop padding; val rule (eval_propagation.py)
+conf_signal: raw          # none | raw | relative; SkiTB val: raw AUC 0.83, relative 0.63 (check_tracker_confidence.py)
+conf_threshold: 3.944619e-05  # Youden's J on SkiTB val: flags 80% of failure frames, 29% of the others
+replay_uses_status: true  # SkiTB val GT-box containment 0.943 with it vs. 0.857 without
