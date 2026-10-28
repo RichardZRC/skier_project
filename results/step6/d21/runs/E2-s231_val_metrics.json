@@ -1,0 +1,1234 @@
+{
+  "checkpoint": "/home/ruichaoz/skier_results/pose/d21/E2-s231/best.pt",
+  "checkpoint_epoch": 87,
+  "checkpoint_sha256": "abc888a45da5b899c15ef632ffe8c0931a8f1d4140df20c3d972326bd7053423",
+  "clean": {
+    "body_shared": {
+      "0.05": {
+        "hits": 2400,
+        "pct": 90.66868152625614,
+        "total": 2647
+      },
+      "0.1": {
+        "hits": 2549,
+        "pct": 96.29769550434455,
+        "total": 2647
+      }
+    },
+    "cut_off": {
+      "body": {
+        "cut": 0,
+        "share": 0.0,
+        "total": 3759
+      },
+      "pole": {
+        "cut": 224,
+        "share": 0.48068669527896996,
+        "total": 466
+      },
+      "ski": {
+        "cut": 0,
+        "share": 0.0,
+        "total": 1752
+      }
+    },
+    "errors": {
+      "body": {
+        "mean_norm_error": 0.02696142713245404,
+        "missing_rate": 0.0,
+        "n_available": 3759,
+        "n_missing": 0
+      },
+      "pole": {
+        "mean_norm_error": 0.4341715682781935,
+        "missing_rate": 0.0,
+        "n_available": 466,
+        "n_missing": 0
+      },
+      "ski": {
+        "mean_norm_error": 0.03373563461913247,
+        "missing_rate": 0.0,
+        "n_available": 1752,
+        "n_missing": 0
+      }
+    },
+    "groups": {
+      "0.05": {
+        "body": {
+          "hits": 3418,
+          "pct": 90.92843841447194,
+          "total": 3759
+        },
+        "pole": {
+          "hits": 9,
+          "pct": 1.9313304721030042,
+          "total": 466
+        },
+        "ski": {
+          "hits": 1477,
+          "pct": 84.30365296803653,
+          "total": 1752
+        }
+      },
+      "0.1": {
+        "body": {
+          "hits": 3605,
+          "pct": 95.90316573556797,
+          "total": 3759
+        },
+        "pole": {
+          "hits": 26,
+          "pct": 5.579399141630901,
+          "total": 466
+        },
+        "ski": {
+          "hits": 1642,
+          "pct": 93.72146118721462,
+          "total": 1752
+        }
+      }
+    },
+    "missing_rate": 0.0,
+    "n_samples": 293,
+    "per_joint": {
+      "ankle_left": {
+        "hits": 243,
+        "pct": 96.04743083003953,
+        "total": 253
+      },
+      "ankle_right": {
+        "hits": 252,
+        "pct": 95.81749049429658,
+        "total": 263
+      },
+      "elbow_left": {
+        "hits": 225,
+        "pct": 94.14225941422595,
+        "total": 239
+      },
+      "elbow_right": {
+        "hits": 265,
+        "pct": 94.30604982206405,
+        "total": 281
+      },
+      "hand_left": {
+        "hits": 228,
+        "pct": 91.56626506024097,
+        "total": 249
+      },
+      "hand_right": {
+        "hits": 254,
+        "pct": 90.71428571428571,
+        "total": 280
+      },
+      "head": {
+        "hits": 286,
+        "pct": 98.28178694158076,
+        "total": 291
+      },
+      "heel_left": {
+        "hits": 180,
+        "pct": 94.73684210526316,
+        "total": 190
+      },
+      "heel_right": {
+        "hits": 218,
+        "pct": 96.46017699115045,
+        "total": 226
+      },
+      "hip_left": {
+        "hits": 253,
+        "pct": 97.68339768339769,
+        "total": 259
+      },
+      "hip_right": {
+        "hits": 275,
+        "pct": 98.5663082437276,
+        "total": 279
+      },
+      "knee_left": {
+        "hits": 248,
+        "pct": 96.875,
+        "total": 256
+      },
+      "knee_right": {
+        "hits": 270,
+        "pct": 95.40636042402826,
+        "total": 283
+      },
+      "neck": {
+        "hits": 288,
+        "pct": 98.63013698630137,
+        "total": 292
+      },
+      "pole_basket_left": {
+        "hits": 6,
+        "pct": 2.73972602739726,
+        "total": 219
+      },
+      "pole_basket_right": {
+        "hits": 20,
+        "pct": 8.097165991902834,
+        "total": 247
+      },
+      "shoulder_left": {
+        "hits": 237,
+        "pct": 96.73469387755102,
+        "total": 245
+      },
+      "shoulder_right": {
+        "hits": 281,
+        "pct": 97.2318339100346,
+        "total": 289
+      },
+      "ski_tail_left": {
+        "hits": 117,
+        "pct": 84.78260869565217,
+        "total": 138
+      },
+      "ski_tail_right": {
+        "hits": 177,
+        "pct": 93.15789473684211,
+        "total": 190
+      },
+      "ski_tip_left": {
+        "hits": 235,
+        "pct": 94.0,
+        "total": 250
+      },
+      "ski_tip_right": {
+        "hits": 241,
+        "pct": 92.33716475095785,
+        "total": 261
+      },
+      "toes_left": {
+        "hits": 226,
+        "pct": 94.95798319327731,
+        "total": 238
+      },
+      "toes_right": {
+        "hits": 248,
+        "pct": 95.75289575289575,
+        "total": 259
+      }
+    },
+    "per_video": {
+      "body": {
+        "SVYdH614G_M": {
+          "hits": 454,
+          "pct": 92.4643584521385,
+          "total": 491
+        },
+        "qxfgw1Kd98A": {
+          "hits": 2978,
+          "pct": 96.50032404407,
+          "total": 3086
+        },
+        "v7PADD2_I00": {
+          "hits": 173,
+          "pct": 95.05494505494505,
+          "total": 182
+        }
+      },
+      "pole": {
+        "SVYdH614G_M": {
+          "hits": 2,
+          "pct": 3.3333333333333335,
+          "total": 60
+        },
+        "qxfgw1Kd98A": {
+          "hits": 23,
+          "pct": 5.897435897435898,
+          "total": 390
+        },
+        "v7PADD2_I00": {
+          "hits": 1,
+          "pct": 6.25,
+          "total": 16
+        }
+      },
+      "ski": {
+        "SVYdH614G_M": {
+          "hits": 223,
+          "pct": 85.76923076923077,
+          "total": 260
+        },
+        "qxfgw1Kd98A": {
+          "hits": 1337,
+          "pct": 95.91104734576757,
+          "total": 1394
+        },
+        "v7PADD2_I00": {
+          "hits": 82,
+          "pct": 83.6734693877551,
+          "total": 98
+        }
+      }
+    }
+  },
+  "config": {
+    "aug": {
+      "blur": null,
+      "flip_p": 0.5,
+      "jitter": {
+        "p": 1.0,
+        "scale_range": [
+          0.9,
+          1.1
+        ],
+        "shift": 0.1
+      },
+      "occlusion": null,
+      "rot_deg": 15.0,
+      "scale_range": [
+        0.8,
+        1.2
+      ]
+    },
+    "batch_size": 16,
+    "expand": 1.25,
+    "finetune_epochs": 150,
+    "lr_backbone": 0.0001,
+    "lr_head": 0.0005,
+    "lr_head_warm": 0.001,
+    "milestones": [
+      0.6,
+      0.85
+    ],
+    "num_workers": 4,
+    "seed": 231,
+    "sigma": 2.0,
+    "val_batch_size": 32,
+    "val_every": 1,
+    "val_partition": "val",
+    "warm_epochs": 3
+  },
+  "crop_error": {
+    "content_sha256": "1e9c0e1c9e7eb3ddfb72057c6307badcf0ddd6df2d671c042ef0ad271d13dfe9",
+    "levels": {
+      "mild": {
+        "body_shared": {
+          "0.05": {
+            "hits": 2403,
+            "pct": 90.78201737816396,
+            "total": 2647
+          },
+          "0.1": {
+            "hits": 2553,
+            "pct": 96.44880997355497,
+            "total": 2647
+          }
+        },
+        "cut_off": {
+          "body": {
+            "cut": 0,
+            "share": 0.0,
+            "total": 3759
+          },
+          "pole": {
+            "cut": 224,
+            "share": 0.48068669527896996,
+            "total": 466
+          },
+          "ski": {
+            "cut": 0,
+            "share": 0.0,
+            "total": 1752
+          }
+        },
+        "errors": {
+          "body": {
+            "mean_norm_error": 0.0260835614298361,
+            "missing_rate": 0.0,
+            "n_available": 3759,
+            "n_missing": 0
+          },
+          "pole": {
+            "mean_norm_error": 0.43380908944236296,
+            "missing_rate": 0.0,
+            "n_available": 466,
+            "n_missing": 0
+          },
+          "ski": {
+            "mean_norm_error": 0.03412958099456814,
+            "missing_rate": 0.0,
+            "n_available": 1752,
+            "n_missing": 0
+          }
+        },
+        "groups": {
+          "0.05": {
+            "body": {
+              "hits": 3424,
+              "pct": 91.08805533386538,
+              "total": 3759
+            },
+            "pole": {
+              "hits": 10,
+              "pct": 2.1459227467811157,
+              "total": 466
+            },
+            "ski": {
+              "hits": 1484,
+              "pct": 84.70319634703196,
+              "total": 1752
+            }
+          },
+          "0.1": {
+            "body": {
+              "hits": 3620,
+              "pct": 96.3022080340516,
+              "total": 3759
+            },
+            "pole": {
+              "hits": 30,
+              "pct": 6.437768240343348,
+              "total": 466
+            },
+            "ski": {
+              "hits": 1638,
+              "pct": 93.4931506849315,
+              "total": 1752
+            }
+          }
+        },
+        "missing_rate": 0.0,
+        "n_samples": 293,
+        "per_joint": {
+          "ankle_left": {
+            "hits": 245,
+            "pct": 96.83794466403162,
+            "total": 253
+          },
+          "ankle_right": {
+            "hits": 255,
+            "pct": 96.95817490494296,
+            "total": 263
+          },
+          "elbow_left": {
+            "hits": 225,
+            "pct": 94.14225941422595,
+            "total": 239
+          },
+          "elbow_right": {
+            "hits": 264,
+            "pct": 93.95017793594306,
+            "total": 281
+          },
+          "hand_left": {
+            "hits": 233,
+            "pct": 93.57429718875503,
+            "total": 249
+          },
+          "hand_right": {
+            "hits": 258,
+            "pct": 92.14285714285714,
+            "total": 280
+          },
+          "head": {
+            "hits": 287,
+            "pct": 98.62542955326461,
+            "total": 291
+          },
+          "heel_left": {
+            "hits": 180,
+            "pct": 94.73684210526316,
+            "total": 190
+          },
+          "heel_right": {
+            "hits": 221,
+            "pct": 97.78761061946902,
+            "total": 226
+          },
+          "hip_left": {
+            "hits": 254,
+            "pct": 98.06949806949807,
+            "total": 259
+          },
+          "hip_right": {
+            "hits": 273,
+            "pct": 97.84946236559139,
+            "total": 279
+          },
+          "knee_left": {
+            "hits": 246,
+            "pct": 96.09375,
+            "total": 256
+          },
+          "knee_right": {
+            "hits": 270,
+            "pct": 95.40636042402826,
+            "total": 283
+          },
+          "neck": {
+            "hits": 289,
+            "pct": 98.97260273972603,
+            "total": 292
+          },
+          "pole_basket_left": {
+            "hits": 11,
+            "pct": 5.0228310502283104,
+            "total": 219
+          },
+          "pole_basket_right": {
+            "hits": 19,
+            "pct": 7.6923076923076925,
+            "total": 247
+          },
+          "shoulder_left": {
+            "hits": 238,
+            "pct": 97.14285714285714,
+            "total": 245
+          },
+          "shoulder_right": {
+            "hits": 283,
+            "pct": 97.92387543252595,
+            "total": 289
+          },
+          "ski_tail_left": {
+            "hits": 114,
+            "pct": 82.6086956521739,
+            "total": 138
+          },
+          "ski_tail_right": {
+            "hits": 175,
+            "pct": 92.10526315789474,
+            "total": 190
+          },
+          "ski_tip_left": {
+            "hits": 235,
+            "pct": 94.0,
+            "total": 250
+          },
+          "ski_tip_right": {
+            "hits": 239,
+            "pct": 91.57088122605364,
+            "total": 261
+          },
+          "toes_left": {
+            "hits": 228,
+            "pct": 95.7983193277311,
+            "total": 238
+          },
+          "toes_right": {
+            "hits": 246,
+            "pct": 94.98069498069498,
+            "total": 259
+          }
+        },
+        "per_video": {
+          "body": {
+            "SVYdH614G_M": {
+              "hits": 459,
+              "pct": 93.48268839103869,
+              "total": 491
+            },
+            "qxfgw1Kd98A": {
+              "hits": 2986,
+              "pct": 96.75955930006481,
+              "total": 3086
+            },
+            "v7PADD2_I00": {
+              "hits": 175,
+              "pct": 96.15384615384616,
+              "total": 182
+            }
+          },
+          "pole": {
+            "SVYdH614G_M": {
+              "hits": 4,
+              "pct": 6.666666666666667,
+              "total": 60
+            },
+            "qxfgw1Kd98A": {
+              "hits": 26,
+              "pct": 6.666666666666667,
+              "total": 390
+            },
+            "v7PADD2_I00": {
+              "hits": 0,
+              "pct": 0.0,
+              "total": 16
+            }
+          },
+          "ski": {
+            "SVYdH614G_M": {
+              "hits": 223,
+              "pct": 85.76923076923077,
+              "total": 260
+            },
+            "qxfgw1Kd98A": {
+              "hits": 1334,
+              "pct": 95.6958393113343,
+              "total": 1394
+            },
+            "v7PADD2_I00": {
+              "hits": 81,
+              "pct": 82.65306122448979,
+              "total": 98
+            }
+          }
+        },
+        "radius": 0.05
+      },
+      "moderate": {
+        "body_shared": {
+          "0.05": {
+            "hits": 2377,
+            "pct": 89.79977332829618,
+            "total": 2647
+          },
+          "0.1": {
+            "hits": 2540,
+            "pct": 95.95768794862109,
+            "total": 2647
+          }
+        },
+        "cut_off": {
+          "body": {
+            "cut": 11,
+            "share": 0.002926310188880021,
+            "total": 3759
+          },
+          "pole": {
+            "cut": 232,
+            "share": 0.4978540772532189,
+            "total": 466
+          },
+          "ski": {
+            "cut": 16,
+            "share": 0.0091324200913242,
+            "total": 1752
+          }
+        },
+        "errors": {
+          "body": {
+            "mean_norm_error": 0.027203367799992145,
+            "missing_rate": 0.0,
+            "n_available": 3759,
+            "n_missing": 0
+          },
+          "pole": {
+            "mean_norm_error": 0.43558863924789476,
+            "missing_rate": 0.0,
+            "n_available": 466,
+            "n_missing": 0
+          },
+          "ski": {
+            "mean_norm_error": 0.035009276938635696,
+            "missing_rate": 0.0,
+            "n_available": 1752,
+            "n_missing": 0
+          }
+        },
+        "groups": {
+          "0.05": {
+            "body": {
+              "hits": 3398,
+              "pct": 90.39638201649375,
+              "total": 3759
+            },
+            "pole": {
+              "hits": 10,
+              "pct": 2.1459227467811157,
+              "total": 466
+            },
+            "ski": {
+              "hits": 1461,
+              "pct": 83.39041095890411,
+              "total": 1752
+            }
+          },
+          "0.1": {
+            "body": {
+              "hits": 3597,
+              "pct": 95.6903431763767,
+              "total": 3759
+            },
+            "pole": {
+              "hits": 27,
+              "pct": 5.793991416309013,
+              "total": 466
+            },
+            "ski": {
+              "hits": 1637,
+              "pct": 93.43607305936074,
+              "total": 1752
+            }
+          }
+        },
+        "missing_rate": 0.0,
+        "n_samples": 293,
+        "per_joint": {
+          "ankle_left": {
+            "hits": 243,
+            "pct": 96.04743083003953,
+            "total": 253
+          },
+          "ankle_right": {
+            "hits": 252,
+            "pct": 95.81749049429658,
+            "total": 263
+          },
+          "elbow_left": {
+            "hits": 225,
+            "pct": 94.14225941422595,
+            "total": 239
+          },
+          "elbow_right": {
+            "hits": 265,
+            "pct": 94.30604982206405,
+            "total": 281
+          },
+          "hand_left": {
+            "hits": 231,
+            "pct": 92.7710843373494,
+            "total": 249
+          },
+          "hand_right": {
+            "hits": 255,
+            "pct": 91.07142857142857,
+            "total": 280
+          },
+          "head": {
+            "hits": 284,
+            "pct": 97.59450171821305,
+            "total": 291
+          },
+          "heel_left": {
+            "hits": 184,
+            "pct": 96.84210526315789,
+            "total": 190
+          },
+          "heel_right": {
+            "hits": 219,
+            "pct": 96.90265486725664,
+            "total": 226
+          },
+          "hip_left": {
+            "hits": 252,
+            "pct": 97.29729729729729,
+            "total": 259
+          },
+          "hip_right": {
+            "hits": 273,
+            "pct": 97.84946236559139,
+            "total": 279
+          },
+          "knee_left": {
+            "hits": 246,
+            "pct": 96.09375,
+            "total": 256
+          },
+          "knee_right": {
+            "hits": 270,
+            "pct": 95.40636042402826,
+            "total": 283
+          },
+          "neck": {
+            "hits": 287,
+            "pct": 98.28767123287672,
+            "total": 292
+          },
+          "pole_basket_left": {
+            "hits": 9,
+            "pct": 4.109589041095891,
+            "total": 219
+          },
+          "pole_basket_right": {
+            "hits": 18,
+            "pct": 7.287449392712551,
+            "total": 247
+          },
+          "shoulder_left": {
+            "hits": 238,
+            "pct": 97.14285714285714,
+            "total": 245
+          },
+          "shoulder_right": {
+            "hits": 276,
+            "pct": 95.50173010380622,
+            "total": 289
+          },
+          "ski_tail_left": {
+            "hits": 115,
+            "pct": 83.33333333333333,
+            "total": 138
+          },
+          "ski_tail_right": {
+            "hits": 172,
+            "pct": 90.52631578947368,
+            "total": 190
+          },
+          "ski_tip_left": {
+            "hits": 234,
+            "pct": 93.6,
+            "total": 250
+          },
+          "ski_tip_right": {
+            "hits": 239,
+            "pct": 91.57088122605364,
+            "total": 261
+          },
+          "toes_left": {
+            "hits": 227,
+            "pct": 95.3781512605042,
+            "total": 238
+          },
+          "toes_right": {
+            "hits": 247,
+            "pct": 95.36679536679537,
+            "total": 259
+          }
+        },
+        "per_video": {
+          "body": {
+            "SVYdH614G_M": {
+              "hits": 469,
+              "pct": 95.51934826883911,
+              "total": 491
+            },
+            "qxfgw1Kd98A": {
+              "hits": 2956,
+              "pct": 95.78742709008425,
+              "total": 3086
+            },
+            "v7PADD2_I00": {
+              "hits": 172,
+              "pct": 94.50549450549451,
+              "total": 182
+            }
+          },
+          "pole": {
+            "SVYdH614G_M": {
+              "hits": 4,
+              "pct": 6.666666666666667,
+              "total": 60
+            },
+            "qxfgw1Kd98A": {
+              "hits": 23,
+              "pct": 5.897435897435898,
+              "total": 390
+            },
+            "v7PADD2_I00": {
+              "hits": 0,
+              "pct": 0.0,
+              "total": 16
+            }
+          },
+          "ski": {
+            "SVYdH614G_M": {
+              "hits": 223,
+              "pct": 85.76923076923077,
+              "total": 260
+            },
+            "qxfgw1Kd98A": {
+              "hits": 1335,
+              "pct": 95.76757532281205,
+              "total": 1394
+            },
+            "v7PADD2_I00": {
+              "hits": 79,
+              "pct": 80.61224489795919,
+              "total": 98
+            }
+          }
+        },
+        "radius": 0.1
+      },
+      "severe": {
+        "body_shared": {
+          "0.05": {
+            "hits": 2342,
+            "pct": 88.47752172270495,
+            "total": 2647
+          },
+          "0.1": {
+            "hits": 2522,
+            "pct": 95.27767283717417,
+            "total": 2647
+          }
+        },
+        "cut_off": {
+          "body": {
+            "cut": 123,
+            "share": 0.03272146847565842,
+            "total": 3759
+          },
+          "pole": {
+            "cut": 220,
+            "share": 0.4721030042918455,
+            "total": 466
+          },
+          "ski": {
+            "cut": 164,
+            "share": 0.09360730593607305,
+            "total": 1752
+          }
+        },
+        "errors": {
+          "body": {
+            "mean_norm_error": 0.031206114339360744,
+            "missing_rate": 0.0,
+            "n_available": 3759,
+            "n_missing": 0
+          },
+          "pole": {
+            "mean_norm_error": 0.43714297807814095,
+            "missing_rate": 0.0,
+            "n_available": 466,
+            "n_missing": 0
+          },
+          "ski": {
+            "mean_norm_error": 0.04770680486683061,
+            "missing_rate": 0.0,
+            "n_available": 1752,
+            "n_missing": 0
+          }
+        },
+        "groups": {
+          "0.05": {
+            "body": {
+              "hits": 3315,
+              "pct": 88.18834796488427,
+              "total": 3759
+            },
+            "pole": {
+              "hits": 9,
+              "pct": 1.9313304721030042,
+              "total": 466
+            },
+            "ski": {
+              "hits": 1332,
+              "pct": 76.02739726027397,
+              "total": 1752
+            }
+          },
+          "0.1": {
+            "body": {
+              "hits": 3556,
+              "pct": 94.59962756052141,
+              "total": 3759
+            },
+            "pole": {
+              "hits": 22,
+              "pct": 4.721030042918455,
+              "total": 466
+            },
+            "ski": {
+              "hits": 1550,
+              "pct": 88.4703196347032,
+              "total": 1752
+            }
+          }
+        },
+        "missing_rate": 0.0,
+        "n_samples": 293,
+        "per_joint": {
+          "ankle_left": {
+            "hits": 241,
+            "pct": 95.25691699604744,
+            "total": 253
+          },
+          "ankle_right": {
+            "hits": 254,
+            "pct": 96.57794676806084,
+            "total": 263
+          },
+          "elbow_left": {
+            "hits": 219,
+            "pct": 91.63179916317992,
+            "total": 239
+          },
+          "elbow_right": {
+            "hits": 261,
+            "pct": 92.88256227758008,
+            "total": 281
+          },
+          "hand_left": {
+            "hits": 220,
+            "pct": 88.35341365461848,
+            "total": 249
+          },
+          "hand_right": {
+            "hits": 250,
+            "pct": 89.28571428571429,
+            "total": 280
+          },
+          "head": {
+            "hits": 278,
+            "pct": 95.53264604810997,
+            "total": 291
+          },
+          "heel_left": {
+            "hits": 177,
+            "pct": 93.15789473684211,
+            "total": 190
+          },
+          "heel_right": {
+            "hits": 220,
+            "pct": 97.34513274336283,
+            "total": 226
+          },
+          "hip_left": {
+            "hits": 249,
+            "pct": 96.13899613899613,
+            "total": 259
+          },
+          "hip_right": {
+            "hits": 267,
+            "pct": 95.6989247311828,
+            "total": 279
+          },
+          "knee_left": {
+            "hits": 245,
+            "pct": 95.703125,
+            "total": 256
+          },
+          "knee_right": {
+            "hits": 272,
+            "pct": 96.113074204947,
+            "total": 283
+          },
+          "neck": {
+            "hits": 286,
+            "pct": 97.94520547945206,
+            "total": 292
+          },
+          "pole_basket_left": {
+            "hits": 6,
+            "pct": 2.73972602739726,
+            "total": 219
+          },
+          "pole_basket_right": {
+            "hits": 16,
+            "pct": 6.477732793522267,
+            "total": 247
+          },
+          "shoulder_left": {
+            "hits": 235,
+            "pct": 95.91836734693878,
+            "total": 245
+          },
+          "shoulder_right": {
+            "hits": 279,
+            "pct": 96.53979238754326,
+            "total": 289
+          },
+          "ski_tail_left": {
+            "hits": 107,
+            "pct": 77.53623188405797,
+            "total": 138
+          },
+          "ski_tail_right": {
+            "hits": 157,
+            "pct": 82.63157894736842,
+            "total": 190
+          },
+          "ski_tip_left": {
+            "hits": 200,
+            "pct": 80.0,
+            "total": 250
+          },
+          "ski_tip_right": {
+            "hits": 217,
+            "pct": 83.14176245210729,
+            "total": 261
+          },
+          "toes_left": {
+            "hits": 226,
+            "pct": 94.95798319327731,
+            "total": 238
+          },
+          "toes_right": {
+            "hits": 246,
+            "pct": 94.98069498069498,
+            "total": 259
+          }
+        },
+        "per_video": {
+          "body": {
+            "SVYdH614G_M": {
+              "hits": 436,
+              "pct": 88.79837067209776,
+              "total": 491
+            },
+            "qxfgw1Kd98A": {
+              "hits": 2950,
+              "pct": 95.59300064808814,
+              "total": 3086
+            },
+            "v7PADD2_I00": {
+              "hits": 170,
+              "pct": 93.4065934065934,
+              "total": 182
+            }
+          },
+          "pole": {
+            "SVYdH614G_M": {
+              "hits": 2,
+              "pct": 3.3333333333333335,
+              "total": 60
+            },
+            "qxfgw1Kd98A": {
+              "hits": 20,
+              "pct": 5.128205128205129,
+              "total": 390
+            },
+            "v7PADD2_I00": {
+              "hits": 0,
+              "pct": 0.0,
+              "total": 16
+            }
+          },
+          "ski": {
+            "SVYdH614G_M": {
+              "hits": 200,
+              "pct": 76.92307692307692,
+              "total": 260
+            },
+            "qxfgw1Kd98A": {
+              "hits": 1271,
+              "pct": 91.17647058823529,
+              "total": 1394
+            },
+            "v7PADD2_I00": {
+              "hits": 79,
+              "pct": 80.61224489795919,
+              "total": 98
+            }
+          }
+        },
+        "radius": 0.2
+      }
+    }
+  },
+  "excluded_records": [],
+  "experiment": "E2-s231",
+  "n_samples": 293,
+  "partition": "val",
+  "sample_ids_sha256": "eba8e588f585f9e129053dc8e432f406debbf74231ab78ec0ef26ef09026393c",
+  "split_sha256": "46bd127b0e51c1293859c7ab86dab1f0759511fbbdfd9dad270a632443bb2e98",
+  "strata": {
+    "discipline": {
+      "Downhill": {
+        "body": {
+          "hits": 173,
+          "pct": 95.05494505494505,
+          "total": 182
+        },
+        "n_images": 16,
+        "pole": {
+          "hits": 1,
+          "pct": 6.25,
+          "total": 16
+        },
+        "ski": {
+          "hits": 82,
+          "pct": 83.6734693877551,
+          "total": 98
+        }
+      },
+      "Slalom": {
+        "body": {
+          "hits": 2978,
+          "pct": 96.50032404407,
+          "total": 3086
+        },
+        "n_images": 239,
+        "pole": {
+          "hits": 23,
+          "pct": 5.897435897435898,
+          "total": 390
+        },
+        "ski": {
+          "hits": 1337,
+          "pct": 95.91104734576757,
+          "total": 1394
+        }
+      },
+      "Super G": {
+        "body": {
+          "hits": 454,
+          "pct": 92.4643584521385,
+          "total": 491
+        },
+        "n_images": 38,
+        "pole": {
+          "hits": 2,
+          "pct": 3.3333333333333335,
+          "total": 60
+        },
+        "ski": {
+          "hits": 223,
+          "pct": 85.76923076923077,
+          "total": 260
+        }
+      }
+    },
+    "note": "view strata overlap: one image can have several views",
+    "threshold": 0.1,
+    "view": {
+      "back": {
+        "body": {
+          "hits": 1282,
+          "pct": 94.89267209474464,
+          "total": 1351
+        },
+        "n_images": 111,
+        "pole": {
+          "hits": 9,
+          "pct": 5.325443786982248,
+          "total": 169
+        },
+        "ski": {
+          "hits": 535,
+          "pct": 90.67796610169492,
+          "total": 590
+        }
+      },
+      "front": {
+        "body": {
+          "hits": 2947,
+          "pct": 96.37017658600392,
+          "total": 3058
+        },
+        "n_images": 236,
+        "pole": {
+          "hits": 21,
+          "pct": 5.645161290322581,
+          "total": 372
+        },
+        "ski": {
+          "hits": 1382,
+          "pct": 95.11355815554026,
+          "total": 1453
+        }
+      },
+      "side": {
+        "body": {
+          "hits": 2540,
+          "pct": 95.9214501510574,
+          "total": 2648
+        },
+        "n_images": 212,
+        "pole": {
+          "hits": 18,
+          "pct": 5.373134328358209,
+          "total": 335
+        },
+        "ski": {
+          "hits": 1156,
+          "pct": 92.92604501607717,
+          "total": 1244
+        }
+      }
+    }
+  },
+  "timing": {
+    "crop_model_decode_s": 1.238,
+    "load_s": 0.597,
+    "ms_per_image_total": 6.26,
+    "n_images": 293
+  }
+}

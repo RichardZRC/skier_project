@@ -1,0 +1,22 @@
+joint              E1-s230 tr   E1-s230 val   E1-s231 tr   E1-s231 val   E2-s230 tr   E2-s230 val   E2-s231 tr   E2-s231 val   E3-s230 tr   E3-s230 val   E3-s231 tr   E3-s231 val   E4-s230 tr   E4-s230 val   E4-s231 tr   E4-s231 val
+ski_tail_right          93.2%         84.7%        87.1%         83.7%        99.6%         90.0%        99.4%         93.2%        95.0%         88.9%        93.9%         85.8%        80.2%         72.6%        83.0%         77.9%
+ski_tail_left           96.3%         76.1%        86.3%         71.7%        99.9%         84.8%        98.7%         84.8%        79.6%         60.9%        83.5%         65.9%        81.4%         66.7%        77.9%         65.2%
+ski_tip_right           99.9%         93.1%        99.8%         92.7%        99.8%         90.8%        99.6%         92.3%       100.0%         93.5%        99.7%         94.3%        99.8%         93.9%        99.7%         95.0%
+ski_tip_left           100.0%         94.4%        99.8%         94.4%        99.9%         93.6%        99.9%         94.0%        99.8%         94.0%       100.0%         95.2%        99.7%         95.2%        99.8%         94.0%
+toes_right             100.0%         95.4%       100.0%         94.2%       100.0%         93.4%       100.0%         95.8%       100.0%         96.1%       100.0%         96.5%       100.0%         96.5%       100.0%         96.1%
+heel_right             100.0%         95.1%       100.0%         95.6%       100.0%         96.9%       100.0%         96.5%        99.6%         95.6%        99.6%         96.5%        99.9%         96.5%        99.9%         96.0%
+toes_left              100.0%         94.5%       100.0%         95.0%       100.0%         93.3%       100.0%         95.0%       100.0%         95.4%       100.0%         95.0%       100.0%         96.2%       100.0%         96.2%
+heel_left              100.0%         96.3%       100.0%         96.3%        99.9%         94.2%       100.0%         94.7%       100.0%         96.8%        99.7%         97.4%        99.5%         95.3%        99.1%         94.7%
+ski                     98.9%         92.2%        97.2%         91.6%        99.9%         92.5%        99.7%         93.7%        97.2%         91.8%        97.5%         92.3%        95.9%         90.8%        95.7%         91.1%
+body                   100.0%         95.6%       100.0%         94.8%       100.0%         95.1%       100.0%         95.9%       100.0%         96.6%       100.0%         97.1%       100.0%         97.1%        99.9%         97.0%
+best epoch                              101                         87                        112                         87                        144                        122                        118                        148
+
+d21/E1-s230: training-image tails 93.2% / 96.3% -> LEARNS the tails (D20 threshold 60%)
+d21/E1-s231: training-image tails 87.1% / 86.3% -> LEARNS the tails (D20 threshold 60%)
+d21/E2-s230: training-image tails 99.6% / 99.9% -> LEARNS the tails (D20 threshold 60%)
+d21/E2-s231: training-image tails 99.4% / 98.7% -> LEARNS the tails (D20 threshold 60%)
+d21/E3-s230: training-image tails 95.0% / 79.6% -> LEARNS the tails (D20 threshold 60%)
+d21/E3-s231: training-image tails 93.9% / 83.5% -> LEARNS the tails (D20 threshold 60%)
+d21/E4-s230: training-image tails 80.2% / 81.4% -> LEARNS the tails (D20 threshold 60%)
+d21/E4-s231: training-image tails 83.0% / 77.9% -> LEARNS the tails (D20 threshold 60%)
+wrote /home/ruichaoz/skier_results/pose/d21/train_fit_d21.json

@@ -139,17 +139,23 @@ def blk(pct, total=1000):
     return {"hits": round(pct * total / 100), "total": total, "pct": pct}
 
 
-def fake_metrics(body, ski, ski005=None, moderate=None, split="S", ids="I", ce="C"):
+def cut(n, total=1000):
+    return {"ski": {"cut": n, "total": total, "share": n / total}}
+
+
+def fake_metrics(body, ski, ski005=None, moderate=None, split="S", ids="I", ce="C", seed=None):
     m = {"split_sha256": split, "partition": "val", "n_samples": 300, "sample_ids_sha256": ids,
          "clean": {"groups": {"0.1": {"body": blk(body), "ski": blk(ski)}, "0.05": {"body": blk(body - 10),
                                                                               "ski": blk(ski005 or ski - 20)}},
                    "body_shared": {"0.1": blk(body + 1)},
                    "per_joint": {"head": blk(body), "ski_tip_right": blk(ski)}}}
+    if seed is not None:
+        m["config"], m["experiment"] = {"seed": seed}, f"run-s{seed}"
     if moderate is not None:
         m["crop_error"] = {"content_sha256": ce, "levels": {
-            "mild": {"radius": 0.05, "groups": {"0.1": {"ski": blk(ski - 1)}}, "cut_off": {"ski": {"share": 0.01}}},
-            "moderate": {"radius": 0.1, "groups": {"0.1": {"ski": blk(moderate)}}, "cut_off": {"ski": {"share": 0.03}}},
-            "severe": {"radius": 0.2, "groups": {"0.1": {"ski": blk(moderate - 10)}}, "cut_off": {"ski": {"share": 0.1}}}}}
+            "mild": {"radius": 0.05, "groups": {"0.1": {"ski": blk(ski - 1)}}, "cut_off": cut(10)},
+            "moderate": {"radius": 0.1, "groups": {"0.1": {"ski": blk(moderate)}}, "cut_off": cut(30)},
+            "severe": {"radius": 0.2, "groups": {"0.1": {"ski": blk(moderate - 10)}}, "cut_off": cut(100)}}}
     return m
 
 
@@ -205,3 +211,80 @@ def test_compare_cli(tmp_path):
     assert cmp.main(["E1", "--out", str(out)]) == 1
     with pytest.raises(ValueError, match="twice"):
         cmp.parse_runs(["E1=a", "E1=b"])
+    with pytest.raises(ValueError, match="expected"):
+        cmp.parse_runs(["E1=a,"])
+
+
+def test_pool_seeds_sums_hits_and_totals():
+    a = fake_metrics(80, 55, moderate=50, seed=230)
+    b = fake_metrics(82, 59, moderate=54, seed=231)
+    b["crop_error"]["levels"]["moderate"]["cut_off"] = cut(50)
+    p = cmp.pool_seeds([a, b])
+    ski = p["clean"]["groups"]["0.1"]["ski"]
+    assert (ski["hits"], ski["total"]) == (550 + 590, 2000) and ski["pct"] == pytest.approx(57.0)  # the seed mean
+    assert p["clean"]["groups"]["0.1"]["body"]["pct"] == pytest.approx(81.0)
+    assert p["clean"]["per_joint"]["ski_tip_right"]["pct"] == pytest.approx(57.0)
+    mod = p["crop_error"]["levels"]["moderate"]
+    assert mod["groups"]["0.1"]["ski"]["pct"] == pytest.approx(52.0) and mod["radius"] == 0.1
+    assert mod["cut_off"]["ski"] == {"cut": 80, "total": 2000, "share": pytest.approx(0.04)}
+    assert p["crop_error"]["content_sha256"] == "C" and p["sample_ids_sha256"] == "I" and p["n_samples"] == 300
+    assert [(s["seed"], s["experiment"], s["ski@0.1"], s["ski@0.1_moderate"]) for s in p["seeds"]] == [
+        (230, "run-s230", 55, 50), (231, "run-s231", 59, 54)]
+
+
+def test_pool_seeds_refusals():
+    a = fake_metrics(80, 55, moderate=50, seed=230)
+    with pytest.raises(ValueError, match="at least 2"):
+        cmp.pool_seeds([a])
+    with pytest.raises(ValueError, match="distinct"):
+        cmp.pool_seeds([a, fake_metrics(80, 56, moderate=50, seed=230)])
+    with pytest.raises(ValueError, match="distinct"):
+        cmp.pool_seeds([a, fake_metrics(80, 56, moderate=50)])
+    with pytest.raises(ValueError, match="split_sha256"):
+        cmp.pool_seeds([a, fake_metrics(80, 56, moderate=50, split="T", seed=231)])
+    with pytest.raises(ValueError, match="only some"):
+        cmp.pool_seeds([a, fake_metrics(80, 56, seed=231)])
+    other_total = fake_metrics(80, 56, moderate=50, seed=231)
+    other_total["clean"]["groups"]["0.1"]["ski"] = blk(56, total=999)
+    with pytest.raises(ValueError, match="total of clean.groups.0.1.ski"):
+        cmp.pool_seeds([a, other_total])
+    missing_joint = fake_metrics(80, 56, moderate=50, seed=231)
+    del missing_joint["clean"]["per_joint"]["head"]
+    with pytest.raises(ValueError, match="clean.per_joint"):
+        cmp.pool_seeds([a, missing_joint])
+    other_radius = fake_metrics(80, 56, moderate=50, seed=231)
+    other_radius["crop_error"]["levels"]["severe"]["radius"] = 0.25
+    with pytest.raises(ValueError, match="severe crop-error radius"):
+        cmp.pool_seeds([a, other_radius])
+
+
+def pooled(body, skis, moderate=50):
+    return cmp.pool_seeds([fake_metrics(body, s, moderate=moderate, seed=seed) for s, seed in zip(skis, (230, 231))])
+
+
+def test_selection_on_seed_means():
+    # seed 230 alone would pick E2 (62), seed 231 alone E3 (57); the means pick E2 (58 vs 56.5)
+    r = cmp.compare({"E1": pooled(80, (55, 55)), "E2": pooled(80, (62, 54)), "E3": pooled(80, (56, 57))})
+    sel = r["selection"]
+    assert sel["pick"] == "E2" and sel["beat_baseline"] == ["E2", "E3"] and sel["seed_means_over"] == [230, 231]
+    assert [s["ski@0.1"] for s in sel["per_seed"]["E3"]] == [56, 57]
+    md = r["markdown"]
+    assert "means over seeds 230 and 231 (D21)" in md and "Ski @0.1 per seed (230 / 231)" in md
+    assert "| E2 | 80.0% (1600/2000) | 81.0% (1620/2000) | 58.0% (1160/2000) | 62.0% / 54.0% |" in md
+    with pytest.raises(ValueError, match="pooled seeds"):
+        cmp.compare({"E1": pooled(80, (55, 55)), "E2": fake_metrics(80, 60, moderate=50, seed=230)})
+
+
+def test_compare_cli_pools_seeds(tmp_path):
+    args = []
+    for name, skis in {"E1": (55, 57), "E4": (58, 60)}.items():
+        paths = []
+        for s, seed in zip(skis, (230, 231)):
+            paths.append(tmp_path / f"{name}-s{seed}.json")
+            paths[-1].write_text(json.dumps(fake_metrics(80, s, moderate=50, seed=seed)))
+        args.append(f"{name}={paths[0]},{paths[1]}")
+    out = tmp_path / "cmp"
+    assert cmp.main(args + ["--out", str(out)]) == 0
+    sel = json.loads((out / "selection.json").read_text())
+    assert sel["pick"] == "E4" and sel["seed_means_over"] == [230, 231]
+    assert "58.0% / 60.0%" in (out / "comparison.md").read_text()

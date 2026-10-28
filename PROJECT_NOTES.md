@@ -6,7 +6,7 @@ Companion docs: `README.md` (setup and commands), `CLAUDE.md` (rules for Claude 
 `skier_proposal.pdf`, `skier_implementation_plan.md` (status table at the top), `skier_step_1_guide.md`,
 `skier_step_1_code_spec.md`, `docs/decisions.md`.
 
-Last updated: 2026-10-26
+Last updated: 2026-10-27
 
 ---
 
@@ -19,7 +19,7 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
 - **Cross-check passed;** the COCO-checkpoint loading bug fixed.
 - **1F overlay review passed;** split, protocol and crop-error set frozen (D19).
 - **Runs:** E0, E1, E2–E4 at 50 epochs. The comparison was **confounded by convergence**: the ski tails aren't learned reliably in 50 epochs (`results/step6/diagnostics.md`). D20 trial: 150 epochs fixes it, and seed variance is large.
-- **D21 rerun running:** E1–E4 at 150 epochs × seeds 230/231, in tmux session `d21` (`~/d21_run.sh`, log `~/setup_logs/d21.log`). Restartable: rerun `bash ~/d21_run.sh` and finished runs are skipped.
+- **D21 rerun done (2026-10-27 00:19):** E1–E4 at 150 epochs × seeds 230/231. On the seed means, D16's rule picks **E2** (crop jitter): val ski PCK@0.1 93.1 vs. E1 91.9; both seeds agree. Recipe choice is Ruichao's (`results/step6/d21/`).
 - **Tracker set up:** toolkit and SiamFC fork cloned, weights downloaded, the adapter's `FILL IN` block done.
   - **Smoke test** on pilot `5UHRvqx1iuQ/0`: it tracks for about 3 s, then drifts to the crowd and locks onto the broadcast logo.
 - **1G alignment done:** labels match their clip frames exactly, offset 0 (`docs/data_audit_ski2dpose.md` §1G).
@@ -36,7 +36,7 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
 | Machine | State |
 | --- | --- |
 | **Mac** | Repo at `~/Desktop/skier_project`; light `.venv` (250 passed, 9 skipped). Data in `~/skier_data`: Ski 2DPose, plus SkiTB (`AL/FS/JP`; only `AL` is used). Results in `~/skier_results`: `step1/audit`, `pose/aug_preview/e1–e4.png`, `replay/synthetic_demo`, `skitb_audit`. The 1F overlays were drawn and reviewed on the laptop instead (2026-10-24). No `skier-aws` entry in `~/.ssh/config` yet. |
-| **Laptop (2026-10-26)** | `~/skier_data`: `ski2dpose`, `pretrained` (COCO HRNet), `vendor/` (SkiTB toolkit `b402f9a`, SiamFC fork `a87f140` + `siamfc_alexnet_e50.pth`). **SkiTB subset: being copied from the Mac by Ruichao.** `~/skier_results/pose/`: E0–E4 (50 epochs), the D20 runs `E1-seed231` and `E3-ft150`, and `d21/` (the rerun, in progress). The WSL clone may carry uncommitted copies of the Windows clone's edits (configs etc.); `git checkout -- <files>` before `git pull`. Windows: sleep on AC is Never; **Windows Update isn't paused**, and it restarted the laptop on 2026-10-24. History: **Parts 1–2 done (2026-10-24).** WSL2 Ubuntu 22.04.5, Linux user `ruichaoz`; venv `~/venvs/skier` with the pinned stack plus D18's two pins; repo cloned at `~/skier_project` (GitHub SSH key added); `SKIER_DATA`/`SKIER_RESULTS` set in `~/.bashrc`. **Gate passed: 257 passed, `check_env --strict` exit 0**; `env.json` and `pip-freeze.txt` in `~/skier_results/step1/env/` (copies in `results/step1/laptop/`). **Parts 3–4 done (2026-10-24):** Ski 2DPose in `~/skier_data/ski2dpose` (all 4 SHA-256 match the audit; 16 / 158 / 1,982), COCO HRNet-W32 config and checkpoint in `~/skier_data/pretrained`; pose smoke test OK (54.7 ms/image, 247 MB); **MMPose cross-check PASS** (mean 0.014 px, max 1.19 px; `results/step3/crosscheck.json`). Gate now 259 passed. No SkiTB, SiamFC or tracker yet. **Later the same day:** 1F overlays reviewed, split frozen (D19), E0 on val, E1 overfit (standard and a 300-epoch diagnostic) and the E1 profile run; see Status. Full E1 not started. |
+| **Laptop (2026-10-26)** | `~/skier_data`: `ski2dpose`, `pretrained` (COCO HRNet), `vendor/` (SkiTB toolkit `b402f9a`, SiamFC fork `a87f140` + `siamfc_alexnet_e50.pth`). **SkiTB: all of `skitb/` copied and verified (2026-10-26); only `AL/` is used.** `~/skier_results/pose/`: E0–E4 (50 epochs), the D20 runs `E1-seed231` and `E3-ft150`, and `d21/` (the rerun: 8 runs, evaluations and comparisons, done 2026-10-27). `~/skier_results/tracking/skitb-val/` and `~/skier_results/replay/` (grid and review set). The WSL clone may carry uncommitted copies of the Windows clone's edits (configs etc.); `git checkout -- <files>` before `git pull`. Windows: sleep on AC is Never; **Windows Update isn't paused**, and it restarted the laptop on 2026-10-24. History: **Parts 1–2 done (2026-10-24).** WSL2 Ubuntu 22.04.5, Linux user `ruichaoz`; venv `~/venvs/skier` with the pinned stack plus D18's two pins; repo cloned at `~/skier_project` (GitHub SSH key added); `SKIER_DATA`/`SKIER_RESULTS` set in `~/.bashrc`. **Gate passed: 257 passed, `check_env --strict` exit 0**; `env.json` and `pip-freeze.txt` in `~/skier_results/step1/env/` (copies in `results/step1/laptop/`). **Parts 3–4 done (2026-10-24):** Ski 2DPose in `~/skier_data/ski2dpose` (all 4 SHA-256 match the audit; 16 / 158 / 1,982), COCO HRNet-W32 config and checkpoint in `~/skier_data/pretrained`; pose smoke test OK (54.7 ms/image, 247 MB); **MMPose cross-check PASS** (mean 0.014 px, max 1.19 px; `results/step3/crosscheck.json`). Gate now 259 passed. No SkiTB, SiamFC or tracker yet. **Later the same day:** 1F overlays reviewed, split frozen (D19), E0 on val, E1 overfit (standard and a 300-epoch diagnostic) and the E1 profile run; see Status. Full E1 not started. |
 | **AWS** | Account verification pending: the GPU-quota request was auto-rejected, the Standard quota is 1 vCPU, and CloudShell says "account verification is in progress". No instance yet. |
 
 ### Waiting on Ruichao, in priority order
@@ -45,7 +45,7 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
 2. ~~**Overlay review (1F), then freeze the split, then the crop-error set**~~ All done 2026-10-24 on the laptop (D19; crop-error set `1e9c0e1c9e7e…`).
 3. ~~**Copy SkiTB to the laptop**~~ Done and verified 2026-10-26. Optional: delete the unused `FS/` and `JP/` there.
 4. ~~**The SkiTB frame rate of each sequence**~~ Settled as D22 (2026-10-26).
-5. **After D21:** read the seed-mean comparison and choose the recipe (D16 rule, D21).
+5. **Choose the recipe:** the D21 seed-mean comparison is ready (`results/step6/d21/compare_val_seedmean/comparison.md`); D16's rule suggests E2.
 6. ~~**SiamFC tracker class** and the **1G alignment check**~~ Done 2026-10-26.
 7. **Pause Windows Update** before long runs.
 8. **AWS, after verification:** reapply for the quotas: G and VT at 4 vCPUs in us-west-2 (and us-east-1), Standard at 8. If the account is on AWS's "Free plan", upgrading to the Paid plan keeps the credits and may be required for GPUs; that's Ruichao's call.
@@ -310,10 +310,30 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
       another seed. **E3-ft150 (150 fine-tune epochs) learns them** (95 / 80%; val ski 91.8%, best epoch 144). D20's row
       "E1-seed231 fails, E3-ft150 learns" → **rerun E1–E4 with the longer schedule and 2+ seeds per recipe (new decision
       needed; Ruichao).** The session interruption at 19:17 shut WSL down; E1-seed231 resumed from epoch 8.
-- [~] **D21 rerun started** (2026-10-26 19:44, Ruichao approved): all four configs at `finetune_epochs: 150` (also the code
-      default, so `e1.yaml` stays the default); seeds 230/231; E3-ft150 reused as `E3-s230` (config, seed and split
-      checked identical). Order: E1, E2, E4 at seed 230, then E1–E4 at 231; then all 8 evaluated on val. About 4.5 h.
-      **Not committed yet** (configs, D21, `train.py` default, test updates).
+- [x] **D21 rerun done** (2026-10-26 19:44 → 2026-10-27 00:19, Ruichao approved; `results/step6/d21/`): all four configs at
+      `finetune_epochs: 150` (also the code default, so `e1.yaml` stays the default); seeds 230/231; E3-ft150 reused as
+      `E3-s230` (config, seed and split checked identical). 7 new runs, about 38–40 min each, no interruptions; all 153
+      epochs logged; all 8 evaluated on val (same split, samples and crop-error set; denominators identical).
+      - **Seed pooling** added to `compare.py` (`E1=s230.json,s231.json`): hits and totals summed, totals must match, seeds
+        must be distinct and the same for every run; per-seed ski PCK shown next to the mean. 4 new tests, mutation check
+        11/11; 268 tests pass on the laptop.
+      - **Seed means, clean val PCK@0.1** (body / ski / ski on moderate crop errors):
+        E1 95.2 / 91.9 / 90.4; **E2 95.5 / 93.1 / 92.9**; E3 96.9 / 92.0 / 90.9; E4 97.1 / 91.0 / 89.5.
+        Per seed (230 / 231), ski: E1 92.2 / 91.6, E2 92.5 / 93.7, E3 91.8 / 92.3, E4 90.8 / 91.1.
+      - **D16's rule on the seed means picks E2** (crop jitter): nobody is disqualified on body; E2 and E3 beat E1;
+        E2 − E3 = 1.08 points, just outside the 1-point tie band (the tie-break would pick E2 too: 92.9 vs 90.9).
+        **Each seed on its own also picks E2.**
+      - **Where it comes from:** E2's gain is in the ski **tails** (seed means +10.9 left, +7.4 right vs. E1); tips and the
+        body are about even. Blur and occlusion (E3, E4) raise most body joints by 1–4 points but lose 8–10 points on the
+        left tail. E4 (all three) has the lowest ski PCK@0.05 (78.8 vs. 82.9).
+      - The severe-level cut-off share is 9.4% for every run, as it should be (it depends only on the crops).
+      - **Convergence check** (`results/step6/trial_eval.py --out=…`, `results/step6/d21/train_fit_d21.{txt,json}`): **all 8
+        runs learn the tails** on training images (D20 threshold 60%), so the convergence confound is gone. Training-image
+        tails (right / left): E1 93 / 96 and 87 / 86; E2 99.6 / 99.9 and 99.4 / 98.7; E3 95 / 80 and 94 / 84;
+        E4 80 / 81 and 83 / 78. E3 and E4 still fit the tails less well than E1 and E2, even on training images, so part
+        of their tail deficit may be slower fitting under blur and occlusion rather than worse generalization. That is a
+        caveat for the report; the pre-registered rule is unchanged.
+      - **Recipe choice: Ruichao** (record it in `docs/decisions.md`). Bootstrap intervals come in Step 8.
 - [x] **Tracker set up and smoke-tested** (2026-10-26, laptop; `docs/data_audit_skitb.md` 1D table):
       - SiamFC adapter `FILL IN` filled in from the fork's source: `siamfc.TrackerSiamFC`, with `return_conf=True` giving
         `(box, conf)`. Box conventions round-trip exactly. A new torch-free test with a fake fork module catches 3/3
@@ -343,6 +363,21 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
       **Review set for Ruichao:** `$SKIER_RESULTS/replay/review/`. Side-by-side smoothed vs. unsmoothed, plus the debug
       view, for AL0027 cam 3 (well tracked, IoU 0.70) and AL0073 cam 7 (tracker lost within 5 frames, IoU 0.005).
       **Defaults not chosen yet (Ruichao, plan §9 review block).**
+- [x] **Tracker-upgrade check** (2026-10-27, look only; nothing installed). Order agreed with Ruichao: Step 7 core with
+      SiamFC (with low-confidence flagging) first; an optional, time-boxed tracker upgrade after it, chosen on val;
+      then Step 8 freezes the tracker.
+      - **STARKski** (the SkiTB authors' tracker): two STARK-ST50 copies **fine-tuned on SkiTB**; when the main one's
+        confidence drops to 0.5 or below, a second copy with a search area the height of the frame re-detects the skier.
+        **No public weights found** (toolkit README, arXiv 2312.09723, arXiv 2502.18867).
+      - **Off-the-shelf trackers on SkiTB AL, single-camera, F-score** (arXiv 2312.09723 Table 9): STARK 0.671,
+        CoCoLoT 0.652, KeepTrack 0.640, MixFormer 0.637, LTMU 0.623, OSTrack 0.594, GlobalTrack 0.585, SiamRPN++ 0.536.
+        SiamFC isn't in the table. Fine-tuned trackers: STARK_FT 0.875, STARKski 0.882, YOLO-SORT 0.819. The F-score is the
+        toolkit's metric, not our IoU/AUC.
+      - **Candidate: off-the-shelf STARK-ST50** (`researchmm/Stark`, MIT). Its weights are in the repo's model zoo. Its
+        API fits our adapter: `STARK_ST.initialize(image, {"init_bbox": [x, y, w, h]})`, then `track(image)` →
+        `{"target_bbox": [x, y, w, h], "conf_score": float}`. STARKski's re-detection works at inference time, so it
+        can be copied without training. The install script targets Python 3.6 / PyTorch 1.7, so it needs its own venv
+        (keeping the pinned pose stack untouched) and Ruichao's OK.
 - [ ] **First GPU session (laptop, `docs/laptop_setup.md`):** ~~full `pytest` (torch + stack tests)~~ done → data (Ski 2DPose; the SkiTB val/test subset)
       → cross-check → (freeze split) → E0 → E1 tiny overfit → profile → full E1 → (freeze the crop-error set)
       → E2–E4 → evaluate and compare on val.
@@ -354,8 +389,8 @@ Current order (2026-10-24):
 A. ~~`[MANUAL][NET]` **Laptop setup and trial** (`docs/laptop_setup.md` Parts 1–4).~~ Done 2026-10-24; cross-check passed.
 B. ~~`[MANUAL]` **Overlay review (1F) → freeze the split → the crop-error set**~~ All done 2026-10-24 (D19; crop-error set above).
 C. `[GPU]` On the laptop: ~~E0 → E1 overfit → profile → full E1 → E2–E4 → evaluate → compare~~ done 2026-10-24.
-   ~~Decide how to handle the convergence confound~~ → D20 trial done 2026-10-25. **Next: approve the rerun (D21): E1–E4 at
-   150 fine-tune epochs, 2 seeds each, with the D16 rule applied to the seed means.**
+   ~~Decide how to handle the convergence confound~~ → D20 trial done 2026-10-25. ~~Approve the rerun (D21)~~ done
+   2026-10-27; the rule picks E2 on the seed means. **Next: Ruichao chooses the recipe; then Step 7 (plan mode).**
 D. `[MANUAL]` AWS: wait for account verification, then reapply for the quotas. Not blocking anything now (D17).
 
 The original Step 1 order, kept for reference (follow `skier_step_1_guide.md`):

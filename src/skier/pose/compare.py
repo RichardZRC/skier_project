@@ -14,6 +14,10 @@ The rule, written down before any E2–E4 results existed:
 
 The rule's pick is a suggestion; Ruichao makes the final choice and records it. Paired
 bootstrap intervals come in Step 8.
+
+Several metrics files per run (one per seed) are pooled first (D21): the hits and totals of
+every PCK block are summed, so with equal per-seed totals each percentage is the seed mean,
+and the rule applies to those means.
 """
 
 from __future__ import annotations
@@ -47,7 +51,8 @@ def row_for(name: str, m: dict) -> dict:
     crop = {lv: {"ski": d["groups"]["0.1"]["ski"], "ski_cut_share": d["cut_off"]["ski"]["share"]}
             for lv, d in m.get("crop_error", {}).get("levels", {}).items()}
     return {"name": name, "body": c["groups"]["0.1"]["body"], "body_shared": c["body_shared"]["0.1"],
-            "ski": c["groups"]["0.1"]["ski"], "ski_005": c["groups"]["0.05"]["ski"], "crop": crop}
+            "ski": c["groups"]["0.1"]["ski"], "ski_005": c["groups"]["0.05"]["ski"], "crop": crop,
+            "seeds": m.get("seeds")}
 
 
 def check_comparable(metrics: dict[str, dict]) -> None:
@@ -63,6 +68,61 @@ def check_comparable(metrics: dict[str, dict]) -> None:
     same("sample_ids_sha256", ours)
     with_ce = [(n, {"ce": m["crop_error"]["content_sha256"]}) for n, m in ours if "crop_error" in m]
     same("ce", with_ce)
+    same("pooled seeds", [(n, {"pooled seeds": tuple(s["seed"] for s in m.get("seeds") or ())}) for n, m in ours])
+
+
+POOLED_CLEAN = ("groups", "body_shared", "per_joint", "cut_off")
+POOLED_LEVEL = ("groups", "body_shared", "cut_off")
+
+
+def _pool(nodes: list, where: str):
+    """Sum one node over seeds: PCK blocks (hits/total) and cut-off counts (cut/total), recursively."""
+    first = nodes[0]
+    if not isinstance(first, dict) or any(not isinstance(n, dict) or set(n) != set(first) for n in nodes):
+        raise ValueError(f"cannot pool {where}: not the same block in every seed")
+    if "total" not in first:
+        return {k: _pool([n[k] for n in nodes], f"{where}.{k}") for k in first}
+    totals = {n["total"] for n in nodes}
+    if len(totals) > 1:
+        raise ValueError(f"seeds differ in the total of {where}: {sorted(totals)}")
+    total = first["total"] * len(nodes)
+    if "hits" in first:
+        hits = sum(n["hits"] for n in nodes)
+        return {"hits": hits, "total": total, "pct": 100.0 * hits / total if total else None}
+    cut = sum(n["cut"] for n in nodes)
+    return {"cut": cut, "total": total, "share": cut / total if total else None}
+
+
+def pool_seeds(runs: list[dict]) -> dict:
+    """One recipe's metrics pooled over seeds (D21), in the layout ``compare`` reads.
+
+    All seeds are scored on the same samples, so every block's total must match across seeds,
+    and each pooled percentage then equals the mean of the per-seed percentages. ``seeds``
+    keeps each run's own headline numbers.
+    """
+    if len(runs) < 2:
+        raise ValueError("pooling needs at least 2 runs")
+    check_comparable({str(i): m for i, m in enumerate(runs)})
+    seeds = [(m.get("config") or {}).get("seed") for m in runs]
+    if None in seeds or len(set(seeds)) < len(seeds):
+        raise ValueError(f"pooled runs need distinct recorded seeds, got {seeds}")
+    if len({"crop_error" in m for m in runs}) > 1:
+        raise ValueError("only some seeds have crop-error results")
+    first = runs[0]
+    out = {k: first[k] for k in ("split_sha256", "partition", "n_samples", "sample_ids_sha256")}
+    out["clean"] = _pool([{k: m["clean"][k] for k in POOLED_CLEAN if k in m["clean"]} for m in runs], "clean")
+    if "crop_error" in first:
+        levels = _pool([{lv: {k: d[k] for k in POOLED_LEVEL if k in d} for lv, d in m["crop_error"]["levels"].items()}
+                        for m in runs], "crop_error")
+        for lv, d in levels.items():
+            radii = {m["crop_error"]["levels"][lv]["radius"] for m in runs}
+            if len(radii) > 1:
+                raise ValueError(f"seeds differ in the {lv} crop-error radius: {sorted(radii)}")
+            d["radius"] = radii.pop()
+        out["crop_error"] = {"content_sha256": first["crop_error"]["content_sha256"], "levels": levels}
+    out["seeds"] = [{"seed": s, "experiment": m.get("experiment"),
+                     **{k: pct(b) for k, b in metric_blocks(row_for("", m)).items()}} for s, m in zip(seeds, runs)]
+    return out
 
 
 def pct(block: dict | None) -> float | None:
@@ -110,17 +170,30 @@ def _d(x: float | None) -> str:
     return "—" if x is None else f"{x:+.1f}"
 
 
+def pooled_seeds(rows: dict[str, dict]) -> list | None:
+    """The seeds the runs are pooled over (the same for every pooled run), or None."""
+    return next(([s["seed"] for s in r["seeds"]] for r in rows.values() if r.get("seeds")), None)
+
+
 def markdown(rows: dict[str, dict], levels: list[str], selection: dict, baseline: str, partition: str) -> str:
-    head = ["Run", "Body @0.1", "Body (shared joints) @0.1", "Ski @0.1", "Ski @0.05"]
+    seeds = pooled_seeds(rows)
+    head = ["Run", "Body @0.1", "Body (shared joints) @0.1", "Ski @0.1"]
+    head += [f"Ski @0.1 per seed ({' / '.join(map(str, seeds))})" if seeds else None, "Ski @0.05"]
     head += [f"Ski @0.1, {lv} crops" for lv in levels]
     head += [f"Ski cut off, {levels[-1]}" if levels else None, f"Δ body vs {baseline}", f"Δ ski vs {baseline}"]
     head = [h for h in head if h]
-    lines = [f"# Experiment comparison: {partition}", "", "| " + " | ".join(head) + " |",
-             "| " + " | ".join(["---"] * len(head)) + " |"]
+    title = f"# Experiment comparison: {partition}"
+    if seeds:
+        title += f", means over seeds {' and '.join(map(str, seeds))} (D21)"
+    lines = [title, "", "| " + " | ".join(head) + " |", "| " + " | ".join(["---"] * len(head)) + " |"]
     b = rows.get(baseline)
     for name, r in rows.items():
         d_body = delta(r["body"], b["body"]) if b else None
-        cells = [name, _cell(r["body"]), _cell(r["body_shared"]), _cell(r["ski"]), _cell(r["ski_005"])]
+        cells = [name, _cell(r["body"]), _cell(r["body_shared"]), _cell(r["ski"])]
+        if seeds:
+            cells.append(" / ".join("—" if s["ski@0.1"] is None else f"{s['ski@0.1']:.1f}%" for s in r["seeds"])
+                         if r.get("seeds") else "—")
+        cells.append(_cell(r["ski_005"]))
         cells += [f"{pct(r['crop'][lv]['ski']):.1f}%" if lv in r["crop"] and pct(r["crop"][lv]["ski"]) is not None
                   else "—" for lv in levels]
         if levels:
@@ -129,8 +202,11 @@ def markdown(rows: dict[str, dict], levels: list[str], selection: dict, baseline
         flag = " ⚠" if d_body is not None and d_body < -BODY_DROP else ""
         cells += [_d(d_body) + flag, _d(delta(r["ski"], b["ski"]) if b else None)]
         lines.append("| " + " | ".join(cells) + " |")
-    lines += ["", f"⚠ = body PCK@0.1 more than {BODY_DROP:g} points below {baseline}.", "",
-              f"**Rule's suggestion: {selection.get('pick')}** ({selection.get('reason')}).",
+    lines += ["", f"⚠ = body PCK@0.1 more than {BODY_DROP:g} points below {baseline}."]
+    if seeds:
+        lines.append("Each pooled run sums the hits and totals of its seeds, so every percentage is the seed mean; "
+                     "the rule applies to these means (D21).")
+    lines += ["", f"**Rule's suggestion: {selection.get('pick')}** ({selection.get('reason')}).",
               f"Rule: {RULE}. Ruichao makes the final choice; record it in docs/decisions.md.",
               "Paired bootstrap intervals over source videos come in Step 8."]
     return "\n".join(lines) + "\n"
@@ -174,28 +250,38 @@ def compare(metrics: dict[str, dict], baseline: str = BASELINE) -> dict:
                     key=lambda lv: next(m["crop_error"]["levels"][lv]["radius"] for m in metrics.values()
                                         if lv in m.get("crop_error", {}).get("levels", {})))
     selection = select_recipe(rows, baseline)
+    if pooled_seeds(rows):
+        selection["seed_means_over"] = pooled_seeds(rows)
+        selection["per_seed"] = {n: r["seeds"] for n, r in rows.items() if r.get("seeds")}
     partition = next(iter(metrics.values()))["partition"]
     return {"rows": rows, "levels": levels, "selection": selection, "partition": partition,
             "markdown": markdown(rows, levels, selection, baseline, partition),
             "long": long_rows(rows, baseline), "per_joint": per_joint_rows(metrics, baseline)}
 
 
-def parse_runs(values: list[str]) -> dict[str, Path]:
+def parse_runs(values: list[str]) -> dict[str, list[Path]]:
     runs = {}
     for v in values:
-        name, sep, path = v.partition("=")
-        if not sep or not name or not path:
-            raise ValueError(f"expected NAME=PATH/metrics.json, got {v!r}")
+        name, sep, paths = v.partition("=")
+        if not sep or not name or not all(paths.split(",")):
+            raise ValueError(f"expected NAME=PATH/metrics.json[,PATH/metrics.json...], got {v!r}")
         if name in runs:
             raise ValueError(f"run {name!r} given twice")
-        runs[name] = Path(path)
+        runs[name] = [Path(p) for p in paths.split(",")]
     return runs
+
+
+def load_run(paths: list[Path]) -> dict:
+    """One metrics file as is; several (one per seed) pooled (D21)."""
+    return read_json(paths[0]) if len(paths) == 1 else pool_seeds([read_json(p) for p in paths])
 
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Compare experiments (plan Step 6): table, per-joint deltas, and the "
                                             "pre-registered recipe-selection rule (D16).")
-    p.add_argument("runs", nargs="+", metavar="NAME=METRICS_JSON", help="e.g. E1=$SKIER_RESULTS/pose/E1/eval/val/metrics.json")
+    p.add_argument("runs", nargs="+", metavar="NAME=METRICS_JSON[,METRICS_JSON...]",
+                   help="e.g. E1=$SKIER_RESULTS/pose/E1/eval/val/metrics.json; several comma-separated files "
+                        "(one per seed) are pooled and compared on the seed means (D21)")
     p.add_argument("--baseline", default=BASELINE)
     p.add_argument("--out", type=Path, help="default: $SKIER_RESULTS/pose/compare/<partition>")
     return p
@@ -204,7 +290,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        metrics = {n: read_json(p) for n, p in parse_runs(args.runs).items()}
+        metrics = {n: load_run(ps) for n, ps in parse_runs(args.runs).items()}
         result = compare(metrics, args.baseline)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)

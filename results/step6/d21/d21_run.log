@@ -1,0 +1,32 @@
+2026-10-26 19:44:48 === D21 start; d6891e6 D20 convergence trial: E1 fails under seed 231; 150 epochs fixes E3; local changes:  M configs/pose/e1.yaml  M configs/pose/e2.yaml  M configs/pose/e3.yaml  M configs/pose/e4.yaml 
+19:44:48 === checks
+19:44:51 === E1-s230: starting
+20:24:34 best epoch 101: val ski PCK@0.1 92.18036529680366; 20 overlays
+20:24:35 E1-s230 exit=0, epochs logged: 153 (expect 153)
+20:24:35 === E2-s230: starting
+21:04:38 best epoch 112: val ski PCK@0.1 92.5228310502283; 20 overlays
+21:04:39 E2-s230 exit=0, epochs logged: 153 (expect 153)
+21:04:39 === E4-s230: starting
+21:45:10 best epoch 118: val ski PCK@0.1 90.81050228310502; 20 overlays
+21:45:11 E4-s230 exit=0, epochs logged: 153 (expect 153)
+21:45:11 === E1-s231: starting
+22:23:37 best epoch 87: val ski PCK@0.1 91.60958904109589; 20 overlays
+22:23:38 E1-s231 exit=0, epochs logged: 153 (expect 153)
+22:23:38 === E2-s231: starting
+23:02:09 best epoch 87: val ski PCK@0.1 93.72146118721462; 20 overlays
+23:02:10 E2-s231 exit=0, epochs logged: 153 (expect 153)
+23:02:10 === E3-s231: starting
+23:40:23 best epoch 122: val ski PCK@0.1 92.29452054794521; 20 overlays
+23:40:23 E3-s231 exit=0, epochs logged: 153 (expect 153)
+23:40:23 === E4-s231: starting
+00:18:16 best epoch 148: val ski PCK@0.1 91.0958904109589; 20 overlays
+00:18:16 E4-s231 exit=0, epochs logged: 153 (expect 153)
+00:18:16 === evaluate E1-s230 (val, crop-error set)
+00:18:27 === evaluate E1-s231 (val, crop-error set)
+00:18:37 === evaluate E2-s230 (val, crop-error set)
+00:18:48 === evaluate E2-s231 (val, crop-error set)
+00:18:58 === evaluate E3-s230 (val, crop-error set)
+00:19:09 === evaluate E3-s231 (val, crop-error set)
+00:19:19 === evaluate E4-s230 (val, crop-error set)
+00:19:29 === evaluate E4-s231 (val, crop-error set)
+2026-10-27 00:19:39 === D21_DONE

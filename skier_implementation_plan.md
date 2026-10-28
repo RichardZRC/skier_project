@@ -23,10 +23,10 @@ What's left needs the GPU or Ruichao, plus SkiTB's frame rate for each sequence.
 | --- | --- | --- | --- |
 | 1 | Done | ~~Overlay review (1F)~~ passed 2026-10-24; ~~alignment check (1G)~~ exact, offset 0 (2026-10-26); ~~smoke tests (1H)~~ pose 2026-10-24, tracker 2026-10-26 (works, but drifts to the broadcast logo after about 3 s); readiness note (1I) | — |
 | 2 | Done | ~~Freeze the split~~ **frozen 2026-10-24** with the evaluation protocol (D19) | — |
-| 3 | Done | ~~MMPose cross-check~~ passed 2026-10-24 (mean 0.014 px, max 1.19 px; `results/step3/crosscheck.json`); ~~E0 on val~~ body PCK@0.1 95.1% (2026-10-24); SiamFC on SkiTB val (adapter filled in 2026-10-26; running) | — (SkiTB on the laptop and verified; frame rates settled, D22) |
-| 4 | Done | Replays of the pilot segments; τ/k grid on SkiTB val (per-sequence fps, D22) | Tracker output on SkiTB val (running) |
+| 3 | Done | ~~MMPose cross-check~~ passed 2026-10-24 (mean 0.014 px, max 1.19 px; `results/step3/crosscheck.json`); ~~E0 on val~~ body PCK@0.1 95.1% (2026-10-24); ~~SiamFC on SkiTB val~~ done 2026-10-26: pooled IoU 0.363, AUC 0.364, failure episodes in 40 of 75 clips (`results/step3/skitb_val_tracking_summary.json`) | — |
+| 4 | Done | ~~τ/k grid on SkiTB val~~ done 2026-10-26 (`results/step4/grid_val.csv`; review set rendered); choose the replay defaults; optional: replays of the pilot segments | Ruichao: replay defaults (τ, k) |
 | 5 | Done | ~~Tiny overfit~~ passed (300-epoch diagnostic: ski 100%) → ~~profile~~ 0.171 s/step, 2.9 GB, ~0.21 h; batch 16 fits (2026-10-24) → ~~full E1~~ done 2026-10-24: val ski PCK@0.1 89.5%, body 96.9% (`results/step5/E1_*`) | — |
-| 6 | Done | ~~Crop-error set~~ frozen 2026-10-24 (`1e9c0e1c9e7e…`); ~~train E2–E4; evaluate; compare~~ done 2026-10-24 (rule picks E1, but runs are confounded by convergence: `results/step6/diagnostics.md`); D20 trial done 2026-10-25 (longer schedule fixes it; seed variance is large); rerun E1–E4 at 150 epochs × 2 seeds; choose the recipe | Ruichao: approve the rerun (D21) |
+| 6 | Done | ~~Crop-error set~~ frozen 2026-10-24 (`1e9c0e1c9e7e…`); ~~train E2–E4; evaluate; compare~~ done 2026-10-24 (rule picks E1, but runs are confounded by convergence: `results/step6/diagnostics.md`); D20 trial done 2026-10-25 (longer schedule fixes it; seed variance is large); ~~rerun E1–E4 at 150 epochs × 2 seeds~~ done 2026-10-27 (D21; the rule picks E2 on the seed means, and on each seed: `results/step6/d21/`); choose the recipe | Ruichao: choose the recipe |
 | 7–8 | Not started | — | Plan-mode plan first. Step 7's prerequisites (1G, the first GPU session) are done; it waits for the recipe choice and the tracker on SkiTB val |
 
 **Possible now, on the Mac, no GPU:**
@@ -567,6 +567,10 @@ Provisional target, not a promise: at least 95% of visible ski endpoints kept on
 > - `configs/pose/e2–e4.yaml`; `make_crop_error_set.py` (val, three levels); `eval_pose.py` (clean, strata, crop-error, cut-off share); `compare_experiments.py` (table, per-joint deltas, and the D16 selection rule); `show_augmentations.py` (pilot sheets); `train_pose.py --seed`.
 > - **Changed from the list below:** follow-cam is not a Step 6 stratum (D11/D16), and the selection rule is pre-registered (D16).
 > - 44 new tests; mutation check 10/10 caught. The pilot augmentation sheets were checked visually.
+>
+> **Status, 2026-10-27: runs done; the recipe choice is Ruichao's.**
+> - The 50-epoch E1–E4 comparison (2026-10-24) was confounded by convergence (`results/step6/diagnostics.md`); the D20 trial showed 150 fine-tune epochs fix it and that seed variance is large.
+> - **D21:** E1–E4 rerun at 150 fine-tune epochs × seeds 230/231, compared on the seed means (`compare_experiments.py` now pools seeds). D16's rule picks **E2** (crop jitter): val ski PCK@0.1 93.1 vs. E1 91.9, body 95.5 vs. 95.2; each seed alone also picks E2. Tables: `results/step6/d21/`.
 
 **Research question:** does targeted augmentation improve ski landmarks and robustness to imperfect crops, without materially hurting body accuracy?
 

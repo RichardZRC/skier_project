@@ -1,6 +1,7 @@
 """D20 readout: per-joint PCK@0.1 of each run's best.pt on training images (no augmentation) and clean val.
 
 Usage: python trial_eval.py E1 E1-seed231 E3 E3-ft150   (folders under $SKIER_RESULTS/pose/)
+       python trial_eval.py --out=PATH.json d21/E1-s230 ...   (D21 check; default output $SKIER_RESULTS/pose/trial_d20.json)
 Training and val images only; never test. A run "learns the tails" if both training-image tail PCKs are >= 60% (D20).
 """
 import json
@@ -49,9 +50,12 @@ def pck(run: str, part: str) -> dict:
 
 
 runs = sys.argv[1:]
+out_path = R / "trial_d20.json"
+if runs and runs[0].startswith("--out="):
+    out_path = Path(runs.pop(0).split("=", 1)[1])
 res = {run: {p: pck(run, p) for p in ("train", "val")} for run in runs}
 w = 9
-print(f"{'joint':<16}" + "".join(f"{r[:w] + ' tr':>{w + 4}}{r[:w] + ' val':>{w + 5}}" for r in runs))
+print(f"{'joint':<16}" + "".join(f"{Path(r).name[:w] + ' tr':>{w + 4}}{Path(r).name[:w] + ' val':>{w + 5}}" for r in runs))
 for name in [schema.names[j] for j in joints] + ["ski", "body"]:
     print(f"{name:<16}" + "".join(f"{res[r]['train'][name]:{w + 4}.1%}{res[r]['val'][name]:{w + 5}.1%}" for r in runs))
 print(f"{'best epoch':<16}" + "".join(f"{res[r]['train']['best_epoch']:>{2 * w + 9}d}" for r in runs))
@@ -61,5 +65,5 @@ for r in runs:
     learns = t["ski_tail_right"] >= TAIL_THRESHOLD and t["ski_tail_left"] >= TAIL_THRESHOLD
     print(f"{r}: training-image tails {t['ski_tail_right']:.1%} / {t['ski_tail_left']:.1%} -> "
           f"{'LEARNS the tails' if learns else 'FAILS on the tails'} (D20 threshold {TAIL_THRESHOLD:.0%})")
-json.dump(res, open(R / "trial_d20.json", "w"), indent=2)
-print(f"wrote {R / 'trial_d20.json'}")
+json.dump(res, open(out_path, "w"), indent=2)
+print(f"wrote {out_path}")

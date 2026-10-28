@@ -26,7 +26,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 ## Environment
 
-- Run the tests with `.venv/bin/python -m pytest -q`. Currently **255 passed, 9 skipped**: 6 `torch` and 3 `stack` tests run on the GPU machine, where all 264 must pass.
+- Run the tests with `.venv/bin/python -m pytest -q`. Currently **259 passed, 9 skipped**: 6 `torch` and 3 `stack` tests run on the GPU machine, where all 268 must pass.
   - Markers: `torch` needs PyTorch; `stack` needs the pinned torch, mmcv and mmpose; `gpu` needs CUDA.
 - **Paths:** code reads `SKIER_DATA` (default `~/skier_data`) and `SKIER_RESULTS` (default `~/skier_results`) through `skier.paths`. Never hard-code absolute paths.
 - **Data on this Mac:**
