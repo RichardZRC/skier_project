@@ -51,7 +51,11 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
 3. ~~**Copy SkiTB to the laptop**~~ Done and verified 2026-10-26. Optional: delete the unused `FS/` and `JP/` there.
 4. ~~**The SkiTB frame rate of each sequence**~~ Settled as D22 (2026-10-26).
 5. ~~**Choose the recipe** and the **replay defaults**~~ Done 2026-10-27 (D23): E2; τ 0.2 s, k 2.5.
-5a. **Step 7 review (about 1 h):**
+5b. **The test run (Step 8):**
+    - The code is done and the val trial passed.
+    - Needs, from Ruichao: commit and push; 7b yes or no (default no); Windows Update paused; the go-ahead.
+    - Then `bash results/step8/run_final.sh test` in tmux, about 1 h.
+5a. **Step 7 review (about 1 h, optional):** Ruichao has no time for it. The report uses the automatic failure hints and says so.
     - Watch the demos in `\\wsl$\Ubuntu-22.04\home\ruichaoz\skier_results\integration\clips\`.
     - Fill in the `category` column of `results/step7/failure_review.csv`, using the sheets in `...\integration\failure_review\`.
     - Then decide whether to run 7b (STARK-ST50; needs a new venv and downloads).
@@ -412,6 +416,31 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
         - 2 are scale drift (tracker box 8–10× the skier's, so the skier is small in the crop);
         - 1 is a partial cut-off.
       - **Waiting on Ruichao:** watch the demos and sort the review CSV's `category` column (plan §12 table); decide on 7b.
+- [x] **Step 8 code** (2026-10-28, plan approved the same day; D25 recorded before any test number):
+      - **`eval/bootstrap.py`:** a cluster bootstrap. Segments are resampled within videos for Ski 2DPose and sequences for SkiTB (D25).
+      - **`eval/pose_metrics.sample_hits`:** per-sample hits; `pck()` now sums it.
+      - **`eval/skitb_official.py`:** a port of the toolkit's F, Pr, Re and GSR. It matches the real toolkit `report()` to 1e-12 in a laptop-only test.
+      - **`make_replay.py --evaluate`:** replays a whole partition, with landmark and ski-end containment on Ski 2DPose segments.
+      - **`report/tables.py` and `make_tables.py`:** rebuild every count from saved predictions and **raise if a count differs from what the tool stored**.
+      - **`report/figures.py` and `make_figures.py`:** the charts.
+      - **Test gates added:** E0's evaluation and SkiTB tracking refuse test without `--final-test`.
+      - **`results/step8/run_final.sh val|test`:**
+        - for test, refuses a dirty tree or a `HEAD` that isn't `origin/main`;
+        - writes `freeze.json` first, then runs every step once;
+        - refuses a second run.
+      - 19 new tests (314 on the laptop); mutation check 27/27.
+      - **The toolkit as shipped doesn't run here:** `np.loadtxt(delimiter='\n')` fails on numpy 1.26, and its SC mode looks in `ST/`. Our port and the cross-check work around both. SiamFC's scores are far below the toolkit's lowest confidence threshold of 0.01, so its F is the value with every frame kept.
+- [x] **Val trial of `run_final.sh`** (2026-10-28, about 6 min; `results/step8/val/`):
+      - **Reproduction:** the whole chain reproduces the stored val results, 89 of 89 checks (`check_val_dryrun.py`).
+      - **Toolkit port:** equals the real toolkit `report()` on all 75 val clips, difference 0.0 (`toolkit_crosscheck_val.json`).
+      - **One fix along the way:** the tables' tracking check allowed only 1e-9. The CSV keeps boxes to 3 decimals, which moves pooled IoU by 1e-8, so the tolerance is now 1e-6.
+      - **New on val:**
+        - E2 − E1 ski +1.2 [0.1, 2.3]; with moderate crop error +2.5 [1.5, 3.6];
+        - reference − tracked crop, E2 ski +18.4 [12.5, 25.2];
+        - E2 vs. E1 under the tracker crop, ski +2.4 [1.3, 3.5];
+        - replay ski ends inside 99.4% (834/839), so the provisional ≥ 95% target is met;
+        - SiamFC toolkit F-score 0.384 [0.324, 0.463], GSR 0.485.
+      - **Before test:** commit and push (the script refuses otherwise), 7b yes or no (default no), pause Windows Update, then Ruichao's go-ahead.
 - [ ] **First GPU session (laptop, `docs/laptop_setup.md`):** ~~full `pytest` (torch + stack tests)~~ done → data (Ski 2DPose; the SkiTB val/test subset)
       → cross-check → (freeze split) → E0 → E1 tiny overfit → profile → full E1 → (freeze the crop-error set)
       → E2–E4 → evaluate and compare on val.

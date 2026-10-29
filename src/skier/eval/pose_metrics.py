@@ -38,15 +38,21 @@ def _result(hits: int, total: int) -> dict:
     return {"hits": int(hits), "total": int(total), "pct": 100.0 * hits / total if total else None}
 
 
-def pck(pred_xy, gt_xy, reliable, ref_diag, joint_ids: Sequence[int], thr: float) -> dict:
-    """``{"hits", "total", "pct"}`` over the reliable labels of ``joint_ids``."""
+def sample_hits(pred_xy, gt_xy, reliable, ref_diag, joint_ids: Sequence[int], thr: float) -> tuple[np.ndarray, np.ndarray]:
+    """Per sample: ``(hits [N], totals [N])`` over the reliable labels of ``joint_ids``."""
     pred, gt, rel, diag = _check(pred_xy, gt_xy, reliable, ref_diag)
     j = list(joint_ids)
     dist = np.linalg.norm(pred[:, j] - gt[:, j], axis=-1)  # NaN where the prediction is missing
     counted = rel[:, j]
     with np.errstate(invalid="ignore"):
         hit = counted & np.isfinite(dist) & (dist <= thr * diag[:, None])
-    return _result(hit.sum(), counted.sum())
+    return hit.sum(axis=1), counted.sum(axis=1)
+
+
+def pck(pred_xy, gt_xy, reliable, ref_diag, joint_ids: Sequence[int], thr: float) -> dict:
+    """``{"hits", "total", "pct"}`` over the reliable labels of ``joint_ids``."""
+    hits, totals = sample_hits(pred_xy, gt_xy, reliable, ref_diag, joint_ids, thr)
+    return _result(hits.sum(), totals.sum())
 
 
 def per_joint_pck(pred_xy, gt_xy, reliable, ref_diag, thr: float) -> list[dict]:

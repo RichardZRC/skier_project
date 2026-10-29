@@ -31,7 +31,7 @@ import numpy as np
 from skier.eval.replay_metrics import replay_summary
 from skier.geometry import crop_affine
 from skier.integration.config import IntegrationConfig, config_sha256
-from skier.integration.confidence import tracking_status
+from skier.integration.confidence import replay_status_rows, tracking_status
 from skier.integration.propagation import tracker_crop_boxes
 from skier.io_utils import ensure_dir, read_json, sha256_file, write_json
 from skier.paths import configs_dir, data_root, repo_root, results_root
@@ -108,7 +108,7 @@ def process_clip(frames_factory: Callable[[], Iterable], rows: Sequence[dict], f
                                        batch_size)
     idx = np.array([r["frame_index"] for r in rows])
     ts = idx / fps
-    drive = ["lost" if s == "low_conf" and icfg.replay_uses_status else r["status"] for r, s in zip(rows, status)]
+    drive = [r["status"] for r in replay_status_rows(rows, icfg)]
     track = run_controller(boxes_of(rows), ts, frame_size, rcfg, drive, [r["score"] for r in rows])
     finite = np.isfinite(xy).all(axis=2)
     overlay = [s != "low_conf" and bool(finite[i].any()) for i, s in enumerate(status)]

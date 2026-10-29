@@ -277,3 +277,21 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
     - So the loss is tracker drift, not a train/inference crop mismatch.
   - **By status**, E2 ski: `low_conf` 57.9 (70 labels), ok 81.8 (191).
   - Step 8 runs these settings unchanged on test. A later tracker change (7b) needs its own decision and a rerun of the confidence check.
+
+## D25 — Bootstrap unit: segments within videos (Ski 2DPose), sequences (SkiTB) (2026-10-28)
+- Choice, recorded before any test number exists:
+  - **Ski 2DPose** (pose, propagation): resample **segments with replacement, within each source video** (a stratified cluster bootstrap). The videos are held fixed, so an interval is conditional on these videos. Per-video rows always appear next to the pooled number, so the between-video spread stays visible.
+  - **SkiTB** (tracking, replay): resample **sequences** with replacement; each sequence brings all its SC clips.
+  - **Settings:** 10,000 resamples, seed 230, percentile 95% intervals. The statistic is recomputed from pooled counts (hits and totals, IoU sums and frame counts) in each resample. The toolkit F-score is recomputed as the max of the mean curve.
+  - **Seeds:** E1 and E2 are pooled over seeds 230 and 231 inside every resample (D21). The seed spread is reported separately as per-seed values, never mixed into the interval (plan §13).
+  - Code: `skier.eval.bootstrap`.
+- Reason:
+  - The protocol (`docs/evaluation_protocol.md`: "a bootstrap over source videos") assumed more videos. Test has 3, and `uLW74013Wp0` holds 1,764 of the 2,197 reliable ski labels.
+  - Three videos give only 10 distinct resamples, so a video-level interval would mostly say which video was drawn.
+  - Test has 43 segments, val 32. Segments are separate camera sequences, the closest independent unit below the video.
+  - The change is made for the count of units, never because of a score; test is still unseen.
+  - Ruichao approved the Step 8 plan containing it on 2026-10-28.
+- Effect on evaluation:
+  - Every paired difference in the report gets a segment- or sequence-level 95% interval, labelled as such.
+  - The video-level spread is shown through the per-video rows instead.
+  - The protocol's bootstrap line is superseded by this decision.

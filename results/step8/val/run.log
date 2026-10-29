@@ -1,0 +1,19 @@
+=== 2026-10-28 23:14:42 run_final val at 7d96f02; k_pose 1.1
+freeze.json: 14 files hashed, commit 7d96f02
+=== pose (val)
+E1-s230 val: body PCK@0.1 95.6% (3593/3759), ski 92.2% (1615/1752) -> /home/ruichaoz/skier_results/final/val/pose/E1-s230
+E1-s231 val: body PCK@0.1 94.8% (3562/3759), ski 91.6% (1605/1752) -> /home/ruichaoz/skier_results/final/val/pose/E1-s231
+E2-s230 val: body PCK@0.1 95.1% (3573/3759), ski 92.5% (1621/1752) -> /home/ruichaoz/skier_results/final/val/pose/E2-s230
+E2-s231 val: body PCK@0.1 95.9% (3605/3759), ski 93.7% (1642/1752) -> /home/ruichaoz/skier_results/final/val/pose/E2-s231
+E0 val: body (shared joints) PCK@0.1 95.1% (2517/2647) → /home/ruichaoz/skier_results/final/val/pose/E0
+=== SkiTB tracking (val)
+75 clips, pooled mean IoU 0.3632059286804029, AUC 0.3644358478401032 → /home/ruichaoz/skier_results/final/val/tracking/skitb
+=== Ski 2DPose: alignment, tracking, propagation (k_pose 1.1)
+32/32 segments usable → /home/ruichaoz/skier_results/final/val/propagation
+tracked 32 val segments → /home/ruichaoz/skier_results/final/val/tracking/ski2dpose
+k_pose rule (E2): pick 1.1
+261 scored labels in 32 segments → /home/ruichaoz/skier_results/final/val/propagation
+=== replay (val)
+replay over 107 clips (val) → /home/ruichaoz/skier_results/final/val/replay
+=== tables and figures
+error: tracking: rebuilt numbers differ from /home/ruichaoz/skier_results/final/val/tracking/skitb/summary.json

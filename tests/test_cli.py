@@ -7,6 +7,7 @@ from skier import envcheck, splits
 from skier.data import alignment, audit, overlays
 from skier.integration import confidence, process, propagation
 from skier.paths import repo_root
+from skier.report import figures, tables
 from skier.pose import aug_preview, compare, crop_error, crosscheck, eval_generic, evaluate, train as pose_train
 from skier.pose import smoke as pose_smoke
 from skier.replay import run as replay_run
@@ -33,6 +34,8 @@ TOOLS = {
     "check_tracker_confidence": confidence,
     "eval_propagation": propagation,
     "process_clip": process,
+    "make_tables": tables,
+    "make_figures": figures,
 }
 
 

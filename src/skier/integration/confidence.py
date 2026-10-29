@@ -70,6 +70,16 @@ def tracking_status(rows: Sequence[dict], cfg: IntegrationConfig) -> list[str]:
     return out
 
 
+def _as_lost(rows: Sequence[dict], status: Sequence[str]) -> list[dict]:
+    return [{**r, "status": "lost"} if s == "low_conf" else r for r, s in zip(rows, status)]
+
+
+def replay_status_rows(rows: Sequence[dict], cfg: IntegrationConfig) -> list[dict]:
+    """The rows as the replay controller sees them: low_conf frames become ``lost`` if ``replay_uses_status`` (D24)."""
+    cfg.require("conf_signal", "replay_uses_status")
+    return _as_lost(rows, tracking_status(rows, cfg)) if cfg.replay_uses_status else list(rows)
+
+
 def _finite(values, failure) -> tuple[np.ndarray, np.ndarray]:
     v, f = np.asarray(values, dtype=np.float64), np.asarray(failure, dtype=bool)
     keep = np.isfinite(v)
@@ -145,8 +155,7 @@ def replay_gating_check(clips, rcfg, icfg: IntegrationConfig, schema) -> dict:
                 "area_fraction_mean": mean(lambda m: m["zoom"]["area_fraction_mean"])}
 
     statuses = [tracking_status(c.rows, icfg) for c in clips]
-    gated = [dataclasses.replace(c, rows=[{**r, "status": "lost" if s == "low_conf" else r["status"]}
-                                          for r, s in zip(c.rows, st)]) for c, st in zip(clips, statuses)]
+    gated = [dataclasses.replace(c, rows=_as_lost(c.rows, st)) for c, st in zip(clips, statuses)]
     n = sum(len(st) for st in statuses)
     plain, with_status = summary(clips), summary(gated)
     a, b = plain["box_containment_mean"], with_status["box_containment_mean"]

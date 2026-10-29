@@ -81,8 +81,8 @@ class Clip:
     visible: np.ndarray  # [T] bool
 
 
-def parse_boxes_txt(path: str | Path) -> np.ndarray:
-    """Rows of ``x, y, w, h`` (comma and/or whitespace separated) -> ``[T, 4]`` xyxy."""
+def parse_boxes_xywh(path: str | Path) -> np.ndarray:
+    """Rows of ``x, y, w, h`` (comma and/or whitespace separated) -> ``[T, 4]`` as in the file."""
     rows = []
     for n, line in enumerate(Path(path).read_text().splitlines(), 1):
         if not line.strip():
@@ -90,9 +90,14 @@ def parse_boxes_txt(path: str | Path) -> np.ndarray:
         parts = [p for p in re.split(r"[,\s]+", line.strip()) if p]
         if len(parts) != 4:
             raise ValueError(f"{path}:{n}: expected 4 numbers (x y w h), got {line!r}")
-        x, y, w, h = map(float, parts)
-        rows.append([x, y, x + w, y + h])
+        rows.append([float(p) for p in parts])
     return np.array(rows, dtype=np.float64).reshape(-1, 4)
+
+
+def parse_boxes_txt(path: str | Path) -> np.ndarray:
+    """Rows of ``x, y, w, h`` -> ``[T, 4]`` xyxy."""
+    b = parse_boxes_xywh(path)
+    return np.column_stack([b[:, 0], b[:, 1], b[:, 0] + b[:, 2], b[:, 1] + b[:, 3]]).reshape(-1, 4)
 
 
 def _lines(path: Path) -> list[str]:

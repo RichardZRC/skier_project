@@ -67,14 +67,18 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--device", default="cuda:0")
     p.add_argument("--batch-size", type=int, default=32)
     p.add_argument("--warmup-batches", type=int, default=2)
+    p.add_argument("--final-test", action="store_true", help="allow test/followcam (Step 8, once)")
     p.add_argument("--out", type=Path, help="default: $SKIER_RESULTS/pose/E0/<partition>")
     return p
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    if args.partition == "test":
-        print("note: evaluating the TEST partition; this should happen once, in Step 8", file=sys.stderr)
+    from skier.pose.crop_error import FINAL_ONLY
+
+    if args.partition in FINAL_ONLY and not args.final_test:
+        print(f"error: {args.partition!r} is evaluated once, in Step 8; pass --final-test then", file=sys.stderr)
+        return 1
     manifest = read_json(args.split)
     schema = load_schema()
     s2d = data_root() / "ski2dpose"

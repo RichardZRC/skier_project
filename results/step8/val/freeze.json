@@ -1,0 +1,63 @@
+{
+ "partition": "val",
+ "git_commit": "7d96f02b0376bddc5c38e4102abcf17bd60fbd5d",
+ "split_content_sha256": "46bd127b0e51c1293859c7ab86dab1f0759511fbbdfd9dad270a632443bb2e98",
+ "files": {
+  "pose_split": {
+   "path": "data/manifests/pose_split_v1.json",
+   "sha256": "afc93e1f0216733bc789b2c361af0469872acd4e25941b095c4bc22a578a7eef"
+  },
+  "skitb_split": {
+   "path": "/home/ruichaoz/skier_data/skitb/AL/AL_train_val_test_athlete_60-40.json",
+   "sha256": "0a15c719bad0dd98e854c267819b6d2895cdb240401daa8d162ae2d4b500926d"
+  },
+  "fps_table": {
+   "path": "data/manifests/skitb_fps_v1.csv",
+   "sha256": "f92afbbb8471b779b404c85d8ba261b9570d84e18f3065ebdf1ab221bcc687cc"
+  },
+  "integration_config": {
+   "path": "configs/integration/default.yaml",
+   "sha256": "719f58749a163bb93e40b29302c577e7a4e21d27b5cccc49e403452d5e4792a0"
+  },
+  "replay_config": {
+   "path": "configs/replay/default.yaml",
+   "sha256": "281570fe7fef1caa328af07e38adb376691200c9c771818f49fd7ce0b06a77ba"
+  },
+  "pose_config_e1": {
+   "path": "configs/pose/e1.yaml",
+   "sha256": "046768f6f9343af107c0f2c0d01534a09e8e5cbd8a76bd35b087afc7f6f6da0a"
+  },
+  "pose_config_e2": {
+   "path": "configs/pose/e2.yaml",
+   "sha256": "2344e7d1ff2c2e306f2fcea4cfdd79a4fcc98f1ab9b910d6ba284125242b00cd"
+  },
+  "hrnet_config": {
+   "path": "/home/ruichaoz/skier_data/pretrained/td-hm_hrnet-w32_8xb64-210e_coco-256x192.py",
+   "sha256": "d9d456f7a04765c6bf539a10c04af52e91bb23483791f292b662e85cd2e8ec28"
+  },
+  "coco_checkpoint": {
+   "path": "/home/ruichaoz/skier_data/pretrained/td-hm_hrnet-w32_8xb64-210e_coco-256x192-81c58e40_20220909.pth",
+   "sha256": "81c58e403a1ba13a741eb02ba790b5b78bff2a45a9390feebf875f43b8502c8f"
+  },
+  "siamfc_weights": {
+   "path": "/home/ruichaoz/skier_data/vendor/siamfc_pytorch/pretrained/siamfc_alexnet_e50.pth",
+   "sha256": "2b3df5c66c814f3a3e0ade83c8fd68ff9c714574a4dc17292317ee11f7e717f6"
+  },
+  "checkpoint_E1-s230": {
+   "path": "/home/ruichaoz/skier_results/pose/d21/E1-s230/best.pt",
+   "sha256": "e9639ede57bbc184c2dc19e86823a2e4b77acc30b65638d29ab519551b1798c1"
+  },
+  "checkpoint_E1-s231": {
+   "path": "/home/ruichaoz/skier_results/pose/d21/E1-s231/best.pt",
+   "sha256": "9f2707ae9712ea991e11715ee21bfe44195737827a913a90f5e7512279875399"
+  },
+  "checkpoint_E2-s230": {
+   "path": "/home/ruichaoz/skier_results/pose/d21/E2-s230/best.pt",
+   "sha256": "1385fe1615ca965f89e13891732964ef222c87df0aef82643111664cf77b1b71"
+  },
+  "checkpoint_E2-s231": {
+   "path": "/home/ruichaoz/skier_results/pose/d21/E2-s231/best.pt",
+   "sha256": "abc888a45da5b899c15ef632ffe8c0931a8f1d4140df20c3d972326bd7053423"
+  }
+ }
+}

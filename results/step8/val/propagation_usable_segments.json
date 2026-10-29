@@ -1,0 +1,520 @@
+{
+  "partition": "val",
+  "segments": [
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 3,
+      "n_own_frame": 3,
+      "n_verified": 3,
+      "segment_id": "0",
+      "usable": true,
+      "video_id": "SVYdH614G_M"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 4,
+      "n_own_frame": 4,
+      "n_verified": 4,
+      "segment_id": "1",
+      "usable": true,
+      "video_id": "SVYdH614G_M"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 6,
+      "n_own_frame": 6,
+      "n_verified": 6,
+      "segment_id": "2",
+      "usable": true,
+      "video_id": "SVYdH614G_M"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 4,
+      "n_own_frame": 4,
+      "n_verified": 2,
+      "segment_id": "3",
+      "usable": true,
+      "video_id": "SVYdH614G_M"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 6,
+      "n_own_frame": 6,
+      "n_verified": 6,
+      "segment_id": "4",
+      "usable": true,
+      "video_id": "SVYdH614G_M"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 3,
+      "n_own_frame": 3,
+      "n_verified": 2,
+      "segment_id": "5",
+      "usable": true,
+      "video_id": "SVYdH614G_M"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 6,
+      "n_own_frame": 6,
+      "n_verified": 6,
+      "segment_id": "6",
+      "usable": true,
+      "video_id": "SVYdH614G_M"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 6,
+      "n_own_frame": 6,
+      "n_verified": 6,
+      "segment_id": "7",
+      "usable": true,
+      "video_id": "SVYdH614G_M"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 4,
+      "n_own_frame": 4,
+      "n_verified": 4,
+      "segment_id": "0",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 10,
+      "n_own_frame": 10,
+      "n_verified": 9,
+      "segment_id": "1",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 5,
+      "n_own_frame": 5,
+      "n_verified": 0,
+      "segment_id": "10",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 8,
+      "n_own_frame": 8,
+      "n_verified": 8,
+      "segment_id": "11",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 9,
+      "n_own_frame": 9,
+      "n_verified": 9,
+      "segment_id": "12",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 12,
+      "n_own_frame": 12,
+      "n_verified": 12,
+      "segment_id": "13",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 13,
+      "n_own_frame": 13,
+      "n_verified": 13,
+      "segment_id": "14",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 6,
+      "n_own_frame": 6,
+      "n_verified": 0,
+      "segment_id": "15",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 7,
+      "n_own_frame": 7,
+      "n_verified": 7,
+      "segment_id": "16",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 11,
+      "n_own_frame": 11,
+      "n_verified": 11,
+      "segment_id": "17",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 16,
+      "n_own_frame": 16,
+      "n_verified": 16,
+      "segment_id": "18",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 11,
+      "n_own_frame": 11,
+      "n_verified": 11,
+      "segment_id": "19",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 15,
+      "n_own_frame": 15,
+      "n_verified": 13,
+      "segment_id": "2",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 16,
+      "n_own_frame": 16,
+      "n_verified": 15,
+      "segment_id": "20",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 33,
+      "n_own_frame": 33,
+      "n_verified": 33,
+      "segment_id": "3",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 10,
+      "n_own_frame": 10,
+      "n_verified": 10,
+      "segment_id": "4",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 2,
+      "n_own_frame": 2,
+      "n_verified": 2,
+      "segment_id": "5",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 20,
+      "n_own_frame": 20,
+      "n_verified": 18,
+      "segment_id": "6",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 18,
+      "n_own_frame": 18,
+      "n_verified": 16,
+      "segment_id": "7",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 12,
+      "n_own_frame": 12,
+      "n_verified": 12,
+      "segment_id": "8",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 1,
+      "n_own_frame": 1,
+      "n_verified": 1,
+      "segment_id": "9",
+      "usable": true,
+      "video_id": "qxfgw1Kd98A"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 5,
+      "n_own_frame": 5,
+      "n_verified": 5,
+      "segment_id": "0",
+      "usable": true,
+      "video_id": "v7PADD2_I00"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 5,
+      "n_own_frame": 5,
+      "n_verified": 5,
+      "segment_id": "1",
+      "usable": true,
+      "video_id": "v7PADD2_I00"
+    },
+    {
+      "fps": 25.0,
+      "frame_h": 720,
+      "frame_w": 1280,
+      "image_sizes": "1280x720",
+      "n_labeled": 6,
+      "n_own_frame": 6,
+      "n_verified": 6,
+      "segment_id": "2",
+      "usable": true,
+      "video_id": "v7PADD2_I00"
+    }
+  ],
+  "split_sha256": "46bd127b0e51c1293859c7ab86dab1f0759511fbbdfd9dad270a632443bb2e98",
+  "usable": [
+    [
+      "SVYdH614G_M",
+      "0"
+    ],
+    [
+      "SVYdH614G_M",
+      "1"
+    ],
+    [
+      "SVYdH614G_M",
+      "2"
+    ],
+    [
+      "SVYdH614G_M",
+      "3"
+    ],
+    [
+      "SVYdH614G_M",
+      "4"
+    ],
+    [
+      "SVYdH614G_M",
+      "5"
+    ],
+    [
+      "SVYdH614G_M",
+      "6"
+    ],
+    [
+      "SVYdH614G_M",
+      "7"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "0"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "1"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "10"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "11"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "12"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "13"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "14"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "15"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "16"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "17"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "18"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "19"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "2"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "20"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "3"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "4"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "5"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "6"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "7"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "8"
+    ],
+    [
+      "qxfgw1Kd98A",
+      "9"
+    ],
+    [
+      "v7PADD2_I00",
+      "0"
+    ],
+    [
+      "v7PADD2_I00",
+      "1"
+    ],
+    [
+      "v7PADD2_I00",
+      "2"
+    ]
+  ]
+}

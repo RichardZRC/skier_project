@@ -171,6 +171,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.split_json is None:
             print("error: --skitb-root needs --split-json", file=sys.stderr)
             return 1
+        if args.partition in FINAL_ONLY and not args.final_test:
+            print(f"error: {args.partition!r} is tracked once, in Step 8; pass --final-test then", file=sys.stderr)
+            return 1
         if args.fps is not None and args.fps_table is not None:
             print("error: give --fps or --fps-table, not both", file=sys.stderr)
             return 1

@@ -1,0 +1,23 @@
+{
+ "partition": "val",
+ "n_clips": 75,
+ "max_abs_diff_per_clip": 0.0,
+ "max_abs_diff_gsr": 0.0,
+ "max_abs_diff_overall": 0.0,
+ "ours_overall": {
+  "f_score": 0.3836854050197697,
+  "precision": 0.3808284819328598,
+  "recall": 0.38723564808832406,
+  "f_score_thresh": 0.0,
+  "gsr_score": 0.48513355779699324,
+  "n_clips": 75
+ },
+ "toolkit_overall": {
+  "f_score": 0.3836854050197697,
+  "precision": 0.3808284819328598,
+  "recall": 0.38723564808832406,
+  "f_score_thresh": 0.0,
+  "gsr_score": 0.48513355779699324
+ },
+ "toolkit": "vendor SkiTB-toolkit, report() with the two workarounds above"
+}

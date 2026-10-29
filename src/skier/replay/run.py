@@ -108,6 +108,41 @@ def run_clip(clip: ClipInput, frames_factory: Callable[[], Iterable], cfg: Repla
     return metrics
 
 
+EVAL_COLUMNS = ["clip", "source", "sequence", "n_frames", "box_target", "box_containment_mean", "box_containment_min",
+                "frac_fully_inside", "centering_error_mean", "centering_error_p95", "acceleration_mean",
+                "acceleration_p95", "area_fraction_mean", "log_zoom_rate_mean", "body_ski_inside", "body_ski_total",
+                "ski_end_inside", "ski_end_total"]
+
+
+def flat_metrics(m: dict) -> dict:
+    """One ``replay_summary`` as a flat row (``EVAL_COLUMNS`` minus the clip identity)."""
+    lm = m.get("landmark_containment", {})
+    return {"n_frames": m["n_frames"], "box_target": m.get("target"),
+            "box_containment_mean": m.get("box_containment", {}).get("mean"),
+            "box_containment_min": m.get("box_containment", {}).get("min"),
+            "frac_fully_inside": m.get("box_containment", {}).get("frac_fully_inside"),
+            "centering_error_mean": m.get("centering_error", {}).get("mean"),
+            "centering_error_p95": m.get("centering_error", {}).get("p95"),
+            "acceleration_mean": m["acceleration"]["mean"], "acceleration_p95": m["acceleration"]["p95"],
+            "area_fraction_mean": m["zoom"]["area_fraction_mean"], "log_zoom_rate_mean": m["zoom"]["log_zoom_rate_mean"],
+            "body_ski_inside": lm.get("body_ski", {}).get("inside"), "body_ski_total": lm.get("body_ski", {}).get("total"),
+            "ski_end_inside": lm.get("ski_endpoints", {}).get("inside"),
+            "ski_end_total": lm.get("ski_endpoints", {}).get("total")}
+
+
+def evaluate_clips(clips: Sequence[tuple[str, str, ClipInput]], cfg: ReplayConfig, schema: Schema) -> dict:
+    """The partition-wide replay table (plan Step 8): per clip, the replay at ``cfg`` and its τ = 0 baseline.
+
+    ``clips``: ``(source, sequence, clip)``; the sequence is the bootstrap cluster (D25).
+    """
+    rows = {"smoothed": [], "unsmoothed_baseline": []}
+    for source, sequence, c in clips:
+        for key, conf in (("smoothed", cfg), ("unsmoothed_baseline", cfg.unsmoothed())):
+            rows[key].append({"clip": c.name, "source": source, "sequence": sequence,
+                              **flat_metrics(clip_metrics(c, compute_track(c, conf)[1], schema))})
+    return rows
+
+
 def _frame_size_of(img: np.ndarray) -> tuple[float, float]:
     return float(img.shape[1]), float(img.shape[0])
 
@@ -127,14 +162,18 @@ def image_source(frames_dir: Path, files: list[str], fps: float):
     return (lambda: iter(ImageFrames(frames_dir, files, fps))), fps, _frame_size_of(first)
 
 
-def ski2dpose_landmarks(rows, video_id: str, segment_id: str, offset: int = 0):
-    """GT landmarks aligned with tracker rows (labeled frames only; NaN elsewhere) + keypoints for drawing."""
-    from skier.data.ski2dpose import load_records
-    from skier.paths import data_root
+def ski2dpose_landmarks(rows, video_id: str, segment_id: str, offset: int = 0, records=None):
+    """GT landmarks aligned with tracker rows (labeled frames only; NaN elsewhere) + keypoints for drawing.
 
-    s2d = data_root() / "ski2dpose"
-    recs = [r for r in load_records(s2d / "labels/ski2dpose_labels.json", s2d / "images")
-            if r.source_video_id == video_id and r.segment_id == segment_id and not r.excluded]
+    ``records``: already loaded Ski 2DPose records (default: load them).
+    """
+    if records is None:
+        from skier.data.ski2dpose import load_records
+        from skier.paths import data_root
+
+        s2d = data_root() / "ski2dpose"
+        records = load_records(s2d / "labels/ski2dpose_labels.json", s2d / "images")
+    recs = [r for r in records if r.source_video_id == video_id and r.segment_id == segment_id and not r.excluded]
     pos = {r["frame_index"]: i for i, r in enumerate(rows)}
     xy = np.full((len(rows), 24, 2), np.nan)
     mask = np.zeros((len(rows), 24), dtype=bool)
@@ -170,7 +209,83 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--skitb-root", type=Path)
     g.add_argument("--split-json", type=Path)
     g.add_argument("--partition", default="val")
+    e = p.add_argument_group("evaluate a whole partition at the chosen settings (Step 8)")
+    e.add_argument("--evaluate", action="store_true",
+                   help="SkiTB clips (--track-dir, --skitb-root, --split-json) and/or Ski 2DPose segments "
+                        "(--ski2dpose-track-dir); low_conf frames handled as in the integration config (D24)")
+    e.add_argument("--ski2dpose-track-dir", type=Path, help="CSVs from run_tracker.py --ski2dpose-partition")
+    e.add_argument("--pose-split", type=Path, help="default: data/manifests/pose_split_v1.json")
+    e.add_argument("--integration-config", type=Path, help="default: configs/integration/default.yaml")
+    e.add_argument("--final-test", action="store_true", help="allow test/followcam (Step 8, once)")
     return p
+
+
+def evaluate_main(args, cfg: ReplayConfig, schema: Schema, skitb_fps) -> int:
+    """``--evaluate``: per-clip replay metrics over a whole partition, written as CSV and JSON."""
+    from skier.integration.confidence import replay_status_rows
+    from skier.integration.config import IntegrationConfig
+    from skier.io_utils import read_json
+    from skier.pose.crop_error import FINAL_ONLY
+
+    if args.partition in FINAL_ONLY and not args.final_test:
+        print(f"error: {args.partition!r} is used once, in Step 8; pass --final-test then", file=sys.stderr)
+        return 1
+    skitb = bool(args.track_dir and args.skitb_root and args.split_json)
+    if not skitb and args.ski2dpose_track_dir is None:
+        print("error: --evaluate needs --track-dir with --skitb-root and --split-json, and/or --ski2dpose-track-dir",
+              file=sys.stderr)
+        return 1
+    icfg = IntegrationConfig.from_yaml(args.integration_config or configs_dir() / "integration" / "default.yaml")
+    try:
+        icfg.require("conf_signal", "replay_uses_status")
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    clips = []
+    if skitb:
+        from skier.data.skitb import frame_file, load_skitb_clips
+
+        for c in load_skitb_clips(args.skitb_root, args.split_json, args.partition):
+            csv = args.track_dir / f"{c.sequence_id}__{c.clip_id}.csv"
+            if not csv.is_file():
+                print(f"error: no track CSV for SkiTB clip {c.sequence_id}/{c.clip_id} in {args.track_dir}", file=sys.stderr)
+                return 1
+            rows = replay_status_rows(read_track_csv(csv), icfg)
+            pos = np.array([r["frame_index"] for r in rows])
+            gt = np.where(c.visible[pos][:, None], c.boxes_xyxy[pos], np.nan)
+            first = cv2.imread(str(c.frames_dir / frame_file(c.frame_files[0])))
+            clips.append(("skitb", c.sequence_id,
+                          ClipInput(csv.stem, rows, skitb_fps(c.sequence_id), _frame_size_of(first), gt)))
+    if args.ski2dpose_track_dir is not None:
+        from skier.data.alignment import locate_segment
+        from skier.data.ski2dpose import load_records
+        from skier.paths import data_root
+        from skier.splits import apply_split
+
+        s2d = data_root() / "ski2dpose"
+        records = load_records(s2d / "labels/ski2dpose_labels.json", s2d / "images")
+        apply_split(records, read_json(args.pose_split or repo_root() / "data/manifests/pose_split_v1.json"))
+        for vid, seg in sorted({(r.source_video_id, r.segment_id) for r in records
+                                if r.split == args.partition and not r.excluded}):
+            csv = args.ski2dpose_track_dir / f"{vid}__{seg}.csv"
+            if not csv.is_file():
+                print(f"error: no track CSV for Ski 2DPose segment {vid}/{seg} in {args.ski2dpose_track_dir}",
+                      file=sys.stderr)
+                return 1
+            rows = replay_status_rows(read_track_csv(csv), icfg)
+            _, fps, size = video_source(locate_segment(s2d / "videos", vid, seg)[0], None)
+            landmarks, _ = ski2dpose_landmarks(rows, vid, seg, records=records)
+            clips.append(("ski2dpose", f"{vid}/{seg}", ClipInput(csv.stem, rows, fps, size, None, landmarks)))
+    result = evaluate_clips(clips, cfg, schema)
+    out = ensure_dir(args.out or results_root() / "replay" / f"eval-{args.partition}")
+    for key, rows in result.items():
+        write_csv(rows, out / f"{key}.csv", EVAL_COLUMNS)
+    write_json({"partition": args.partition, "config": dataclasses.asdict(cfg),
+                "integration_config": dataclasses.asdict(icfg),
+                "n_clips": {s: sum(c[0] == s for c in clips) for s in ("skitb", "ski2dpose")}, **result},
+               out / "replay_eval.json")
+    print(f"replay over {len(clips)} clips ({args.partition}) → {out}")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -190,6 +305,8 @@ def main(argv: list[str] | None = None) -> int:
             return args.fps
         return fps_for(load_fps_table(args.fps_table or repo_root() / FPS_TABLE), sequence_id)
 
+    if args.evaluate:
+        return evaluate_main(args, cfg, schema, skitb_fps)
     if args.grid:
         if not (args.track_dir and args.skitb_root and args.split_json):
             print("error: --grid needs --track-dir, --skitb-root and --split-json", file=sys.stderr)

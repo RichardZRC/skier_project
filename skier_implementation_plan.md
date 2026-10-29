@@ -28,7 +28,7 @@ What's left needs the GPU or Ruichao, plus SkiTB's frame rate for each sequence.
 | 5 | Done | ~~Tiny overfit~~ passed (300-epoch diagnostic: ski 100%) → ~~profile~~ 0.171 s/step, 2.9 GB, ~0.21 h; batch 16 fits (2026-10-24) → ~~full E1~~ done 2026-10-24: val ski PCK@0.1 89.5%, body 96.9% (`results/step5/E1_*`) | — |
 | 6 | Done | ~~Crop-error set~~ frozen 2026-10-24 (`1e9c0e1c9e7e…`); ~~train E2–E4; evaluate; compare~~ done 2026-10-24 (rule picks E1, but runs are confounded by convergence: `results/step6/diagnostics.md`); D20 trial done 2026-10-25 (longer schedule fixes it; seed variance is large); ~~rerun E1–E4 at 150 epochs × 2 seeds~~ done 2026-10-27 (D21; the rule picks E2 on the seed means, and on each seed: `results/step6/d21/`); ~~choose the recipe~~ E2 (D23, 2026-10-27) | — |
 | 7 | Done (core) | ~~Plan, code, val runs~~ done 2026-10-27 (D24: gating on the raw SiamFC score, `k_pose` 1.1; propagation on val: tracker crops cost about 15 body / 18 ski PCK points, nearly all from drift; `results/step7/`); Ruichao's review of the demos and the failure sheet; optional 7b (STARK-ST50) | Ruichao: review; 7b yes/no |
-| 8 | Not started | — | Plan-mode plan first, after the Step 7 review (and 7b if chosen) |
+| 8 | Done (code) | ~~Plan, code (tables, bootstrap D25, toolkit metrics, figures, `run_final.sh`)~~ done 2026-10-28; val trial of `run_final.sh`; then the single test run | Ruichao: 7b yes/no (default no), pause Windows Update, go-ahead for test |
 
 **Possible now, on the Mac, no GPU:**
 1. Overlay review (pilot videos).
@@ -652,6 +652,13 @@ If video alignment failed in Step 1, use the crop-error set as the quantitative 
 ---
 
 ## 13. Step 8 — Final evaluation and report (Weeks 4–5; about 14 h)
+
+> **Status, 2026-10-28: code done; the test run waits for Ruichao's go-ahead.** The plan approved on 2026-10-28 refines this section:
+> - **The bootstrap unit is segments within videos (Ski 2DPose) and sequences (SkiTB),** not videos, because test has only 3 videos (D25).
+> - **The toolkit's official metrics come from a verified port** (`eval/skitb_official.py`), because the shipped toolkit doesn't run on our numpy.
+> - **The replay table gets ski-end containment** from `make_replay.py --evaluate` on the Ski 2DPose segments.
+> - **Every step runs from one script,** `results/step8/run_final.sh val|test`, which writes `freeze.json` first and refuses a second test run.
+> - **The report's demos are the Step 7 val clips,** and the failure categories come from the automatic hints (Ruichao had no time for the manual review).
 
 ### Offline coding block
 - `[CODE]` `scripts/make_tables.py`: pose, tracking and replay tables from saved predictions, with point counts and per-video rows.

@@ -26,7 +26,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 ## Environment
 
-- Run the tests with `.venv/bin/python -m pytest -q`. Currently **285 passed, 10 skipped**: 6 `torch` and 4 `stack` tests run on the GPU machine, where all 295 must pass.
+- Run the tests with `.venv/bin/python -m pytest -q`. Currently **314 tests**; all must pass on the GPU machine. The Mac skips 12: 6 `torch`, 4 `stack`, the SkiTB-toolkit cross-check (it needs the vendored toolkit) and the figure test (it needs matplotlib).
   - Markers: `torch` needs PyTorch; `stack` needs the pinned torch, mmcv and mmpose; `gpu` needs CUDA.
 - **Paths:** code reads `SKIER_DATA` (default `~/skier_data`) and `SKIER_RESULTS` (default `~/skier_results`) through `skier.paths`. Never hard-code absolute paths.
 - **Data on this Mac:**
@@ -74,6 +74,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 - **SiamFC on broadcast video:** after a few seconds it can drift to clutter and lock onto static on-screen graphics such as the logo (tracker smoke test, 2026-10-26). It also drifts to spectators, and its box can grow 8–10× too large (Step 7 failure review).
 - **SiamFC's score** is the peak of a sum-normalized response map, about 1e-5. Track CSVs keep 7 significant digits; 5 decimals collapsed it to about 7 values. The gating threshold (D24) is on this raw scale.
 - **`wsl -- bash -c "..."`** expands `$VAR` before bash sees it, whether called from PowerShell or Git Bash. Put anything with variables in a script file.
+- **The SkiTB toolkit doesn't run as vendored:** `np.loadtxt(delimiter='\n')` fails on numpy 1.26, and SC mode lists `ST/` instead of `SC/`. Use `eval/skitb_official.py`; `results/step8/toolkit_crosscheck.py` shows the port matches `report()`.
 - **Laptop interruptions:** Windows sleep (Modern Standby), Windows Update restarts and closing the last `wsl` connection have each stopped a run. Every epoch is checkpointed; resume with `--resume <run>/last.pt` and the same arguments.
 - **Minimum crop:** replay crops are at least `max(240 px, frame_h / 3)`, so design controller tests around that.
 - **SkiTB:**
@@ -92,5 +93,6 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 | Pose | `pose/preprocess.py`, `pose/heatmap.py`, `pose/infer.py`, `pose/model.py`, `pose/coco_map.py`, `pose/eval_generic.py` (E0), `pose/crosscheck.py`, `pose/augment.py`, `pose/dataset.py`, `pose/loss.py`, `pose/train.py`, `pose/crop_error.py`, `pose/evaluate.py`, `pose/compare.py`, `pose/aug_preview.py` |
 | Tracking and replay | `tracking/siamfc_adapter.py`, `tracking/frames.py`, `tracking/run.py`, `replay/controller.py`, `replay/render.py`, `replay/run.py` |
 | Integration (Step 7) | `integration/config.py` (+ `configs/integration/default.yaml`), `integration/confidence.py`, `integration/propagation.py`, `integration/process.py` |
-| Metrics | `eval/pose_metrics.py`, `eval/track_metrics.py`, `eval/replay_metrics.py` |
+| Metrics | `eval/pose_metrics.py`, `eval/track_metrics.py`, `eval/replay_metrics.py`, `eval/bootstrap.py` (D25), `eval/skitb_official.py` (the toolkit's F/Pr/Re/GSR, ported) |
+| Report (Step 8) | `report/tables.py` (`make_tables.py`), `report/figures.py` (`make_figures.py`); the frozen run is `results/step8/run_final.sh` |
 | Tools | `envcheck.py`, `io_utils.py`, `paths.py` |
