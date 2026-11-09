@@ -319,22 +319,35 @@ def replay_tables(replay_dir: Path, n_boot: int = N_BOOT, target_pct: float = 95
 
 def propagation_tables(prop_dir: Path, records_by_id: dict, schema: Schema, k_pose: float, n_boot: int = N_BOOT,
                        recipes=("E1", "E2")) -> dict:
-    """Reference vs. tracker crop on the same labels (Step 7), seed-pooled per recipe, with intervals."""
+    """Reference vs. tracker crop on the same labels (Step 7), seed-pooled per recipe, with intervals.
+
+    When the run scored exactly one crop-refinement setting (D26, ``--refine``), the refined crop is a
+    third crop with refined − tracked intervals.
+    """
     p = read_json(prop_dir / "propagation.json")
     with np.load(prop_dir / "predictions.npz") as z:
         npz = {k: z[k] for k in z.files}
     recs = align(records_by_id, [str(s) for s in npz["sample_ids"]])
     clusters, strata = clusters_of(recs)
     k = f"{k_pose:g}"
+    settings = p.get("refine_settings", [])
+    rkey = settings[0] if len(settings) == 1 else None
+    crops = ("reference", "tracked") + (("refined",) if rkey else ())
+
+    def stored_block(name, crop):  # in a refined entry, "tracked" is the refined crop
+        b = p["checkpoints"][name]["by_k_pose"][k]
+        return b["refined"][rkey]["tracked"] if crop == "refined" else b[crop]
+
     arrays, per_seed = {}, {}
     for r in recipes:
-        for crop in ("reference", "tracked"):
+        for crop in crops:
             seeds = []
             for s in SEEDS:
                 name = f"{r}-s{s}"
-                pred = npz[f"{name}__reference"] if crop == "reference" else npz[f"{name}__k{k}"]
+                pred = npz[{"reference": f"{name}__reference", "tracked": f"{name}__k{k}",
+                            "refined": f"{name}__k{k}__{rkey}"}[crop]]
                 a = hit_arrays(pred, recs, schema, ("body", "ski", "pole"))
-                stored = p["checkpoints"][name]["by_k_pose"][k][crop]["groups"]
+                stored = stored_block(name, crop)["groups"]
                 check_counts(a, {(g, t): stored[f"{t:g}"][g] for g in ("body", "ski", "pole") for t in THRS},
                              f"propagation {name} {crop}")
                 seeds.append(a)
@@ -350,21 +363,39 @@ def propagation_tables(prop_dir: Path, records_by_id: dict, schema: Schema, k_po
     deltas += [{"a": f"{recipes[-1]} tracked", "b": f"{recipes[0]} tracked", "group": g, "threshold": 0.1,
                 **diff_block(arrays[(recipes[-1], "tracked")][(g, 0.1)], arrays[(recipes[0], "tracked")][(g, 0.1)],
                              clusters, strata, n_boot)} for g in ("body", "ski")]
+    if rkey:
+        deltas += [{"a": f"{r} refined", "b": f"{r} tracked", "group": g, "threshold": t,
+                    **diff_block(arrays[(r, "refined")][(g, t)], arrays[(r, "tracked")][(g, t)], clusters, strata, n_boot)}
+                   for r in recipes for g, t in (("body", 0.1), ("ski", 0.1), ("ski", 0.05))]
+        deltas += [{"a": f"{recipes[-1]} refined", "b": f"{recipes[0]} refined", "group": g, "threshold": 0.1,
+                    **diff_block(arrays[(recipes[-1], "refined")][(g, 0.1)], arrays[(recipes[0], "refined")][(g, 0.1)],
+                                 clusters, strata, n_boot)} for g in ("body", "ski")]
     first = p["checkpoints"][f"{recipes[-1]}-s{SEEDS[0]}"]["by_k_pose"][k]
     strata_rows = []
     for name in ("tracker_iou", "time_since_init", "status"):
         for value in first["strata"].get(name, {}):
             for r in recipes:
-                blocks = [p["checkpoints"][f"{r}-s{s}"]["by_k_pose"][k]["strata"][name][value] for s in SEEDS]
+                blks = [p["checkpoints"][f"{r}-s{s}"]["by_k_pose"][k] for s in SEEDS]
+                blocks = [b["strata"][name][value] for b in blks]
                 row = {"stratum": name, "value": value, "run": r, "n_images": blocks[0]["n_images"]}
-                for crop in ("reference", "tracked"):
+                by_crop = {"reference": [(b, "reference") for b in blocks], "tracked": [(b, "tracked") for b in blocks]}
+                if rkey:
+                    by_crop["refined"] = [(b["refined"][rkey]["strata"][name][value], "tracked") for b in blks]
+                for crop, parts in by_crop.items():
                     for g in ("body", "ski"):
-                        h = sum(b[crop][g]["hits"] for b in blocks)
-                        n = sum(b[crop][g]["total"] for b in blocks)
+                        h = sum(b[c][g]["hits"] for b, c in parts)
+                        n = sum(b[c][g]["total"] for b, c in parts)
                         row[f"{crop}_{g}"] = 100.0 * h / n if n else None
                 strata_rows.append(row)
-    return {"k_pose": k_pose, "n_scored": len(recs), "n_segments": len(set(clusters)), "rows": rows, "deltas": deltas,
-            "cut_off_share": {g: first["tracked"]["cut_off"][g]["share"] for g in ("body", "ski")}, "strata": strata_rows}
+    out = {"k_pose": k_pose, "n_scored": len(recs), "n_segments": len(set(clusters)), "rows": rows, "deltas": deltas,
+           "cut_off_share": {g: first["tracked"]["cut_off"][g]["share"] for g in ("body", "ski")}, "strata": strata_rows}
+    if rkey:
+        e = first["refined"][rkey]
+        out["refined"] = {"setting": rkey, "s_min": e["s_min"], "k_refine": e["k_refine"],
+                          "cut_off_share": {g: e["tracked"]["cut_off"][g]["share"] for g in ("body", "ski")},
+                          "fallback_share": {f"{r}-s{s}": p["checkpoints"][f"{r}-s{s}"]["by_k_pose"][k]["refined"][rkey]
+                                             ["fallback_share"] for r in recipes for s in SEEDS}}
+    return out
 
 
 # --- markdown --------------------------------------------------------------------------------
@@ -459,15 +490,23 @@ def to_markdown(t: dict) -> str:
                 f"{_f(cell[(run, crop, g, th)]['pct'])}% ({cell[(run, crop, g, th)]['hits']}/{cell[(run, crop, g, th)]['total']})"
                 for g, th in (("body", 0.1), ("ski", 0.1), ("ski", 0.05))) + " |")
         out += ["", f"Tracker-crop cut-off share: body {_f(100 * pr['cut_off_share']['body'])}%, "
-                f"ski {_f(100 * pr['cut_off_share']['ski'])}%.", "",
-                "| Δ | Group | Δ (points) | 95% interval |", "| --- | --- | --- | --- |"]
+                f"ski {_f(100 * pr['cut_off_share']['ski'])}%."]
+        rf = pr.get("refined")
+        if rf:
+            fb = " / ".join(f"{n} {_f(100 * v)}%" for n, v in rf["fallback_share"].items())
+            out += ["", f"Refined crop (D26: s_min {rf['s_min']:g}, k_refine {rf['k_refine']:g}): cut-off share body "
+                    f"{_f(100 * rf['cut_off_share']['body'])}%, ski {_f(100 * rf['cut_off_share']['ski'])}%; "
+                    f"kept the tracker crop (fallback): {fb}."]
+        out += ["", "| Δ | Group | Δ (points) | 95% interval |", "| --- | --- | --- | --- |"]
         for d in pr["deltas"]:
             out.append(f"| {d['a']} − {d['b']} | {d['group']} @{d['threshold']:g} | {d['delta']:+.1f} | {_ci(d['ci95'])} |")
-        out += ["", "| Stratum | Value | Run | Labels | Body ref → tracked | Ski ref → tracked |",
+        arrow = "ref → tracked → refined" if rf else "ref → tracked"
+        out += ["", f"| Stratum | Value | Run | Labels | Body {arrow} | Ski {arrow} |",
                 "| --- | --- | --- | --- | --- | --- |"]
         for s in pr["strata"]:
-            out.append(f"| {s['stratum']} | {s['value']} | {s['run']} | {s['n_images']} | {_f(s['reference_body'])} → "
-                       f"{_f(s['tracked_body'])} | {_f(s['reference_ski'])} → {_f(s['tracked_ski'])} |")
+            body, ski = (" → ".join(_f(s.get(f"{c}_{g}")) for c in ("reference", "tracked", "refined")
+                                    if f"{c}_{g}" in s) for g in ("body", "ski"))
+            out.append(f"| {s['stratum']} | {s['value']} | {s['run']} | {s['n_images']} | {body} | {ski} |")
         out.append("")
     return "\n".join(out) + "\n"
 

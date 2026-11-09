@@ -24,6 +24,9 @@ class IntegrationConfig:
     conf_signal: str | None = None  # "none", "raw" or "relative" (skier.integration.confidence)
     conf_threshold: float | None = None  # a tracked frame is low_conf when its signal is below this
     replay_uses_status: bool | None = None  # low_conf frames drive the replay as lost
+    pose_refine: bool | None = None  # pose-guided crop refinement in process_clip (D26)
+    refine_min_score: float | None = None  # D26 s_min; the setting Step 8 scores even if pose_refine is false
+    refine_k: float | None = None  # D26 k_refine
 
     def __post_init__(self):
         if self.conf_signal is not None and self.conf_signal not in SIGNALS:
@@ -45,8 +48,10 @@ class IntegrationConfig:
         missing = [n for n in names if getattr(self, n) is None]
         if "conf_signal" in names and self.conf_signal in ("raw", "relative") and self.conf_threshold is None:
             missing.append("conf_threshold")
+        if "pose_refine" in names and self.pose_refine:
+            missing += [n for n in ("refine_min_score", "refine_k") if getattr(self, n) is None and n not in names]
         if missing:
-            raise ValueError(f"integration settings not chosen yet: {missing} (Step 7 val runs, D24); set them in "
+            raise ValueError(f"integration settings not chosen yet: {missing} (Step 7 val runs, D24, D26); set them in "
                              "configs/integration/default.yaml or on the command line")
         return self
 

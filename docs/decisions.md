@@ -295,3 +295,30 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
   - Every paired difference in the report gets a segment- or sequence-level 95% interval, labelled as such.
   - The video-level spread is shown through the per-video rows instead.
   - The protocol's bootstrap line is superseded by this decision.
+
+## D26 — Pose-guided crop refinement (Step 7c): method, grid, selection rule and adoption gate (2026-11-08)
+- Choice, recorded before any refinement number exists:
+  - **Method:** pass 1 is the current tracker crop (`expand_box(tracker_box, k_pose)`, then the model's 1.25 padding). The refined box is the tight box of the pass-1 **body + ski** predictions (poles excluded, as in `geometry.reference_box`) that are finite and have a heatmap score ≥ `s_min`, scaled by `expand_box(·, k_refine)`. Pass 2 crops it with the usual 1.25 padding and 3:4 fit and predicts again. One refinement step only.
+  - **Fallback:** fewer than 4 qualifying points, or a box diagonal under 1 px, keeps the pass-1 prediction and crop. The fallback share is reported.
+  - **No labels:** the refined box is built from predictions only.
+  - **Grid, on val:** `s_min` ∈ {0.1, 0.2, 0.3, 0.5}, `k_refine` ∈ {1.0, 1.15, 1.3}. Heatmap targets peak at 1.0, but the scale of the maxima on bad crops is unknown, so it is chosen on val.
+  - **Selection rule:** the highest E2 seed-mean of (refined body + ski PCK@0.1) / 2 over all scored val labels. Settings within 0.5 points of the best tie; a tie goes to the `k_refine` closest to 1.0, then to the higher `s_min`.
+  - **Adoption gate:** refinement becomes the system default (`pose_refine: true`, used by `process_clip`) only if the chosen setting beats the single tracker crop by more than 0.5 points on that E2 mean.
+  - **Test:** the single Step 8 run reports reference, tracker and refined crops at the chosen setting whatever the gate says, with refined − tracked intervals (D25).
+  - **Unchanged:** `k_pose` 1.1, the checkpoints, the tracker, the replay, the bootstrap.
+- Reason:
+  - The biggest measured error is the tracker crop (D24): E2 loses 18.4 ski points on val. On the 129 labels whose tracker box only partly overlaps the reference box (IoU 0.1–0.5), ski PCK drops 94.6 → 76.8 while body PCK stays at 87.9, so the model still finds the skier in a badly framed crop.
+  - It adds a method beyond fine-tuning, with the single tracker crop as baseline and the reference crop as upper bound (CS230 handout; Ruichao, 2026-11-08, after the milestone review).
+- Effect on evaluation:
+  - The propagation tables and the strata figure get a third crop. The test freeze becomes D27.
+- Result on val (2026-11-08; the selection run, `$SKIER_RESULTS/integration/refine-val`, summary in `results/step7/refine_val_summary.json`):
+  - **Pick:** `s_min` 0.3, `k_refine` 1.3. The E2 seed-mean of body and ski is 82.6 vs. 78.3 for the single tracker crop (gain +4.4 > 0.5), so **`pose_refine: true`** (`configs/integration/default.yaml`).
+    - The best setting was `s_min` 0.2, `k_refine` 1.3 (83.1); 0.3 is within 0.5 points and wins the tie on the higher `s_min`.
+    - Every `s_min` row is best at `k_refine` 1.3, the largest value in the grid. The grid is not extended after the fact; the report says the optimum may lie beyond it.
+  - **E2, both seeds pooled, PCK@0.1 (reference → tracker crop → refined):**
+    - all 261 labels: body 95.9 → 81.1 → 83.9, ski 93.8 → 75.4 → 81.3; ski @0.05 85.2 → 65.6 → 72.7;
+    - tracker IoU 0.1–0.5 (129 labels): body 96.7 → 87.9 → 93.3, ski 94.6 → 76.8 → 88.0;
+    - IoU ≥ 0.5 (99): body 95.6 → 95.4 → 94.6, ski 93.2 → 92.5 → 93.1;
+    - IoU < 0.1 (33): ski 92.7 → 0.9 → 4.6.
+  - The ski labels cut off by the crop drop from 16.8% to 10.8% (E2). The fallback share is 5–9% per checkpoint.
+  - The reference and tracker-crop numbers equal the Step 7 run exactly.

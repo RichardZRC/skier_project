@@ -120,22 +120,28 @@ def success_curves(curves: dict[str, tuple[list, list, float]], path: Path) -> P
 
 
 def propagation_strata(strata: list[dict], path: Path, run: str = "E2") -> Path:
-    """Reference vs. tracker crop by tracker-IoU stratum (ski and body PCK@0.1)."""
+    """Reference vs. tracker crop (and the refined crop, D26, when scored) by tracker-IoU stratum (ski and body
+    PCK@0.1)."""
     plt = _plt()
     order = ["iou>=0.5", "0.1<=iou<0.5", "iou<0.1"]
     rows = {s["value"]: s for s in strata if s["stratum"] == "tracker_iou" and s["run"] == run}
     vals = [v for v in order if v in rows]
+    crops = [("reference", "reference crop", "#999999"), ("tracked", "tracker crop", RECIPE_COLORS[run])]
+    if vals and all("refined_ski" in rows[v] for v in vals):
+        crops.append(("refined", "refined crop", "#8c4a1c"))
+    width = 0.8 / len(crops)
     fig, axes = plt.subplots(1, 2, figsize=(10, 4))
     for ax, g in zip(axes, ("ski", "body")):
         x = np.arange(len(vals))
-        ax.bar(x - 0.2, [rows[v][f"reference_{g}"] for v in vals], 0.4, label="reference crop", color="#999999")
-        ax.bar(x + 0.2, [rows[v][f"tracked_{g}"] for v in vals], 0.4, label="tracker crop", color=RECIPE_COLORS[run])
+        for i, (crop, label, color) in enumerate(crops):
+            ax.bar(x + (i - (len(crops) - 1) / 2) * width, [rows[v][f"{crop}_{g}"] for v in vals], width, label=label,
+                   color=color)
         ax.set_xticks(x, [f"{v}\n(n={rows[v]['n_images']})" for v in vals])
         ax.set_ylim(0, 100)
         ax.set_title(f"{run}: {g} PCK@0.1 by tracker IoU")
         ax.grid(axis="y", alpha=0.3)
-    axes[0].legend()
-    fig.tight_layout()
+    fig.legend(*axes[0].get_legend_handles_labels(), loc="upper center", ncol=len(crops), frameon=False)
+    fig.tight_layout(rect=(0, 0, 1, 0.93))  # the legend sits above the panels, clear of the bars
     fig.savefig(path, dpi=150)
     plt.close(fig)
     return path

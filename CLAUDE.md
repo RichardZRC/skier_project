@@ -4,7 +4,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 **Deadline: Fri 2026-11-20** (D14; plan §4). If the schedule slips, cut stretch goals first, then extra seeds, then E2/E3.
 
-**Read first:** `PROJECT_NOTES.md` (start with its **Handoff** section: machine state, what's waiting, AWS lessons; then status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D24; append only).
+**Read first:** `PROJECT_NOTES.md` (start with its **Handoff** section: machine state, what's waiting, AWS lessons; then status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D26; append only).
 
 ## Working rules (Ruichao's instructions; follow them exactly)
 
@@ -26,7 +26,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 ## Environment
 
-- Run the tests with `.venv/bin/python -m pytest -q`. Currently **314 tests**; all must pass on the GPU machine. The Mac skips 12: 6 `torch`, 4 `stack`, the SkiTB-toolkit cross-check (it needs the vendored toolkit) and the figure test (it needs matplotlib).
+- Run the tests with `.venv/bin/python -m pytest -q`. Currently **320 tests**; all must pass on the GPU machine. The Mac skips 12: 6 `torch`, 4 `stack`, the SkiTB-toolkit cross-check (it needs the vendored toolkit) and the figure test (it needs matplotlib).
   - Markers: `torch` needs PyTorch; `stack` needs the pinned torch, mmcv and mmpose; `gpu` needs CUDA.
 - **Paths:** code reads `SKIER_DATA` (default `~/skier_data`) and `SKIER_RESULTS` (default `~/skier_results`) through `skier.paths`. Never hard-code absolute paths.
 - **Data on this Mac:**
@@ -92,7 +92,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 | Geometry and drawing | `geometry.py`, `viz.py`, `schema.py` (+ `configs/ski24_schema.json`) |
 | Pose | `pose/preprocess.py`, `pose/heatmap.py`, `pose/infer.py`, `pose/model.py`, `pose/coco_map.py`, `pose/eval_generic.py` (E0), `pose/crosscheck.py`, `pose/augment.py`, `pose/dataset.py`, `pose/loss.py`, `pose/train.py`, `pose/crop_error.py`, `pose/evaluate.py`, `pose/compare.py`, `pose/aug_preview.py` |
 | Tracking and replay | `tracking/siamfc_adapter.py`, `tracking/frames.py`, `tracking/run.py`, `replay/controller.py`, `replay/render.py`, `replay/run.py` |
-| Integration (Step 7) | `integration/config.py` (+ `configs/integration/default.yaml`), `integration/confidence.py`, `integration/propagation.py`, `integration/process.py` |
+| Integration (Step 7) | `integration/config.py` (+ `configs/integration/default.yaml`), `integration/confidence.py`, `integration/propagation.py`, `integration/refine.py` (D26 crop refinement), `integration/process.py` |
 | Metrics | `eval/pose_metrics.py`, `eval/track_metrics.py`, `eval/replay_metrics.py`, `eval/bootstrap.py` (D25), `eval/skitb_official.py` (the toolkit's F/Pr/Re/GSR, ported) |
 | Report (Step 8) | `report/tables.py` (`make_tables.py`), `report/figures.py` (`make_figures.py`); the frozen run is `results/step8/run_final.sh` |
 | Tools | `envcheck.py`, `io_utils.py`, `paths.py` |

@@ -12,6 +12,9 @@ always the reference-box diagonal. So ``PCK_reference − PCK_tracked`` isolates
 Labels the tracker crop cuts off are misses, and their share is reported.
 Initialization frames are excluded.
 
+With ``--refine-grid`` or ``--refine``, a third crop is scored the same way: pose-guided
+refinement of the tracker crop (``integration.refine``, D26).
+
 A segment is usable when every labelled image's best NCC match (guide 1G) is its own frame
 (offset 0, score ≥ ``MIN_SCORE``) and the clip's frame size equals the image size. The
 margin rule may fail in near-static stretches, as it did in 1G.
@@ -38,6 +41,7 @@ from skier.data.records import PoseRecord
 from skier.eval.pose_metrics import THRESHOLDS, group_pck, gt_arrays
 from skier.geometry import expand_box, iou_xyxy
 from skier.integration.config import IntegrationConfig
+from skier.integration.refine import N_MIN, REFINE_GRID, choose_refine, refine_on, setting_key
 from skier.io_utils import ensure_dir, read_json, sha256_file, write_csv, write_json
 from skier.paths import configs_dir, data_root, results_root
 from skier.pose.crop_error import FINAL_ONLY
@@ -147,15 +151,23 @@ def tracker_crop_boxes(tracker_boxes: np.ndarray, k_pose: float) -> np.ndarray:
     return out
 
 
+def predict_on_scored(records: Sequence[PoseRecord], heatmap_fn: HeatmapFn, boxes: np.ndarray, expand: float,
+                      batch_size: int = 32) -> tuple[np.ndarray, np.ndarray]:
+    """``([N, K, 2], [N, K])`` points and heatmap maxima; a record without a finite box gets NaN (a miss)."""
+    finite = np.isfinite(boxes).all(axis=1)
+    k = records[0].keypoints_xy.shape[0] if records else 0
+    xy, scores = np.full((len(records), k, 2), np.nan), np.full((len(records), k), np.nan)
+    idx = np.flatnonzero(finite)
+    if len(idx):
+        p = predict_records([records[i] for i in idx], heatmap_fn, expand, batch_size, boxes=boxes[idx])
+        xy[idx], scores[idx] = p.xy, p.scores
+    return xy, scores
+
+
 def predict_on(records: Sequence[PoseRecord], heatmap_fn: HeatmapFn, boxes: np.ndarray, expand: float,
                batch_size: int = 32) -> np.ndarray:
     """``[N, K, 2]``; a record without a finite box gets NaN (a miss)."""
-    finite = np.isfinite(boxes).all(axis=1)
-    xy = np.full((len(records), records[0].keypoints_xy.shape[0], 2), np.nan) if records else np.zeros((0, 0, 2))
-    idx = np.flatnonzero(finite)
-    if len(idx):
-        xy[idx] = predict_records([records[i] for i in idx], heatmap_fn, expand, batch_size, boxes=boxes[idx]).xy
-    return xy
+    return predict_on_scored(records, heatmap_fn, boxes, expand, batch_size)[0]
 
 
 def score_crops(pred_xy: np.ndarray, records: Sequence[PoseRecord], schema: Schema, boxes: np.ndarray,
@@ -235,6 +247,11 @@ def build_parser() -> argparse.ArgumentParser:
                    help="e.g. E2-s230=$SKIER_RESULTS/pose/d21/E2-s230/best.pt (repeat)")
     p.add_argument("--recipe", default="E2", help="the recipe whose seed mean picks k_pose (D23)")
     p.add_argument("--k-pose", type=float, nargs="+", help=f"default: the grid {K_POSE_GRID}")
+    rg = p.add_mutually_exclusive_group()
+    rg.add_argument("--refine-grid", action="store_true",
+                    help="also score pose-guided crop refinement over the D26 grid and apply its rule (one --k-pose)")
+    rg.add_argument("--refine", type=float, nargs=2, metavar=("S_MIN", "K_REFINE"),
+                    help="also score crop refinement at one setting (Step 8)")
     p.add_argument("--config", type=Path, help="integration config for the status stratum; default: "
                                                "configs/integration/default.yaml")
     p.add_argument("--hrnet-config", type=Path)
@@ -294,6 +311,10 @@ def main(argv: list[str] | None = None) -> int:
     icfg = IntegrationConfig.from_yaml(args.config or configs_dir() / "integration" / "default.yaml")
     icfg = icfg if icfg.conf_signal is not None else None  # no status stratum until the confidence check is done
     ks = tuple(args.k_pose or K_POSE_GRID)
+    settings = list(REFINE_GRID) if args.refine_grid else ([tuple(args.refine)] if args.refine else [])
+    if args.refine_grid and len(ks) != 1:
+        print("error: --refine-grid refines one k_pose (D26); give exactly one --k-pose", file=sys.stderr)
+        return 1
 
     eligible, s2d = _load(args, schema)
     init, scored = split_init(eligible, usable["usable"])
@@ -311,8 +332,9 @@ def main(argv: list[str] | None = None) -> int:
 
     result = {"partition": args.partition, "split_sha256": manifest["content_sha256"], "n_segments": len(init),
               "n_scored": len(scored), "track_dir": str(args.track_dir), "k_pose_grid": list(ks),
+              "refine_settings": [setting_key(s, kr) for s, kr in settings], "refine_n_min": N_MIN,
               "integration_config": None if icfg is None else dataclasses.asdict(icfg), "checkpoints": {}}
-    long, preds, by_k = [], {}, defaultdict(list)
+    long, preds, by_k, by_setting = [], {}, defaultdict(list), defaultdict(list)
     for name, path in checkpoints.items():
         model, _ = build_hrnet(schema.num_keypoints, args.hrnet_config, None, device=args.device)
         ck = load_checkpoint(path, model, schema=schema, map_location=args.device)
@@ -327,7 +349,7 @@ def main(argv: list[str] | None = None) -> int:
                  "expand": expand, "by_k_pose": {}}
         for k in ks:
             boxes = tracker_crop_boxes(trk["boxes"], k)
-            trk_pred = predict_on(scored, fn, boxes, expand, args.batch_size)
+            trk_pred, trk_scores = predict_on_scored(scored, fn, boxes, expand, args.batch_size)
             preds[f"{name}__k{k:g}"] = trk_pred
             block = compare_crops(scored, schema, ref_pred, trk_pred, boxes, expand, strata_keys)
             entry["by_k_pose"][f"{k:g}"] = block
@@ -337,11 +359,34 @@ def main(argv: list[str] | None = None) -> int:
             g = block["tracked"]["groups"]["0.1"]
             if recipe_of(name) == args.recipe:
                 by_k[k].append((g["body"]["pct"], g["ski"]["pct"]))
+            if settings:
+                preds[f"{name}__k{k:g}__scores"] = trk_scores
+                block["refined"] = {}  # D26; in each entry, "tracked" is the refined crop
+            for s, kr in settings:
+                key = setting_key(s, kr)
+                xy, crop, used = refine_on(scored, fn, trk_pred, trk_scores, boxes, schema, s, kr, expand,
+                                           args.batch_size)
+                preds[f"{name}__k{k:g}__{key}"] = xy
+                preds[f"{name}__k{k:g}__{key}__crop_boxes"] = crop
+                rb = compare_crops(scored, schema, ref_pred, xy, crop, expand, strata_keys)
+                block["refined"][key] = {"s_min": s, "k_refine": kr, "n_refined": int(used.sum()),
+                                         "fallback_share": float(1 - used.mean()) if len(used) else None, **rb}
+                long += long_rows(name, k, f"refined_{key}", rb["tracked"])
+                g = rb["tracked"]["groups"]["0.1"]
+                if recipe_of(name) == args.recipe:
+                    by_setting[(s, kr)].append((g["body"]["pct"], g["ski"]["pct"]))
         result["checkpoints"][name] = entry
+
+    def seed_mean(v):
+        return {"body": float(np.mean([b for b, _ in v])), "ski": float(np.mean([s for _, s in v]))}
+
     if by_k:
-        table = [{"k_pose": k, "body": float(np.mean([b for b, _ in v])), "ski": float(np.mean([s for _, s in v]))}
-                 for k, v in sorted(by_k.items())]
+        table = [{"k_pose": k, **seed_mean(v)} for k, v in sorted(by_k.items())]
         result["k_pose_rule"] = {"recipe": args.recipe, "n_seeds": len(next(iter(by_k.values()))), **choose_k_pose(table)}
+    if args.refine_grid and by_setting:
+        table = [{"s_min": s, "k_refine": kr, **seed_mean(v)} for (s, kr), v in sorted(by_setting.items())]
+        result["refine_rule"] = {"recipe": args.recipe, "k_pose": ks[0], "n_seeds": len(by_k[ks[0]]),
+                                 **choose_refine(table, seed_mean(by_k[ks[0]]))}
     write_json(result, out / "propagation.json")
     write_csv(long, out / "propagation.csv", LONG_COLUMNS)
     np.savez(out / "predictions.npz", sample_ids=np.array([r.sample_id for r in scored]),
@@ -351,7 +396,16 @@ def main(argv: list[str] | None = None) -> int:
             r, t = b["reference"]["groups"]["0.1"], b["tracked"]["groups"]["0.1"]
             print(f"{name} k_pose {k}: body {r['body']['pct']:.1f} → {t['body']['pct']:.1f}, "
                   f"ski {r['ski']['pct']:.1f} → {t['ski']['pct']:.1f} (reference → tracked, PCK@0.1)")
+            for key, rb in b.get("refined", {}).items():
+                f = rb["tracked"]["groups"]["0.1"]
+                print(f"{name} k_pose {k} refined {key}: body {f['body']['pct']:.1f}, ski {f['ski']['pct']:.1f} "
+                      f"({rb['n_refined']}/{len(scored)} refined)")
     if "k_pose_rule" in result:
         print(f"k_pose rule ({args.recipe}): pick {result['k_pose_rule']['pick']}")
+    if "refine_rule" in result:
+        rr = result["refine_rule"]
+        print(f"refine rule ({args.recipe}): pick {setting_key(rr['pick']['s_min'], rr['pick']['k_refine'])}, "
+              f"mean {rr['pick_mean']:.1f} vs. tracker crop {rr['baseline_mean']:.1f} (gain {rr['gain']:+.1f}); "
+              f"adopt: {rr['adopt']}")
     print(f"{len(scored)} scored labels in {len(init)} segments → {out}")
     return 0

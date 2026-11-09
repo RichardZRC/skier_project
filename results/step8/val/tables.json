@@ -1349,11 +1349,130 @@
         "n_boot": 10000,
         "n_clusters": 31,
         "threshold": 0.1
+      },
+      {
+        "a": "E1 refined",
+        "b": "E1 tracked",
+        "ci95": [
+          1.8480693421537058,
+          6.287703709802751
+        ],
+        "delta": 3.811792733770103,
+        "group": "body",
+        "n_boot": 10000,
+        "n_clusters": 31,
+        "threshold": 0.1
+      },
+      {
+        "a": "E1 refined",
+        "b": "E1 tracked",
+        "ci95": [
+          4.639168098510888,
+          9.812866810601033
+        ],
+        "delta": 7.050869285254347,
+        "group": "ski",
+        "n_boot": 10000,
+        "n_clusters": 31,
+        "threshold": 0.1
+      },
+      {
+        "a": "E1 refined",
+        "b": "E1 tracked",
+        "ci95": [
+          5.844644878621443,
+          12.157326449578129
+        ],
+        "delta": 8.886027044430133,
+        "group": "ski",
+        "n_boot": 10000,
+        "n_clusters": 31,
+        "threshold": 0.05
+      },
+      {
+        "a": "E2 refined",
+        "b": "E2 tracked",
+        "ci95": [
+          1.213103654040824,
+          4.518273752449094
+        ],
+        "delta": 2.814175104228711,
+        "group": "body",
+        "n_boot": 10000,
+        "n_clusters": 31,
+        "threshold": 0.1
+      },
+      {
+        "a": "E2 refined",
+        "b": "E2 tracked",
+        "ci95": [
+          3.5845571426266227,
+          8.40542788848392
+        ],
+        "delta": 5.924018029620093,
+        "group": "ski",
+        "n_boot": 10000,
+        "n_clusters": 31,
+        "threshold": 0.1
+      },
+      {
+        "a": "E2 refined",
+        "b": "E2 tracked",
+        "ci95": [
+          4.692971045272732,
+          9.522410369614416
+        ],
+        "delta": 7.050869285254347,
+        "group": "ski",
+        "n_boot": 10000,
+        "n_clusters": 31,
+        "threshold": 0.05
+      },
+      {
+        "a": "E2 refined",
+        "b": "E1 refined",
+        "ci95": [
+          -1.8530396538942295,
+          1.3502453027125416
+        ],
+        "delta": -0.014889815366292414,
+        "group": "body",
+        "n_boot": 10000,
+        "n_clusters": 31,
+        "threshold": 0.1
+      },
+      {
+        "a": "E2 refined",
+        "b": "E1 refined",
+        "ci95": [
+          -0.8779398651447633,
+          2.9802096238460014
+        ],
+        "delta": 1.2878300064391501,
+        "group": "ski",
+        "n_boot": 10000,
+        "n_clusters": 31,
+        "threshold": 0.1
       }
     ],
     "k_pose": 1.1,
     "n_scored": 261,
     "n_segments": 31,
+    "refined": {
+      "cut_off_share": {
+        "body": 0.07564026206075045,
+        "ski": 0.10753380553766903
+      },
+      "fallback_share": {
+        "E1-s230": 0.04597701149425293,
+        "E1-s231": 0.05363984674329503,
+        "E2-s230": 0.09195402298850575,
+        "E2-s231": 0.06896551724137934
+      },
+      "k_refine": 1.3,
+      "s_min": 0.3,
+      "setting": "s0.3_k1.3"
+    },
     "rows": [
       {
         "crop": "reference",
@@ -1703,6 +1822,186 @@
           "qxfgw1Kd98A": {
             "hits": 11,
             "pct": 1.5492957746478873,
+            "total": 710
+          },
+          "v7PADD2_I00": {
+            "hits": 0,
+            "pct": 0.0,
+            "total": 32
+          }
+        },
+        "run": "E1",
+        "threshold": 0.05,
+        "total": 844
+      },
+      {
+        "crop": "refined",
+        "group": "body",
+        "hits": 5639,
+        "pct": 83.96366885050625,
+        "per_seed": [
+          84.12745681953544,
+          83.79988088147707
+        ],
+        "per_video": {
+          "SVYdH614G_M": {
+            "hits": 660,
+            "pct": 83.54430379746836,
+            "total": 790
+          },
+          "qxfgw1Kd98A": {
+            "hits": 4681,
+            "pct": 83.41054882394869,
+            "total": 5612
+          },
+          "v7PADD2_I00": {
+            "hits": 298,
+            "pct": 94.90445859872611,
+            "total": 314
+          }
+        },
+        "run": "E1",
+        "threshold": 0.1,
+        "total": 6716
+      },
+      {
+        "crop": "refined",
+        "group": "body",
+        "hits": 5310,
+        "pct": 79.06491959499702,
+        "per_seed": [
+          79.3627159023228,
+          78.76712328767124
+        ],
+        "per_video": {
+          "SVYdH614G_M": {
+            "hits": 609,
+            "pct": 77.0886075949367,
+            "total": 790
+          },
+          "qxfgw1Kd98A": {
+            "hits": 4430,
+            "pct": 78.93799002138275,
+            "total": 5612
+          },
+          "v7PADD2_I00": {
+            "hits": 271,
+            "pct": 86.30573248407643,
+            "total": 314
+          }
+        },
+        "run": "E1",
+        "threshold": 0.05,
+        "total": 6716
+      },
+      {
+        "crop": "refined",
+        "group": "ski",
+        "hits": 2486,
+        "pct": 80.03863490019317,
+        "per_seed": [
+          81.0688989053445,
+          79.00837089504185
+        ],
+        "per_video": {
+          "SVYdH614G_M": {
+            "hits": 310,
+            "pct": 77.5,
+            "total": 400
+          },
+          "qxfgw1Kd98A": {
+            "hits": 2039,
+            "pct": 80.33884948778565,
+            "total": 2538
+          },
+          "v7PADD2_I00": {
+            "hits": 137,
+            "pct": 81.54761904761905,
+            "total": 168
+          }
+        },
+        "run": "E1",
+        "threshold": 0.1,
+        "total": 3106
+      },
+      {
+        "crop": "refined",
+        "group": "ski",
+        "hits": 2222,
+        "pct": 71.53895685769479,
+        "per_seed": [
+          72.56922086284611,
+          70.50869285254346
+        ],
+        "per_video": {
+          "SVYdH614G_M": {
+            "hits": 275,
+            "pct": 68.75,
+            "total": 400
+          },
+          "qxfgw1Kd98A": {
+            "hits": 1829,
+            "pct": 72.06461780929867,
+            "total": 2538
+          },
+          "v7PADD2_I00": {
+            "hits": 118,
+            "pct": 70.23809523809524,
+            "total": 168
+          }
+        },
+        "run": "E1",
+        "threshold": 0.05,
+        "total": 3106
+      },
+      {
+        "crop": "refined",
+        "group": "pole",
+        "hits": 47,
+        "pct": 5.568720379146919,
+        "per_seed": [
+          5.213270142180095,
+          5.924170616113744
+        ],
+        "per_video": {
+          "SVYdH614G_M": {
+            "hits": 3,
+            "pct": 2.9411764705882355,
+            "total": 102
+          },
+          "qxfgw1Kd98A": {
+            "hits": 44,
+            "pct": 6.197183098591549,
+            "total": 710
+          },
+          "v7PADD2_I00": {
+            "hits": 0,
+            "pct": 0.0,
+            "total": 32
+          }
+        },
+        "run": "E1",
+        "threshold": 0.1,
+        "total": 844
+      },
+      {
+        "crop": "refined",
+        "group": "pole",
+        "hits": 23,
+        "pct": 2.7251184834123223,
+        "per_seed": [
+          2.3696682464454977,
+          3.080568720379147
+        ],
+        "per_video": {
+          "SVYdH614G_M": {
+            "hits": 2,
+            "pct": 1.9607843137254901,
+            "total": 102
+          },
+          "qxfgw1Kd98A": {
+            "hits": 21,
+            "pct": 2.9577464788732395,
             "total": 710
           },
           "v7PADD2_I00": {
@@ -2074,6 +2373,186 @@
         "run": "E2",
         "threshold": 0.05,
         "total": 844
+      },
+      {
+        "crop": "refined",
+        "group": "body",
+        "hits": 5638,
+        "pct": 83.94877903513996,
+        "per_seed": [
+          83.32340678975581,
+          84.57415128052412
+        ],
+        "per_video": {
+          "SVYdH614G_M": {
+            "hits": 662,
+            "pct": 83.79746835443038,
+            "total": 790
+          },
+          "qxfgw1Kd98A": {
+            "hits": 4682,
+            "pct": 83.42836778332145,
+            "total": 5612
+          },
+          "v7PADD2_I00": {
+            "hits": 294,
+            "pct": 93.63057324840764,
+            "total": 314
+          }
+        },
+        "run": "E2",
+        "threshold": 0.1,
+        "total": 6716
+      },
+      {
+        "crop": "refined",
+        "group": "body",
+        "hits": 5340,
+        "pct": 79.5116140559857,
+        "per_seed": [
+          78.97558070279929,
+          80.04764740917213
+        ],
+        "per_video": {
+          "SVYdH614G_M": {
+            "hits": 616,
+            "pct": 77.9746835443038,
+            "total": 790
+          },
+          "qxfgw1Kd98A": {
+            "hits": 4453,
+            "pct": 79.34782608695652,
+            "total": 5612
+          },
+          "v7PADD2_I00": {
+            "hits": 271,
+            "pct": 86.30573248407643,
+            "total": 314
+          }
+        },
+        "run": "E2",
+        "threshold": 0.05,
+        "total": 6716
+      },
+      {
+        "crop": "refined",
+        "group": "ski",
+        "hits": 2526,
+        "pct": 81.32646490663232,
+        "per_seed": [
+          81.71281390856407,
+          80.94011590470058
+        ],
+        "per_video": {
+          "SVYdH614G_M": {
+            "hits": 320,
+            "pct": 80.0,
+            "total": 400
+          },
+          "qxfgw1Kd98A": {
+            "hits": 2071,
+            "pct": 81.59968479117416,
+            "total": 2538
+          },
+          "v7PADD2_I00": {
+            "hits": 135,
+            "pct": 80.35714285714286,
+            "total": 168
+          }
+        },
+        "run": "E2",
+        "threshold": 0.1,
+        "total": 3106
+      },
+      {
+        "crop": "refined",
+        "group": "ski",
+        "hits": 2257,
+        "pct": 72.66580811332904,
+        "per_seed": [
+          73.66387636831938,
+          71.6677398583387
+        ],
+        "per_video": {
+          "SVYdH614G_M": {
+            "hits": 285,
+            "pct": 71.25,
+            "total": 400
+          },
+          "qxfgw1Kd98A": {
+            "hits": 1855,
+            "pct": 73.08904649330181,
+            "total": 2538
+          },
+          "v7PADD2_I00": {
+            "hits": 117,
+            "pct": 69.64285714285714,
+            "total": 168
+          }
+        },
+        "run": "E2",
+        "threshold": 0.05,
+        "total": 3106
+      },
+      {
+        "crop": "refined",
+        "group": "pole",
+        "hits": 56,
+        "pct": 6.6350710900473935,
+        "per_seed": [
+          6.872037914691943,
+          6.398104265402844
+        ],
+        "per_video": {
+          "SVYdH614G_M": {
+            "hits": 3,
+            "pct": 2.9411764705882355,
+            "total": 102
+          },
+          "qxfgw1Kd98A": {
+            "hits": 53,
+            "pct": 7.464788732394366,
+            "total": 710
+          },
+          "v7PADD2_I00": {
+            "hits": 0,
+            "pct": 0.0,
+            "total": 32
+          }
+        },
+        "run": "E2",
+        "threshold": 0.1,
+        "total": 844
+      },
+      {
+        "crop": "refined",
+        "group": "pole",
+        "hits": 27,
+        "pct": 3.199052132701422,
+        "per_seed": [
+          2.843601895734597,
+          3.5545023696682465
+        ],
+        "per_video": {
+          "SVYdH614G_M": {
+            "hits": 1,
+            "pct": 0.9803921568627451,
+            "total": 102
+          },
+          "qxfgw1Kd98A": {
+            "hits": 26,
+            "pct": 3.6619718309859155,
+            "total": 710
+          },
+          "v7PADD2_I00": {
+            "hits": 0,
+            "pct": 0.0,
+            "total": 32
+          }
+        },
+        "run": "E2",
+        "threshold": 0.05,
+        "total": 844
       }
     ],
     "strata": [
@@ -2081,6 +2560,8 @@
         "n_images": 129,
         "reference_body": 95.96142254370102,
         "reference_ski": 93.52861035422343,
+        "refined_body": 92.40506329113924,
+        "refined_ski": 85.55858310626704,
         "run": "E1",
         "stratum": "tracker_iou",
         "tracked_body": 85.50331525015069,
@@ -2091,6 +2572,8 @@
         "n_images": 129,
         "reference_body": 96.68474984930681,
         "reference_ski": 94.55040871934605,
+        "refined_body": 93.33936106088005,
+        "refined_ski": 88.0108991825613,
         "run": "E2",
         "stratum": "tracker_iou",
         "tracked_body": 87.91440626883664,
@@ -2101,6 +2584,8 @@
         "n_images": 33,
         "reference_body": 91.12271540469973,
         "reference_ski": 89.32926829268293,
+        "refined_body": 9.660574412532638,
+        "refined_ski": 5.7926829268292686,
         "run": "E1",
         "stratum": "tracker_iou",
         "tracked_body": 2.741514360313316,
@@ -2111,6 +2596,8 @@
         "n_images": 33,
         "reference_body": 93.47258485639686,
         "reference_ski": 92.6829268292683,
+        "refined_body": 6.788511749347259,
+        "refined_ski": 4.573170731707317,
         "run": "E2",
         "stratum": "tracker_iou",
         "tracked_body": 2.6109660574412534,
@@ -2121,6 +2608,8 @@
         "n_images": 99,
         "reference_body": 95.17477203647417,
         "reference_ski": 91.6793893129771,
+        "refined_body": 94.94680851063829,
+        "refined_ski": 92.44274809160305,
         "run": "E1",
         "stratum": "tracker_iou",
         "tracked_body": 95.93465045592706,
@@ -2131,6 +2620,8 @@
         "n_images": 99,
         "reference_body": 95.59270516717325,
         "reference_ski": 93.20610687022901,
+        "refined_body": 94.56686930091185,
+        "refined_ski": 93.05343511450381,
         "run": "E2",
         "stratum": "tracker_iou",
         "tracked_body": 95.44072948328268,
@@ -2141,6 +2632,8 @@
         "n_images": 120,
         "reference_body": 96.55396618985695,
         "reference_ski": 95.14285714285714,
+        "refined_body": 79.3888166449935,
+        "refined_ski": 77.21428571428571,
         "run": "E1",
         "stratum": "time_since_init",
         "tracked_body": 74.73992197659298,
@@ -2151,6 +2644,8 @@
         "n_images": 120,
         "reference_body": 97.33420026007802,
         "reference_ski": 95.92857142857143,
+        "refined_body": 79.81144343302991,
+        "refined_ski": 77.42857142857143,
         "run": "E2",
         "stratum": "time_since_init",
         "tracked_body": 76.65799739921977,
@@ -2161,6 +2656,8 @@
         "n_images": 104,
         "reference_body": 93.31610044313146,
         "reference_ski": 87.99694189602447,
+        "refined_body": 90.5834564254062,
+        "refined_ski": 84.1743119266055,
         "run": "E1",
         "stratum": "time_since_init",
         "tracked_body": 87.8138847858198,
@@ -2171,6 +2668,8 @@
         "n_images": 104,
         "reference_body": 94.09158050221566,
         "reference_ski": 90.36697247706422,
+        "refined_body": 88.88478581979321,
+        "refined_ski": 85.62691131498471,
         "run": "E2",
         "stratum": "time_since_init",
         "tracked_body": 87.55539143279172,
@@ -2181,6 +2680,8 @@
         "n_images": 37,
         "reference_body": 95.49356223175965,
         "reference_ski": 96.48241206030151,
+        "refined_body": 79.8283261802575,
+        "refined_ski": 76.38190954773869,
         "run": "E1",
         "stratum": "time_since_init",
         "tracked_body": 75.7510729613734,
@@ -2191,6 +2692,8 @@
         "n_images": 37,
         "reference_body": 96.3519313304721,
         "reference_ski": 97.48743718592965,
+        "refined_body": 83.2618025751073,
+        "refined_ski": 80.90452261306532,
         "run": "E2",
         "stratum": "time_since_init",
         "tracked_body": 77.25321888412017,
@@ -2201,6 +2704,8 @@
         "n_images": 70,
         "reference_body": 91.74157303370787,
         "reference_ski": 88.24940047961631,
+        "refined_body": 68.65168539325843,
+        "refined_ski": 64.74820143884892,
         "run": "E1",
         "stratum": "status",
         "tracked_body": 65.4494382022472,
@@ -2211,6 +2716,8 @@
         "n_images": 70,
         "reference_body": 93.65168539325843,
         "reference_ski": 90.16786570743405,
+        "refined_body": 66.74157303370787,
+        "refined_ski": 64.5083932853717,
         "run": "E2",
         "stratum": "status",
         "tracked_body": 64.32584269662921,
@@ -2221,6 +2728,8 @@
         "n_images": 191,
         "reference_body": 96.31280388978931,
         "reference_ski": 93.79401408450704,
+        "refined_body": 89.48541329011346,
+        "refined_ski": 85.65140845070422,
         "run": "E1",
         "stratum": "status",
         "tracked_body": 85.45380875202594,
@@ -2231,6 +2740,8 @@
         "n_images": 191,
         "reference_body": 96.69773095623987,
         "reference_ski": 95.1144366197183,
+        "refined_body": 90.15397082658022,
+        "refined_ski": 87.5,
         "run": "E2",
         "stratum": "status",
         "tracked_body": 87.19611021069692,

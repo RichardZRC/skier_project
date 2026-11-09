@@ -1,5 +1,5 @@
 #!/bin/bash
-# Step 8: the frozen evaluation run (plan §13; D23-D25). Usage, inside Ubuntu on the GPU machine:
+# Step 8: the frozen evaluation run (plan §13; D23-D26). Usage, inside Ubuntu on the GPU machine:
 #   bash results/step8/run_final.sh val    # the cheap trial: the identical chain on val
 #   bash results/step8/run_final.sh test   # ONCE: test + the follow-cam set (D11); refuses a second run
 # Preflight: clean tree and HEAD == origin/main; freeze.json (hashes of everything that decides a number) is
@@ -34,11 +34,12 @@ SIAM=(--siamfc-repo $V/siamfc_pytorch --weights $V/siamfc_pytorch/pretrained/sia
 D=$SKIER_RESULTS/pose/d21
 PS=data/manifests/pose_split_v1.json
 RUNS=(E1-s230 E1-s231 E2-s230 E2-s231)
-KPOSE=$(python -I -c "import sys; sys.path.insert(0, 'src'); from skier.integration.config import IntegrationConfig as C; print(C.from_yaml('configs/integration/default.yaml').require('k_pose', 'conf_signal', 'replay_uses_status').k_pose)")
+read KPOSE RS RK < <(python -I -c "import sys; sys.path.insert(0, 'src'); from skier.integration.config import IntegrationConfig as C; c = C.from_yaml('configs/integration/default.yaml').require('k_pose', 'conf_signal', 'replay_uses_status', 'pose_refine', 'refine_min_score', 'refine_k'); print(c.k_pose, c.refine_min_score, c.refine_k)")
+[ -n "$RK" ] || { echo "could not read the integration settings"; exit 1; }
 mkdir -p $F
 LOG=$F/run.log
 exec > >(tee -a $LOG) 2>&1
-echo "=== $(date '+%F %T') run_final $PART at $(git rev-parse --short HEAD); k_pose $KPOSE"
+echo "=== $(date '+%F %T') run_final $PART at $(git rev-parse --short HEAD); k_pose $KPOSE; refine s_min $RS k_refine $RK"
 
 python -I - "$F/freeze.json" "$PART" <<PY
 import hashlib, json, subprocess, sys
@@ -76,14 +77,14 @@ echo "=== SkiTB tracking ($PART)"
 python scripts/run_tracker.py "${SIAM[@]}" --skitb-root $SK --split-json $SPLIT --partition $PART "${FT[@]}" \
   --out $F/tracking/skitb 2>&1 | grep -v -i warn | tail -1
 
-echo "=== Ski 2DPose: alignment, tracking, propagation (k_pose $KPOSE)"
+echo "=== Ski 2DPose: alignment, tracking, propagation (k_pose $KPOSE; refined crop D26)"
 python scripts/eval_propagation.py --split $PS --partition $PART "${FT[@]}" --check-alignment --out $F/propagation
 python scripts/run_tracker.py "${SIAM[@]}" --ski2dpose-partition $PART "${FT[@]}" --out $F/tracking/ski2dpose 2>&1 \
   | grep -v -i warn | tail -1
 CK=(); for r in "${RUNS[@]}"; do CK+=(--checkpoint "$r=$D/$r/best.pt"); done
 python scripts/eval_propagation.py --split $PS --partition $PART "${FT[@]}" --usable $F/propagation/usable_segments.json \
-  --track-dir $F/tracking/ski2dpose "${CK[@]}" --recipe E2 --k-pose $KPOSE --hrnet-config $HR --out $F/propagation 2>&1 \
-  | grep -v -i warn | tail -2
+  --track-dir $F/tracking/ski2dpose "${CK[@]}" --recipe E2 --k-pose $KPOSE --refine $RS $RK --hrnet-config $HR \
+  --out $F/propagation 2>&1 | grep -v -i warn | tail -10
 
 echo "=== replay ($PART)"
 python scripts/make_replay.py --evaluate --track-dir $F/tracking/skitb --skitb-root $SK --split-json $SPLIT \

@@ -1,5 +1,6 @@
 """Step 7 integration: settings, the tracker-confidence rule, propagation scoring, and process_clip."""
 
+import dataclasses
 import itertools
 import json
 import math
@@ -14,6 +15,7 @@ from skier.geometry import apply_affine, expand_box
 from skier.integration import confidence as conf
 from skier.integration import process as proc
 from skier.integration import propagation as prop
+from skier.integration import refine
 from skier.integration.config import IntegrationConfig, config_sha256
 from skier.paths import configs_dir
 from skier.pose.heatmap import encode
@@ -282,6 +284,116 @@ def test_eval_propagation_refusals(tmp_path):
     args = ["--split", str(split), "--usable", str(usable), "--track-dir", str(tmp_path), "--checkpoint", "E2-s230=x",
             "--hrnet-config", "x"]
     assert prop.main(args) == 1  # written for another split
+    usable.write_text(json.dumps({"partition": "val", "split_sha256": "S", "usable": [], "segments": []}))
+    assert prop.main(args + ["--refine-grid", "--k-pose", "1.0", "1.1"]) == 1  # D26 refines one k_pose
+    with pytest.raises(SystemExit):
+        prop.main(args + ["--refine-grid", "--refine", "0.3", "1.15"])
+
+
+# --- crop refinement (D26) --------------------------------------------------------------------
+
+def test_refined_boxes_hand_computed(schema):
+    body, ski, pole = (list(schema.groups[g]) for g in ("body", "ski", "pole"))
+    xy = np.full((1, schema.num_keypoints, 2), 50.0)
+    scores = np.full((1, schema.num_keypoints), 0.9)
+    xy[0, body[0]], xy[0, ski[0]] = (10.0, 20.0), (110.0, 220.0)  # the extremes that set the box
+    xy[0, pole] = (-500.0, 900.0)  # poles never count
+    xy[0, body[1]], scores[0, body[1]] = (400.0, 400.0), 0.29  # below s_min
+    xy[0, body[2]], scores[0, body[2]] = (np.nan, np.nan), 0.95  # missing prediction
+    xy[0, body[3]], scores[0, body[3]] = (-300.0, -300.0), np.nan
+    out = refine.refined_boxes(xy, scores, schema, 0.3, 1.0)
+    np.testing.assert_allclose(out[0], [10.0, 20.0, 110.0, 220.0])
+    np.testing.assert_allclose(refine.refined_boxes(xy, scores, schema, 0.3, 1.2)[0],
+                               expand_box([10.0, 20.0, 110.0, 220.0], 1.2))
+    assert refine.refined_boxes(xy, scores, schema, 0.29, 1.0)[0, 2] == 400.0  # s_min is inclusive
+    few = np.full_like(scores, 0.1)
+    few[0, [body[0], ski[0], ski[1]]] = 0.9
+    assert np.isnan(refine.refined_boxes(xy, few, schema, 0.3, 1.0)).all()  # 3 < N_MIN points
+    few[0, body[4]] = 0.9
+    assert np.isfinite(refine.refined_boxes(xy, few, schema, 0.3, 1.0)).all()  # exactly N_MIN
+    same = np.full_like(xy, 77.0)
+    assert np.isnan(refine.refined_boxes(same, scores, schema, 0.3, 1.0)).all()  # diagonal under 1 px
+    assert refine.refined_boxes(np.zeros((0, schema.num_keypoints, 2)), np.zeros((0, schema.num_keypoints)), schema,
+                                0.3, 1.0).shape == (0, 4)
+
+
+def skier_record(r, schema):
+    """A fixed skier: body in a column, the skis flat below it (left ski x 220-280, right ski 360-420)."""
+    xy = np.zeros((schema.num_keypoints, 2))
+    body, ski, pole = (list(schema.groups[g]) for g in ("body", "ski", "pole"))
+    xy[body] = np.stack([np.linspace(300, 340, len(body)), np.linspace(100, 250, len(body))], axis=1)
+    xy[ski] = np.stack([[220, 240, 260, 280, 360, 380, 400, 420], [270] * 4 + [272] * 4], axis=1)
+    xy[pole] = [(250, 200), (390, 200)]
+    rel = np.ones(schema.num_keypoints, dtype=bool)
+    return dataclasses.replace(r, keypoints_xy=xy, reliable=rel, reference_box_xyxy=np.array([220.0, 100.0, 420.0, 272.0]))
+
+
+def test_refine_on_recovers_a_cut_off_skier(seg_records, schema):
+    _, scored = prop.split_init(seg_records, {(r.source_video_id, r.segment_id) for r in seg_records})
+    scored = [skier_record(r, schema) for r in scored]
+    trk = np.tile([290.0, 100.0, 490.0, 272.0], (len(scored), 1))  # 0.35 box widths right: x < 252.5 is cut off
+    trk[1] += [800, 0, 800, 0]  # far off the skier: no label in the crop, so it falls back
+    trk[2] = np.nan  # no tracker box
+    trk[3] = scored[3].reference_box_xyxy
+    boxes = prop.tracker_crop_boxes(trk, 1.1)
+    finite = np.isfinite(boxes).all(axis=1)
+    fn1 = synth.box_oracle_heatmap_fn([(r, b) for r, b, f in zip(scored, boxes, finite) if f])
+    xy1, s1 = prop.predict_on_scored(scored, fn1, boxes, 1.25, batch_size=64)
+    assert np.isnan(xy1[[1, 2]]).all() and np.isnan(s1[2]).all()
+    s1[3] = 0.1  # found, but not confident: falls back with finite pass-1 points
+    expect = refine.refined_boxes(xy1, s1, schema, 0.3, 1.3)
+    used_expect = np.isfinite(expect).all(axis=1)
+    assert used_expect.tolist() == [True, False, False, False, True, True] and np.isfinite(xy1[3]).all()
+    fn2 = synth.box_oracle_heatmap_fn([(r, b) for r, b, u in zip(scored, expect, used_expect) if u])
+    xy2, crop, used = refine.refine_on(scored, fn2, xy1, s1, boxes, schema, 0.3, 1.3, 1.25, batch_size=64)
+    np.testing.assert_array_equal(used, used_expect)
+    np.testing.assert_array_equal(xy2[~used], xy1[~used])  # fallback keeps pass 1 and its crop
+    np.testing.assert_array_equal(crop[~used], boxes[~used])
+    np.testing.assert_allclose(crop[used], expect[used])
+
+    ref = np.array([r.keypoints_xy for r in scored])
+    one = prop.compare_crops(scored, schema, ref, xy1, boxes, 1.25, {})
+    two = prop.compare_crops(scored, schema, ref, xy2, crop, 1.25, {})
+    for m in (one, two):  # a perfect model misses exactly the labels its crop cuts off
+        for g in ("body", "ski"):
+            t, cut = m["tracked"]["groups"]["0.1"][g], m["tracked"]["cut_off"][g]
+            assert t["hits"] == t["total"] - cut["cut"]
+    cut1, cut2 = one["tracked"]["cut_off"]["ski"]["cut"], two["tracked"]["cut_off"]["ski"]["cut"]
+    lost = 2 * len(schema.groups["ski"])  # rows 1 and 2 have no skier in their crop
+    assert cut1 == lost + 3 * 2 and cut2 == lost  # the 2 cut-off ski points in each shifted row come back
+    assert two["tracked"]["groups"]["0.1"]["body"]["hits"] == one["tracked"]["groups"]["0.1"]["body"]["hits"]
+
+
+def test_choose_refine_rule():
+    rows = [{"s_min": s, "k_refine": k, "body": 80.0, "ski": 70.0} for s, k in refine.REFINE_GRID]
+    best = {"s_min": 0.2, "k_refine": 1.3, "body": 82.0, "ski": 72.0}  # mean 77
+    rows[[(r["s_min"], r["k_refine"]) for r in rows].index((0.2, 1.3))] = best
+    r = refine.choose_refine(rows, {"body": 80.0, "ski": 70.0})
+    assert r["pick"] == {"s_min": 0.2, "k_refine": 1.3} and r["gain"] == pytest.approx(2.0) and r["adopt"]
+    tie = dict(best, s_min=0.1, k_refine=1.15, ski=71.2)  # mean 76.6: a tie, and k_refine is nearer 1.0
+    rows2 = rows + [tie]
+    assert refine.choose_refine(rows2, {"body": 80.0, "ski": 70.0})["pick"] == {"s_min": 0.1, "k_refine": 1.15}
+    rows3 = rows2 + [dict(tie, s_min=0.5, ski=71.0)]  # mean 76.5: still a tie, same k_refine, higher s_min
+    pick = refine.choose_refine(rows3, {"body": 80.0, "ski": 70.0})
+    assert pick["pick"] == {"s_min": 0.5, "k_refine": 1.15} and pick["best_mean"] == pytest.approx(77.0)
+    assert pick["pick_mean"] == pytest.approx(76.5) and pick["gain"] == pytest.approx(1.5)
+    gate = refine.choose_refine(rows, {"body": 81.0, "ski": 72.0})  # gain 0.5: not more than the gate
+    assert gate["gain"] == pytest.approx(0.5) and gate["adopt"] is False
+    assert refine.setting_key(0.3, 1.15) == "s0.3_k1.15" and len(refine.REFINE_GRID) == 12
+
+
+def test_integration_config_refine_settings(tmp_path):
+    cfg = IntegrationConfig(pose_refine=True)
+    with pytest.raises(ValueError, match="refine_min_score"):
+        cfg.require("pose_refine")
+    with pytest.raises(ValueError, match="refine_k"):
+        cfg.with_(refine_min_score=0.3).require("pose_refine")
+    assert cfg.with_(refine_min_score=0.3, refine_k=1.15).require("pose_refine").refine_k == 1.15
+    assert IntegrationConfig(pose_refine=False).require("pose_refine").pose_refine is False
+    with pytest.raises(ValueError, match="pose_refine"):
+        IntegrationConfig().require("pose_refine")
+    (tmp_path / "r.yaml").write_text("pose_refine: true\nrefine_min_score: 0.3\nrefine_k: 1.15\n")
+    assert IntegrationConfig.from_yaml(tmp_path / "r.yaml").require("pose_refine").refine_min_score == 0.3
 
 
 # --- process_clip ---------------------------------------------------------------------------
@@ -316,7 +428,8 @@ def run_square_clip(tmp_path, schema, icfg, videos=True):
     return rows, m
 
 
-ICFG = IntegrationConfig(k_pose=1.2, conf_signal="raw", conf_threshold=1e-5, replay_uses_status=False)
+ICFG = IntegrationConfig(k_pose=1.2, conf_signal="raw", conf_threshold=1e-5, replay_uses_status=False,
+                         pose_refine=False)
 
 
 def same_rows(a, b):
@@ -347,6 +460,28 @@ def test_process_clip_end_to_end(tmp_path, schema):
     _, track = read_crops_csv(out / "crops.csv")
     assert not track.lost.any()  # replay_uses_status false: low_conf doesn't drive the replay
     assert (out / "replay.mp4").stat().st_size > 0
+    assert not any(d["pose_refined"] for d in lines) and m["refined_frames"] == 0
+
+
+def test_process_clip_with_crop_refinement(tmp_path, schema):
+    _, m = run_square_clip(tmp_path, schema, ICFG.with_(pose_refine=True, refine_min_score=0.3, refine_k=1.3),
+                           videos=False)
+    out = tmp_path / "out"
+    assert proc.validate_jsonl(out / "frames.jsonl", 24) == 30
+    lines = [json.loads(t) for t in (out / "frames.jsonl").read_text().splitlines()]
+    assert all(d["pose_refined"] for d in lines) and m["refined_frames"] == 30
+    # pass 1 is the 3.2 px/px tracker crop (test above); pass 2 crops around its points, so M changes
+    assert lines[5]["pose_crop_M"][0][0] != pytest.approx(3.2)
+    body_ski = list(schema.groups["body"]) + list(schema.groups["ski"])
+    pts = INPUT_POINTS[body_ski]
+    span = pts.max(axis=0) - pts.min(axis=0)  # input px of pass 1 = 3.2 x original px
+    w, h = span / 3.2 * 1.3 * 1.25  # the refined box, padded
+    # fit to 3:4 grows the short side; pass-1 decoding moves each point by up to ~1.4 input px
+    assert lines[5]["pose_crop_M"][0][0] == pytest.approx(min(192 / w, 256 / h), rel=0.05)
+    for d in lines:  # the fake model put each joint at INPUT_POINTS in the crop it was given: the refined one
+        back = apply_affine(np.array(d["pose_crop_M"]), np.array(d["raw_keypoints_xy"], float))
+        assert np.abs(back - INPUT_POINTS).max() < 1.5
+    assert m["integration_config"]["pose_refine"] is True
 
 
 def test_process_clip_status_can_drive_the_replay(tmp_path, schema):
@@ -358,6 +493,8 @@ def test_process_clip_status_can_drive_the_replay(tmp_path, schema):
 def test_process_clip_needs_chosen_settings(tmp_path, schema):
     with pytest.raises(ValueError, match="not chosen"):
         run_square_clip(tmp_path, schema, ICFG.with_(k_pose=None), videos=False)
+    with pytest.raises(ValueError, match="pose_refine"):
+        run_square_clip(tmp_path, schema, ICFG.with_(pose_refine=None), videos=False)
 
 
 def test_validate_jsonl_catches_problems(tmp_path, schema):
@@ -381,6 +518,8 @@ def test_validate_jsonl_catches_problems(tmp_path, schema):
         (3, lambda d: d.update(tracking_status="init")),
         (3, lambda d: d.update(tracker_box=None)),  # a crop matrix without a box
         (3, lambda d: d.update(replay_crop=[0, 0, 1])),
+        (3, lambda d: d.update(pose_refined=1)),
+        (3, lambda d: d.update(tracker_box=None, pose_crop_M=None, pose_refined=True)),  # refined without a crop
     ]
     for i, change in cases:
         with pytest.raises(ValueError):

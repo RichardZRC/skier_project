@@ -5,6 +5,7 @@ Compares $SKIER_RESULTS/final/val/ with the Step 3, 6 and 7 outputs:
 - the SkiTB tracking summary;
 - the usable segments;
 - propagation counts at the chosen k_pose;
+- refined-crop counts at the D26 pick (the selection run in integration/refine-val);
 - the replay numbers from the D24 confidence check.
 Exits 1 on any difference. Usage: python check_val_dryrun.py
 """
@@ -60,6 +61,15 @@ for name, e in new_p["checkpoints"].items():
             for g, c in groups.items():
                 o = old_p["checkpoints"][name]["by_k_pose"][k][crop]["groups"][t][g]
                 same(f"propagation {name} k{k} {crop} {g}@{t}", (c["hits"], c["total"]), (o["hits"], o["total"]))
+rv = load(R / "integration" / "refine-val" / "propagation.json")  # the D26 selection run
+pick = rv["refine_rule"]["pick"]
+key = f"s{pick['s_min']:g}_k{pick['k_refine']:g}"
+same("refine setting is the D26 pick", new_p.get("refine_settings"), [key])
+for name, e in new_p["checkpoints"].items():
+    for t, groups in e["by_k_pose"][k].get("refined", {}).get(key, {}).get("tracked", {}).get("groups", {}).items():
+        for g, c in groups.items():
+            o = rv["checkpoints"][name]["by_k_pose"][k]["refined"][key]["tracked"]["groups"][t][g]
+            same(f"propagation {name} refined {key} {g}@{t}", (c["hits"], c["total"]), (o["hits"], o["total"]))
 
 conf = load(R / "integration" / "confidence-val" / "confidence.json")["replay"]["status_drives_replay"]
 rows = [r for r in csv.DictReader(open(F / "replay" / "smoothed.csv")) if r["source"] == "skitb"]

@@ -1,6 +1,6 @@
 {
  "partition": "val",
- "git_commit": "7d96f02b0376bddc5c38e4102abcf17bd60fbd5d",
+ "git_commit": "8b045032a8bd0fb40dd3e3fb5f1cd715d7d2c322",
  "split_content_sha256": "46bd127b0e51c1293859c7ab86dab1f0759511fbbdfd9dad270a632443bb2e98",
  "files": {
   "pose_split": {
@@ -17,7 +17,7 @@
   },
   "integration_config": {
    "path": "configs/integration/default.yaml",
-   "sha256": "719f58749a163bb93e40b29302c577e7a4e21d27b5cccc49e403452d5e4792a0"
+   "sha256": "6965d7aded4044e432e02d62e4681f07fefa4755c1422b2768d6b67d0aaf91b4"
   },
   "replay_config": {
    "path": "configs/replay/default.yaml",

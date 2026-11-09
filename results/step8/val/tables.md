@@ -87,11 +87,15 @@ Per video, PCK@0.1:
 | Run | Crop | Body @0.1 | Ski @0.1 | Ski @0.05 |
 | --- | --- | --- | --- | --- |
 | E1 | reference | 95.1% (6387/6716) | 92.3% (2867/3106) | 83.6% (2597/3106) |
+| E1 | refined | 84.0% (5639/6716) | 80.0% (2486/3106) | 71.5% (2222/3106) |
 | E1 | tracked | 80.2% (5383/6716) | 73.0% (2267/3106) | 62.7% (1946/3106) |
 | E2 | reference | 95.9% (6440/6716) | 93.8% (2913/3106) | 85.2% (2647/3106) |
+| E2 | refined | 83.9% (5638/6716) | 81.3% (2526/3106) | 72.7% (2257/3106) |
 | E2 | tracked | 81.1% (5449/6716) | 75.4% (2342/3106) | 65.6% (2038/3106) |
 
 Tracker-crop cut-off share: body 9.8%, ski 16.8%.
+
+Refined crop (D26: s_min 0.3, k_refine 1.3): cut-off share body 7.6%, ski 10.8%; kept the tracker crop (fallback): E1-s230 4.6% / E1-s231 5.4% / E2-s230 9.2% / E2-s231 6.9%.
 
 | Δ | Group | Δ (points) | 95% interval |
 | --- | --- | --- | --- |
@@ -103,23 +107,31 @@ Tracker-crop cut-off share: body 9.8%, ski 16.8%.
 | E2 reference − E2 tracked | ski @0.05 | +19.6 | [14.1, 26.2] |
 | E2 tracked − E1 tracked | body @0.1 | +1.0 | [-0.8, 2.6] |
 | E2 tracked − E1 tracked | ski @0.1 | +2.4 | [1.3, 3.5] |
+| E1 refined − E1 tracked | body @0.1 | +3.8 | [1.8, 6.3] |
+| E1 refined − E1 tracked | ski @0.1 | +7.1 | [4.6, 9.8] |
+| E1 refined − E1 tracked | ski @0.05 | +8.9 | [5.8, 12.2] |
+| E2 refined − E2 tracked | body @0.1 | +2.8 | [1.2, 4.5] |
+| E2 refined − E2 tracked | ski @0.1 | +5.9 | [3.6, 8.4] |
+| E2 refined − E2 tracked | ski @0.05 | +7.1 | [4.7, 9.5] |
+| E2 refined − E1 refined | body @0.1 | -0.0 | [-1.9, 1.4] |
+| E2 refined − E1 refined | ski @0.1 | +1.3 | [-0.9, 3.0] |
 
-| Stratum | Value | Run | Labels | Body ref → tracked | Ski ref → tracked |
+| Stratum | Value | Run | Labels | Body ref → tracked → refined | Ski ref → tracked → refined |
 | --- | --- | --- | --- | --- | --- |
-| tracker_iou | 0.1<=iou<0.5 | E1 | 129 | 96.0 → 85.5 | 93.5 → 72.7 |
-| tracker_iou | 0.1<=iou<0.5 | E2 | 129 | 96.7 → 87.9 | 94.6 → 76.8 |
-| tracker_iou | iou<0.1 | E1 | 33 | 91.1 → 2.7 | 89.3 → 1.2 |
-| tracker_iou | iou<0.1 | E2 | 33 | 93.5 → 2.6 | 92.7 → 0.9 |
-| tracker_iou | iou>=0.5 | E1 | 99 | 95.2 → 95.9 | 91.7 → 91.3 |
-| tracker_iou | iou>=0.5 | E2 | 99 | 95.6 → 95.4 | 93.2 → 92.5 |
-| time_since_init | 2-5s | E1 | 120 | 96.6 → 74.7 | 95.1 → 70.9 |
-| time_since_init | 2-5s | E2 | 120 | 97.3 → 76.7 | 95.9 → 73.3 |
-| time_since_init | <2s | E1 | 104 | 93.3 → 87.8 | 88.0 → 76.1 |
-| time_since_init | <2s | E2 | 104 | 94.1 → 87.6 | 90.4 → 78.8 |
-| time_since_init | >=5s | E1 | 37 | 95.5 → 75.8 | 96.5 → 70.1 |
-| time_since_init | >=5s | E2 | 37 | 96.4 → 77.3 | 97.5 → 71.6 |
-| status | low_conf | E1 | 70 | 91.7 → 65.4 | 88.2 → 54.9 |
-| status | low_conf | E2 | 70 | 93.7 → 64.3 | 90.2 → 57.9 |
-| status | ok | E1 | 191 | 96.3 → 85.5 | 93.8 → 79.6 |
-| status | ok | E2 | 191 | 96.7 → 87.2 | 95.1 → 81.8 |
+| tracker_iou | 0.1<=iou<0.5 | E1 | 129 | 96.0 → 85.5 → 92.4 | 93.5 → 72.7 → 85.6 |
+| tracker_iou | 0.1<=iou<0.5 | E2 | 129 | 96.7 → 87.9 → 93.3 | 94.6 → 76.8 → 88.0 |
+| tracker_iou | iou<0.1 | E1 | 33 | 91.1 → 2.7 → 9.7 | 89.3 → 1.2 → 5.8 |
+| tracker_iou | iou<0.1 | E2 | 33 | 93.5 → 2.6 → 6.8 | 92.7 → 0.9 → 4.6 |
+| tracker_iou | iou>=0.5 | E1 | 99 | 95.2 → 95.9 → 94.9 | 91.7 → 91.3 → 92.4 |
+| tracker_iou | iou>=0.5 | E2 | 99 | 95.6 → 95.4 → 94.6 | 93.2 → 92.5 → 93.1 |
+| time_since_init | 2-5s | E1 | 120 | 96.6 → 74.7 → 79.4 | 95.1 → 70.9 → 77.2 |
+| time_since_init | 2-5s | E2 | 120 | 97.3 → 76.7 → 79.8 | 95.9 → 73.3 → 77.4 |
+| time_since_init | <2s | E1 | 104 | 93.3 → 87.8 → 90.6 | 88.0 → 76.1 → 84.2 |
+| time_since_init | <2s | E2 | 104 | 94.1 → 87.6 → 88.9 | 90.4 → 78.8 → 85.6 |
+| time_since_init | >=5s | E1 | 37 | 95.5 → 75.8 → 79.8 | 96.5 → 70.1 → 76.4 |
+| time_since_init | >=5s | E2 | 37 | 96.4 → 77.3 → 83.3 | 97.5 → 71.6 → 80.9 |
+| status | low_conf | E1 | 70 | 91.7 → 65.4 → 68.7 | 88.2 → 54.9 → 64.7 |
+| status | low_conf | E2 | 70 | 93.7 → 64.3 → 66.7 | 90.2 → 57.9 → 64.5 |
+| status | ok | E1 | 191 | 96.3 → 85.5 → 89.5 | 93.8 → 79.6 → 85.7 |
+| status | ok | E2 | 191 | 96.7 → 87.2 → 90.2 | 95.1 → 81.8 → 87.5 |
 

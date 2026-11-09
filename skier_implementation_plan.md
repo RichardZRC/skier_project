@@ -613,15 +613,23 @@ Provisional target, not a promise: at least 95% of visible ski endpoints kept on
 > - **Code:** `src/skier/integration/` (`config`, `confidence`, `propagation`, `process`), `scripts/{check_tracker_confidence,eval_propagation,process_clip}.py`. 27 tests; mutation check 33/33.
 > - **Val results:** `results/step7/` (summary in D24 and `PROJECT_NOTES.md`). The fallback below (no alignment) isn't needed: all 32 val segments align exactly.
 > - **Open:** Ruichao's review of the demos and the failure sheet; the optional 7b (off-the-shelf STARK-ST50, adopted only if its SkiTB val AUC beats SiamFC's and tracked E2 ski PCK doesn't drop).
+>
+> **Status, 2026-11-08: 7c, pose-guided crop refinement, done (D26; plan approved the same day).**
+> - **Method:** predict on the tracker crop, then crop again around the confident body + ski predictions (score ≥ `s_min`, box × `k_refine`) and predict again. It uses no labels.
+> - **Code:** `integration/refine.py`; `eval_propagation.py --refine-grid | --refine S K`; `process_clip` adds a second pass when `pose_refine` is set, and the JSONL gains a `pose_refined` field; tables and the strata figure get a third crop.
+> - **Val selection:** `s_min` 0.3, `k_refine` 1.3. The E2 mean of body and ski goes from 78.3 to 82.6, so the gate adopts it (`pose_refine: true`). On the 129 partial-overlap labels, ski PCK goes from 76.8 to 88.0.
+> - Evidence: `results/step7/refine_val_summary.json`.
 
 ### Offline coding block
 - `[CODE]` `scripts/process_clip.py`: video + first-frame box → tracker → pose crop → pose model → replay → outputs. Writes a per-frame JSONL with:
 
   ```text
   video_id, frame_index, timestamp, tracker_box, tracker_score, tracking_status,
-  pose_crop_M, raw_keypoints_xy, raw_keypoint_scores, replay_crop, overlay_visible,
+  pose_crop_M, pose_refined, raw_keypoints_xy, raw_keypoint_scores, replay_crop, overlay_visible,
   checkpoint_sha256, config_sha256
   ```
+
+  (`pose_refined` was added with D26.)
 
   It also writes a rendered MP4. Raw predictions are never overwritten by display filtering.
 - `[CODE]` Tracker box → pose crop: `fit_aspect(expand(tracker_box, k_pose), 192/256)`, with `k_pose` tuned on val.
@@ -659,6 +667,7 @@ If video alignment failed in Step 1, use the crop-error set as the quantitative 
 > - **The replay table gets ski-end containment** from `make_replay.py --evaluate` on the Ski 2DPose segments.
 > - **Every step runs from one script,** `results/step8/run_final.sh val|test`, which writes `freeze.json` first and refuses a second test run.
 > - **The report's demos are the Step 7 val clips,** and the failure categories come from the automatic hints (Ruichao had no time for the manual review).
+> - **2026-11-08 (D26):** the run also scores the refined crop at the val-chosen setting, with refined − tracked intervals. The test freeze becomes D27.
 
 ### Offline coding block
 - `[CODE]` `scripts/make_tables.py`: pose, tracking and replay tables from saved predictions, with point counts and per-video rows.

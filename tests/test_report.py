@@ -358,6 +358,54 @@ def test_propagation_tables(tmp_path, pose_records, schema):
         tab.propagation_tables(tmp_path / "prop", {r.sample_id: r for r in pose_records}, schema, 1.1, n_boot=50)
 
 
+def test_propagation_tables_with_refinement(tmp_path, pose_records, schema):
+    gt, rel, diag, _ = gt_arrays(pose_records)
+    rng = np.random.default_rng(9)
+    boxes = np.array([r.reference_box_xyxy for r in pose_records])
+    n = len(pose_records)
+    keys = {"tracker_iou": ["iou>=0.5"] * (n // 2) + ["0.1<=iou<0.5"] * (n - n // 2)}
+    key = "s0.3_k1.15"
+    ckpts, npz = {}, {"sample_ids": np.array([r.sample_id for r in pose_records])}
+    for name, sd in (("E1-s230", 5), ("E1-s231", 5), ("E2-s230", 4), ("E2-s231", 4)):
+        ref, trk, rfd = (gt + rng.normal(0, f * sd, gt.shape) for f in (1, 8, 4))  # refined misses some, ref none
+        npz[f"{name}__reference"], npz[f"{name}__k1.1"], npz[f"{name}__k1.1__{key}"] = ref, trk, rfd
+        block = prop.compare_crops(pose_records, schema, ref, trk, boxes, 1.25, keys)
+        block["refined"] = {key: {"s_min": 0.3, "k_refine": 1.15, "n_refined": n - 1, "fallback_share": 1 / n,
+                                  **prop.compare_crops(pose_records, schema, ref, rfd, boxes, 1.25, keys)}}
+        ckpts[name] = {"by_k_pose": {"1.1": block}}
+    (tmp_path / "prop").mkdir()
+    write_json({"checkpoints": ckpts, "refine_settings": [key]}, tmp_path / "prop" / "propagation.json")
+    np.savez(tmp_path / "prop" / "predictions.npz", **npz)
+    by_id = {r.sample_id: r for r in pose_records}
+    t = tab.propagation_tables(tmp_path / "prop", by_id, schema, 1.1, n_boot=200)
+
+    def row(run, crop):
+        return next(r for r in t["rows"] if (r["run"], r["crop"], r["group"], r["threshold"]) == (run, crop, "ski", 0.1))
+
+    d = next(x for x in t["deltas"] if (x["a"], x["b"], x["group"], x["threshold"]) == ("E2 refined", "E2 tracked", "ski", 0.1))
+    assert d["delta"] == pytest.approx(row("E2", "refined")["pct"] - row("E2", "tracked")["pct"]) and d["delta"] > 0
+    assert d["ci95"][0] <= d["delta"] <= d["ci95"][1]
+    e = next(x for x in t["deltas"] if (x["a"], x["b"], x["group"]) == ("E2 refined", "E1 refined", "ski"))
+    assert e["delta"] == pytest.approx(row("E2", "refined")["pct"] - row("E1", "refined")["pct"])
+    rows = row("E2", "refined")
+    assert sum(v["hits"] for v in rows["per_video"].values()) == rows["hits"]
+    st = {s["value"]: s for s in t["strata"] if s["run"] == "E2"}
+    pooled = [sum(ckpts[f"E2-s{s}"]["by_k_pose"]["1.1"]["refined"][key]["strata"]["tracker_iou"][v]["tracked"]["ski"][c]
+                  for s in (230, 231)) for v in ("iou>=0.5",) for c in ("hits", "total")]
+    assert st["iou>=0.5"]["refined_ski"] == pytest.approx(100 * pooled[0] / pooled[1])
+    assert st["iou>=0.5"]["reference_ski"] > st["iou>=0.5"]["refined_ski"] > st["iou>=0.5"]["tracked_ski"]
+    assert t["refined"]["setting"] == key and t["refined"]["fallback_share"]["E2-s231"] == pytest.approx(1 / n)
+    md = tab.to_markdown({"partition": "val", "propagation": t})
+    assert "| E2 | refined |" in md and "Refined crop (D26: s_min 0.3, k_refine 1.15)" in md and "→ refined" in md
+    ckpts["E2-s231"]["by_k_pose"]["1.1"]["refined"][key]["tracked"]["groups"]["0.05"]["ski"]["hits"] += 1
+    write_json({"checkpoints": ckpts, "refine_settings": [key]}, tmp_path / "prop" / "propagation.json")
+    with pytest.raises(ValueError, match="E2-s231 refined"):
+        tab.propagation_tables(tmp_path / "prop", by_id, schema, 1.1, n_boot=50)
+    write_json({"checkpoints": ckpts, "refine_settings": [key, "s0.5_k1"]}, tmp_path / "prop" / "propagation.json")
+    many = tab.propagation_tables(tmp_path / "prop", by_id, schema, 1.1, n_boot=50)  # a grid run: no refined crop
+    assert "refined" not in many and {r["crop"] for r in many["rows"]} == {"reference", "tracked"}
+
+
 def test_tracking_tables_match_run_skitb_and_the_port(tmp_path):
     split, fps = make_skitb_multi(tmp_path / "skitb")
     tracks = tmp_path / "tracks"
@@ -423,6 +471,10 @@ def test_read_log_and_figures(tmp_path, pose_records, schema):
                       "--out", str(tmp_path / "figs")]) == 0
     assert (tmp_path / "figs" / "learning_curves.png").stat().st_size > 0
     assert (tmp_path / "figs" / "per_joint_delta_val.png").stat().st_size > 0
+    strata = [{"stratum": "tracker_iou", "value": v, "run": "E2", "n_images": 3,
+               **{f"{c}_{g}": 50.0 for c in ("reference", "tracked", "refined") for g in ("body", "ski")}}
+              for v in ("iou>=0.5", "iou<0.1")]
+    assert figs.propagation_strata(strata, tmp_path / "strata.png").stat().st_size > 0  # three bars (D26)
 
 
 def test_final_only_gates(tmp_path):

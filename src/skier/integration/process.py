@@ -5,7 +5,9 @@ Stages (so another tracker can be swapped in without touching the pose stack):
    Either way the later stages read the CSV, so both paths give the same result.
 2. A status per frame (``skier.integration.confidence.tracking_status``).
 3. Pose on every tracked frame. The crop is ``expand_box(tracker_box, k_pose)`` with the
-   model's padding, cut from the original frame, so the replay never changes pose.
+   model's padding, cut from the original frame, so the replay never changes pose. With
+   ``pose_refine`` (D26) a second pass predicts on the box around the confident first-pass
+   landmarks (``skier.integration.refine``); ``pose_crop_M`` is the crop actually used.
 4. The replay controller (D23 defaults; low_conf frames drive it as lost only if
    ``replay_uses_status``), the replay video with the skeleton, and the debug video.
 
@@ -33,6 +35,7 @@ from skier.geometry import crop_affine
 from skier.integration.config import IntegrationConfig, config_sha256
 from skier.integration.confidence import replay_status_rows, tracking_status
 from skier.integration.propagation import tracker_crop_boxes
+from skier.integration.refine import refined_boxes
 from skier.io_utils import ensure_dir, read_json, sha256_file, write_json
 from skier.paths import configs_dir, data_root, repo_root, results_root
 from skier.pose.crop_error import FINAL_ONLY
@@ -44,8 +47,8 @@ from skier.schema import Schema, load_schema
 from skier.tracking.run import boxes_of, read_track_csv, track_clip, write_track_csv
 
 JSONL_FIELDS = ["video_id", "frame_index", "timestamp", "tracker_box", "tracker_score", "tracking_status",
-                "pose_crop_M", "raw_keypoints_xy", "raw_keypoint_scores", "replay_crop", "overlay_visible",
-                "checkpoint_sha256", "config_sha256"]
+                "pose_crop_M", "pose_refined", "raw_keypoints_xy", "raw_keypoint_scores", "replay_crop",
+                "overlay_visible", "checkpoint_sha256", "config_sha256"]
 STATUSES = ("init", "track", "low_conf")
 SHA = re.compile(r"[0-9a-f]{64}")
 
@@ -57,11 +60,16 @@ def track_stage(tracker, frames: Iterable, init_index: int, init_box, path: Path
 
 
 def pose_on_frames(frames: Iterable[tuple[int, np.ndarray]], rows: Sequence[dict], heatmap_fn: HeatmapFn,
-                   num_keypoints: int, k_pose: float, expand: float, batch_size: int = 16):
-    """``(xy [T,K,2], scores [T,K], M [T,2,3])`` for the tracked rows; NaN where there is no box."""
+                   num_keypoints: int, k_pose: float, expand: float, batch_size: int = 16,
+                   refine: tuple[float, float] | None = None, schema: Schema | None = None):
+    """``(xy [T,K,2], scores [T,K], M [T,2,3], refined [T])`` for the tracked rows; NaN where there is no box.
+
+    ``refine = (s_min, k_refine)`` runs the D26 second pass (``schema`` required); ``M`` is the crop used.
+    """
     boxes = tracker_crop_boxes(boxes_of(rows), k_pose)
     n = len(rows)
     xy, scores, Ms = np.full((n, num_keypoints, 2), np.nan), np.full((n, num_keypoints), np.nan), np.full((n, 2, 3), np.nan)
+    refined = np.zeros(n, dtype=bool)
     pos = {r["frame_index"]: i for i, r in enumerate(rows)}
     last = max(pos) if pos else -1
     images, todo = [], []
@@ -69,6 +77,14 @@ def pose_on_frames(frames: Iterable[tuple[int, np.ndarray]], rows: Sequence[dict
     def flush():
         if todo:
             p, s = predict_boxes(images, [boxes[i] for i in todo], heatmap_fn, expand)
+            if refine is not None:
+                rb = refined_boxes(p, s, schema, *refine)
+                ok = np.flatnonzero(np.isfinite(rb).all(axis=1))
+                if len(ok):
+                    p[ok], s[ok] = predict_boxes([images[j] for j in ok], rb[ok], heatmap_fn, expand)
+                    for j in ok:
+                        Ms[todo[j]] = crop_affine(pose_crop_box(rb[j], expand), INPUT_W, INPUT_H)
+                        refined[todo[j]] = True
             xy[todo], scores[todo] = p, s
             images.clear()
             todo.clear()
@@ -85,7 +101,7 @@ def pose_on_frames(frames: Iterable[tuple[int, np.ndarray]], rows: Sequence[dict
         if len(todo) == batch_size:
             flush()
     flush()
-    return xy, scores, Ms
+    return xy, scores, Ms, refined
 
 
 def _num(v) -> float | None:
@@ -101,11 +117,12 @@ def process_clip(frames_factory: Callable[[], Iterable], rows: Sequence[dict], f
                  frame_size: tuple[float, float], heatmap_fn: HeatmapFn, num_keypoints: int, expand: float,
                  icfg: IntegrationConfig, rcfg: ReplayConfig, schema: Schema, out: Path, video_id: str,
                  checkpoint_sha256: str, videos: bool = True, batch_size: int = 16) -> dict:
-    icfg.require("k_pose", "conf_signal", "replay_uses_status")
+    icfg.require("k_pose", "conf_signal", "replay_uses_status", "pose_refine")
     out = ensure_dir(out)
     status = tracking_status(rows, icfg)
-    xy, kp_scores, Ms = pose_on_frames(frames_factory(), rows, heatmap_fn, num_keypoints, icfg.k_pose, expand,
-                                       batch_size)
+    refine = (icfg.refine_min_score, icfg.refine_k) if icfg.pose_refine else None
+    xy, kp_scores, Ms, refined = pose_on_frames(frames_factory(), rows, heatmap_fn, num_keypoints, icfg.k_pose,
+                                                expand, batch_size, refine, schema)
     idx = np.array([r["frame_index"] for r in rows])
     ts = idx / fps
     drive = [r["status"] for r in replay_status_rows(rows, icfg)]
@@ -121,7 +138,7 @@ def process_clip(frames_factory: Callable[[], Iterable], rows: Sequence[dict], f
                     "tracker_box": _nums(box) if np.isfinite(box).all() else None,
                     "tracker_score": _num(r["score"]), "tracking_status": status[i],
                     "pose_crop_M": _nums(Ms[i]) if np.isfinite(Ms[i]).all() else None,
-                    "raw_keypoints_xy": _nums(xy[i]), "raw_keypoint_scores": _nums(kp_scores[i]),
+                    "pose_refined": bool(refined[i]), "raw_keypoints_xy": _nums(xy[i]), "raw_keypoint_scores": _nums(kp_scores[i]),
                     "replay_crop": _nums(track.crops[i]), "overlay_visible": overlay[i],
                     "checkpoint_sha256": checkpoint_sha256, "config_sha256": cfg_sha}
             f.write(json.dumps(line) + "\n")
@@ -129,6 +146,7 @@ def process_clip(frames_factory: Callable[[], Iterable], rows: Sequence[dict], f
     keypoints = {int(idx[i]): (xy[i], finite[i]) for i in range(len(rows)) if overlay[i]}
     metrics = {"video_id": video_id, "fps": fps, "frame_size": list(frame_size), "n_frames": len(rows),
                "status_counts": dict(Counter(status)), "overlay_frames": int(sum(overlay)),
+               "refined_frames": int(refined.sum()),
                "integration_config": dataclasses.asdict(icfg), "replay_config": dataclasses.asdict(rcfg),
                "expand": expand, "config_sha256": cfg_sha, "checkpoint_sha256": checkpoint_sha256,
                "replay": replay_summary(track.crops, track.timestamps, frame_size, track.raw_boxes, "tracker")}
@@ -174,6 +192,8 @@ def validate_jsonl(path: str | Path, num_keypoints: int) -> int:
         if (M is None) != (d["tracker_box"] is None) or not (M is None or (isinstance(M, list) and len(M) == 2
                                                                               and all(_vec(r, 3) for r in M))):
             bad("pose_crop_M must be 2x3 exactly when there is a tracker box")
+        if not isinstance(d["pose_refined"], bool) or (d["pose_refined"] and M is None):
+            bad("pose_refined must be a bool, and false without a pose crop")
         kp = d["raw_keypoints_xy"]
         if not (isinstance(kp, list) and len(kp) == num_keypoints and all(_vec(p, 2, nullable=True) for p in kp)):
             bad(f"raw_keypoints_xy must be {num_keypoints} [x, y] pairs")
@@ -216,6 +236,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--conf-signal", choices=("none", "raw", "relative"), help="override the config")
     p.add_argument("--conf-threshold", type=float, help="override the config")
     p.add_argument("--replay-uses-status", choices=("true", "false"), help="override the config")
+    p.add_argument("--pose-refine", choices=("true", "false"), help="override the config (D26)")
     p.add_argument("--fps", type=float, help="with --video: override the file's frame rate")
     p.add_argument("--fps-table", type=Path, help="SkiTB frame rates; default: data/manifests/skitb_fps_v1.csv")
     p.add_argument("--device", default="cuda:0")
@@ -275,9 +296,11 @@ def main(argv: list[str] | None = None) -> int:
     overrides = {k: v for k, v in {"k_pose": args.k_pose, "conf_signal": args.conf_signal,
                                    "conf_threshold": args.conf_threshold,
                                    "replay_uses_status": None if args.replay_uses_status is None
-                                   else args.replay_uses_status == "true"}.items() if v is not None}
+                                   else args.replay_uses_status == "true",
+                                   "pose_refine": None if args.pose_refine is None
+                                   else args.pose_refine == "true"}.items() if v is not None}
     try:
-        icfg = icfg.with_(**overrides).require("k_pose", "conf_signal", "replay_uses_status")
+        icfg = icfg.with_(**overrides).require("k_pose", "conf_signal", "replay_uses_status", "pose_refine")
         name, video_id, factory, fps, size, init_index, init_box = _source(args)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)

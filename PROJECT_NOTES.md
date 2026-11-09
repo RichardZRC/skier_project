@@ -6,13 +6,21 @@ Companion docs: `README.md` (setup and commands), `CLAUDE.md` (rules for Claude 
 `skier_proposal.pdf`, `skier_implementation_plan.md` (status table at the top), `skier_step_1_guide.md`,
 `skier_step_1_code_spec.md`, `docs/decisions.md`.
 
-Last updated: 2026-10-27
+Last updated: 2026-11-08
 
 ---
 
 ## Handoff: where things stand (2026-10-26)
 
 Start here in a new session, on any machine. Claude's own notes stay on the machine they were written on, so everything a new session needs is in the repo: this section, `CLAUDE.md`, the decisions log and the plan's status table.
+
+### Done 2026-11-08: Step 7c, pose-guided crop refinement (D26)
+- **Why:** the CS230 handout gives no Methods credit for fine-tuning alone, and the tracker crop is our biggest measured error.
+- **Method:** predict on the tracker crop, then crop again around the confident body + ski predictions and predict again. It uses no labels and no retraining.
+- **Val selection:** `s_min` 0.3, `k_refine` 1.3. The gate adopts it (`pose_refine: true`).
+  - E2 tracked → refined: ski 75.4 → 81.3 (+5.9 [3.6, 8.4]), body 81.1 → 83.9 (+2.8 [1.2, 4.5]).
+  - On the partial-overlap labels: ski 76.8 → 88.0.
+- **New val dry run:** 114/114 checks; the old one is in `final/val_d25`. The test run includes the refined crop.
 
 ### Done 2026-10-24 to 2026-10-26 (all on the laptop; details under Status)
 - **Laptop set up** (D18 pins); the gate passes (now 260 tests).
@@ -51,10 +59,14 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
 3. ~~**Copy SkiTB to the laptop**~~ Done and verified 2026-10-26. Optional: delete the unused `FS/` and `JP/` there.
 4. ~~**The SkiTB frame rate of each sequence**~~ Settled as D22 (2026-10-26).
 5. ~~**Choose the recipe** and the **replay defaults**~~ Done 2026-10-27 (D23): E2; τ 0.2 s, k 2.5.
+5c. **Milestone report** (due 2026-11-10):
+    - Draft in `milestone/` (the course template; Ruichao compiles it in Overleaf). Val numbers only.
+    - 2026-11-08: contributions stated explicitly; the D26 refinement and its val result added; `milestone_overleaf.zip` rebuilt.
+    - **The test run waits until after the TA feedback** (Ruichao, 2026-11-08), so the feedback can still change the system.
 5b. **The test run (Step 8):**
     - The code is done and the val trial passed.
     - Needs, from Ruichao: commit and push; 7b yes or no (default no); Windows Update paused; the go-ahead.
-    - Then `bash results/step8/run_final.sh test` in tmux, about 1 h.
+    - Then `bash results/step8/run_final.sh test` in tmux, about 1 h. It also scores the refined crop (D26); D27 records the freeze.
 5a. **Step 7 review (about 1 h, optional):** Ruichao has no time for it. The report uses the automatic failure hints and says so.
     - Watch the demos in `\\wsl$\Ubuntu-22.04\home\ruichaoz\skier_results\integration\clips\`.
     - Fill in the `category` column of `results/step7/failure_review.csv`, using the sheets in `...\integration\failure_review\`.
@@ -441,6 +453,21 @@ Ruichao suggested doing tracking only first, then pose. Discussion outcome:
         - replay ski ends inside 99.4% (834/839), so the provisional ≥ 95% target is met;
         - SiamFC toolkit F-score 0.384 [0.324, 0.463], GSR 0.485.
       - **Before test:** commit and push (the script refuses otherwise), 7b yes or no (default no), pause Windows Update, then Ruichao's go-ahead.
+- [x] **Step 7c: pose-guided crop refinement** (2026-11-08; plan approved the same day; D26 recorded before any refinement number):
+      - **`integration/refine.py`:** `refined_boxes` (from predictions only), `refine_on`, and the D26 rule `choose_refine`.
+      - **`eval_propagation.py`:** `--refine-grid` (selection) and `--refine S K` (Step 8).
+      - **`process_clip`:** a second pass when `pose_refine` is set. The JSONL gains `pose_refined`, and `pose_crop_M` is the crop used.
+      - **Tables and the strata figure** get a third crop with refined − tracked intervals. The strata figure's legend moved above the panels; it used to cover a bar.
+      - **`run_final.sh`** reads the refine settings with `require`. `check_val_dryrun.py` also checks the refined counts against the selection run.
+      - 6 new tests (320 on the laptop); mutation checks 19/19 and 6/6.
+      - **Val selection** (`$SKIER_RESULTS/integration/refine-val`, `results/step7/refine_val_summary.json`):
+        - pick `s_min` 0.3, `k_refine` 1.3; the E2 mean of body and ski goes 78.3 → 82.6, so the gate adopts it;
+        - every row of the grid was best at its largest `k_refine` (1.3). The grid wasn't extended after the fact.
+      - **New val dry run** (2026-11-08, about 4 min; the D25-era output moved to `final/val_d25`): 114/114 checks.
+        - E2 refined − tracked: ski +5.9 [3.6, 8.4], body +2.8 [1.2, 4.5]; E1 gains more, ski +7.1 [4.6, 9.8];
+        - after refinement, E2 − E1 ski is only +1.3 [−0.9, 3.0], because refinement and crop jitter fix the same mis-framing;
+        - by tracker IoU, E2 ski: ≥ 0.5 92.5 → 93.1; 0.1–0.5 76.8 → 88.0; < 0.1 0.9 → 4.6;
+        - the ski cut-off share drops from 16.8% to 10.8%, and the fallback share is 5–9% per checkpoint.
 - [ ] **First GPU session (laptop, `docs/laptop_setup.md`):** ~~full `pytest` (torch + stack tests)~~ done → data (Ski 2DPose; the SkiTB val/test subset)
       → cross-check → (freeze split) → E0 → E1 tiny overfit → profile → full E1 → (freeze the crop-error set)
       → E2–E4 → evaluate and compare on val.
