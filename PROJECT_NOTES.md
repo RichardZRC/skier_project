@@ -6,13 +6,32 @@ Companion docs: `README.md` (setup and commands), `CLAUDE.md` (rules for Claude 
 `skier_proposal.pdf`, `skier_implementation_plan.md` (status table at the top), `skier_step_1_guide.md`,
 `skier_step_1_code_spec.md`, `docs/decisions.md`.
 
-Last updated: 2026-11-08
+Last updated: 2026-11-12
 
 ---
 
 ## Handoff: where things stand (2026-10-26)
 
 Start here in a new session, on any machine. Claude's own notes stay on the machine they were written on, so everything a new session needs is in the repo: this section, `CLAUDE.md`, the decisions log and the plan's status table.
+
+### 2026-11-12: run the test now; STARK deferred
+- **No waiting for TA feedback** (Ruichao): everything must be finished by Fri 2026-11-20. Order: test run → final
+  report draft → failure analysis, 2–3 demo clips, README → revise → submit.
+- **7b (STARK) deferred** (Ruichao): finish the first version with SiamFC. If time remains, STARK can only be a
+  clearly labeled extra experiment after the test run; SiamFC stays the main result, because the test is used once.
+- **Pole check before the freeze (val only): no bug.**
+  - Pole PCK is 4–8% per basket (`results/step8/val/pose_per_joint.csv`).
+  - 48% of the visible pole-basket labels (224/466) fall outside the model-input crop, because the reference box is
+    built from body + ski points only (poles excluded), as for training crops (`metrics.json` → `clean/cut_off`).
+  - Inside the crop, at most about 10–12% are hit; with half of the baskets outside training crops, poles get about
+    half the supervision.
+  - Flip pairs include the poles ([5, 9]), and scoring treats them like every other joint.
+  - For the report: a limitation, with "include pole baskets in the crop box" as future work (needs retraining).
+- **Milestone done** (2026-11-09): subsections, pipeline diagram (Figure 1, `milestone/figures/pipeline_fig.py`),
+  Table 2 as reference / tracker / refined.
+  - Compiled locally: Section 4 ends on page 3 with about 1.5 lines to spare.
+  - TeX Live was installed in WSL for this, with Ruichao's OK: `texlive-latex-extra`, `texlive-fonts-recommended`,
+    `texlive-bibtex-extra`.
 
 ### Done 2026-11-08: Step 7c, pose-guided crop refinement (D26)
 - **Why:** the CS230 handout gives no Methods credit for fine-tuning alone, and the tracker crop is our biggest measured error.
@@ -62,10 +81,12 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
 5c. **Milestone report** (due 2026-11-10):
     - Draft in `milestone/` (the course template; Ruichao compiles it in Overleaf). Val numbers only.
     - 2026-11-08: contributions stated explicitly; the D26 refinement and its val result added; `milestone_overleaf.zip` rebuilt.
-    - **The test run waits until after the TA feedback** (Ruichao, 2026-11-08), so the feedback can still change the system.
+    - ~~**The test run waits until after the TA feedback** (Ruichao, 2026-11-08), so the feedback can still change the system.~~
+      2026-11-12: no longer; there is no time to wait (see the top of this section).
 5b. **The test run (Step 8):**
     - The code is done and the val trial passed.
-    - Needs, from Ruichao: commit and push; 7b yes or no (default no); Windows Update paused; the go-ahead.
+    - ~~Needs, from Ruichao: commit and push; 7b yes or no (default no)~~ done 2026-11-12 (7b deferred). Still needs:
+      Windows Update paused; the go-ahead.
     - Then `bash results/step8/run_final.sh test` in tmux, about 1 h. It also scores the refined crop (D26); D27 records the freeze.
 5a. **Step 7 review (about 1 h, optional):** Ruichao has no time for it. The report uses the automatic failure hints and says so.
     - Watch the demos in `\\wsl$\Ubuntu-22.04\home\ruichaoz\skier_results\integration\clips\`.
