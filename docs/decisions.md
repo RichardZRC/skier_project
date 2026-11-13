@@ -322,3 +322,25 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
     - IoU < 0.1 (33): ski 92.7 → 0.9 → 4.6.
   - The ski labels cut off by the crop drop from 16.8% to 10.8% (E2). The fallback share is 5–9% per checkpoint.
   - The reference and tracker-crop numbers equal the Step 7 run exactly.
+
+## D27 — Test freeze: the single Step 8 test run, and two reporting fixes after it (2026-11-12)
+- **The run:** `bash results/step8/run_final.sh test` on the laptop, 2026-11-12 from 20:34, at commit `bf546e3`. `freeze.json` (14 files hashed: splits, frame-rate table, configs, the COCO and SiamFC weights, the four checkpoints) was written before any output.
+  - Not waiting for TA feedback (Ruichao, 2026-11-12: everything must be finished by Fri 2026-11-20).
+  - 7b (STARK) deferred (Ruichao): if it is done later, it is reported as a labeled extra experiment. SiamFC stays the main result, because the test is used once.
+  - Before the run, a val-only check of the 4–8% pole PCK found no bug: 48% of the visible pole-basket labels lie outside the body + ski crop (see `PROJECT_NOTES.md`).
+- **Every evaluation step finished:**
+  - pose on test (E0, E1, E2, two seeds each) and on the follow-cam set;
+  - SkiTB tracking (471 SC clips);
+  - Ski 2DPose alignment (43/43 segments usable), tracking (43 segments) and propagation (317 labels in 40 segments; reference, tracker and refined crops);
+  - the replay (514 clips).
+- **The tables step stopped twice.** Both fixes are reporting only; no evaluation output changes.
+  1. **Tracking AUC consistency check:** the tolerance goes from 1e-6 to 1e-5 (commit `7715065`).
+     - Cause: the track CSVs keep boxes to 3 decimals. 5 of the 87,753 test frames have an IoU within 1e-5 of a success threshold (0.35, 0.45, 0.70 twice, 0.75) and cross it after rounding. The AUC rebuilt from the CSVs is off by 1.6e-6; each crossing moves it by 1/(21 n).
+     - Pooled IoU agreed to 2e-10, and the failure-episode counts matched (258).
+  2. **Follow-cam pose intervals:** every follow-cam video is a single segment (6 videos, 6 segments; manifest frozen 2026-10-24). D25's bootstrap resamples segments within videos, so each stratum would have one cluster, and `skier.eval.bootstrap` refuses that.
+     - **Choice (Ruichao, 2026-11-12):** for the follow-cam set, resample the 6 videos (each one segment). This is the protocol's original video-level bootstrap, which D25 replaced only because test has 3 videos. Code: `pose_tables(..., by_video=True)`, used by `make_tables.py` for `--partition followcam` only.
+     - The intervals are wide: 6 units give 462 distinct resamples. The markdown says which unit was used.
+     - Chosen for the structure. The follow-cam point estimates had been printed in the run log; no follow-cam interval had been computed.
+     - The alternative considered was no intervals, with per-video rows only.
+- **Tables and figures** were then built with the same commands as `run_final.sh`, from the commit that records this decision. The commit and the commands are in `$SKIER_RESULTS/final/test/tables_rerun.log`.
+- **Effect:** test is spent. Any later change, such as STARK, is reported as an extra experiment, never as a replacement of these numbers.

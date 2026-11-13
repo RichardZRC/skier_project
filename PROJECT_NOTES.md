@@ -14,6 +14,17 @@ Last updated: 2026-11-12
 
 Start here in a new session, on any machine. Claude's own notes stay on the machine they were written on, so everything a new session needs is in the repo: this section, `CLAUDE.md`, the decisions log and the plan's status table.
 
+### 2026-11-12: test run done (D27)
+- `run_final.sh test` ran once at `bf546e3`; every evaluation step finished. Two reporting-only fixes followed
+  (D27): the tracking AUC check tolerance, and follow-cam intervals over its 6 videos. Tables and figures were
+  rebuilt from the committed code; evidence in `results/step8/test/` (follow-cam in `results/step8/followcam/`).
+- Headline (E2, test): reference-crop ski PCK@0.1 94.8; tracker crops cost 28.0 ski points; refinement recovers
+  +9.3 [6.7, 12.1] (a third, as on val). The val pattern "E2's gain shrinks after refinement" did not replicate.
+  The replay keeps 93.7% of ski ends in view (target 95%).
+- **Reminder for Ruichao before submitting:** check whether the GitHub repo is private; if so, add the CA.
+- Next: the final report in `final_report/` (template from Ruichao; Claude prepares the skeleton, outlines, tables
+  and figures; Ruichao writes the prose, per the template's AI policy), then failure analysis and demo clips.
+
 ### 2026-11-12: run the test now; STARK deferred
 - **No waiting for TA feedback** (Ruichao): everything must be finished by Fri 2026-11-20. Order: test run → final
   report draft → failure analysis, 2–3 demo clips, README → revise → submit.
@@ -85,8 +96,8 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
       2026-11-12: no longer; there is no time to wait (see the top of this section).
 5b. **The test run (Step 8):**
     - The code is done and the val trial passed.
-    - ~~Needs, from Ruichao: commit and push; 7b yes or no (default no)~~ done 2026-11-12 (7b deferred). Still needs:
-      Windows Update paused; the go-ahead.
+    - ~~Needs, from Ruichao: commit and push; 7b yes or no (default no); Windows Update paused; the go-ahead.~~
+      **Done 2026-11-12 (D27):** 7b deferred; Windows Update paused until 2026-11-23; the run finished.
     - Then `bash results/step8/run_final.sh test` in tmux, about 1 h. It also scores the refined crop (D26); D27 records the freeze.
 5a. **Step 7 review (about 1 h, optional):** Ruichao has no time for it. The report uses the automatic failure hints and says so.
     - Watch the demos in `\\wsl$\Ubuntu-22.04\home\ruichaoz\skier_results\integration\clips\`.

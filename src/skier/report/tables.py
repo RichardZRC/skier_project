@@ -102,8 +102,11 @@ def align(records_by_id: dict, sample_ids) -> list:
 # --- pose ------------------------------------------------------------------------------------
 
 def pose_tables(pose_dir: Path, records_by_id: dict, schema: Schema, n_boot: int = N_BOOT,
-                recipes=("E1", "E2"), key: str = "clean") -> dict:
-    """E0 (shared joints), then each recipe pooled over its seeds; Δ E2 − E1 and recipe − E0 with intervals."""
+                recipes=("E1", "E2"), key: str = "clean", by_video: bool = False) -> dict:
+    """E0 (shared joints), then each recipe pooled over its seeds; Δ E2 − E1 and recipe − E0 with intervals.
+
+    Intervals resample segments within videos (D25). ``by_video`` resamples whole videos instead, for the follow-cam
+    set, where every video is a single segment (D27)."""
     arrays, order, per_seed, errors = {}, None, {}, {}
     for name in ["E0"] + [f"{r}-s{s}" for r in recipes for s in SEEDS]:
         if not (pose_dir / name).is_dir():
@@ -124,7 +127,8 @@ def pose_tables(pose_dir: Path, records_by_id: dict, schema: Schema, n_boot: int
     if order is None:
         raise FileNotFoundError(f"no pose runs under {pose_dir}")
     recs = align(records_by_id, order)
-    clusters, strata = clusters_of(recs)
+    segments, videos = clusters_of(recs)
+    clusters, strata = (videos, None) if by_video else (segments, videos)
     if "E0" in per_seed:
         arrays["E0"] = per_seed["E0"]
     for r in recipes:
@@ -135,7 +139,7 @@ def pose_tables(pose_dir: Path, records_by_id: dict, schema: Schema, n_boot: int
     rows = []
     for name, a in arrays.items():
         for (g, t), (h, n) in a.items():
-            row = {"run": name, "group": g, "threshold": t, **_cell(h, n), "per_video": _per_video(h, n, strata)}
+            row = {"run": name, "group": g, "threshold": t, **_cell(h, n), "per_video": _per_video(h, n, videos)}
             if name != "E0":
                 row["per_seed"] = {s: pct(*per_seed[f"{name}-s{s}"][(g, t)]) for s in SEEDS}
             rows.append(row)
@@ -166,7 +170,8 @@ def pose_tables(pose_dir: Path, records_by_id: dict, schema: Schema, n_boot: int
         per_joint.append(row)
     err = {r: {g: float(np.mean([errors[f"{r}-s{s}"][g]["mean_norm_error"] for s in SEEDS])) for g in ("body", "ski")}
            for r in recipes}
-    return {"n_samples": len(recs), "n_segments": len(set(clusters)), "n_videos": len(set(strata)), "rows": rows,
+    return {"n_samples": len(recs), "n_segments": len(set(segments)), "n_videos": len(set(videos)),
+            "bootstrap_unit": "video" if by_video else "segment within video", "rows": rows,
             "deltas": deltas, "headline_ci": {recipes[-1]: headline}, "per_joint": per_joint,
             "mean_norm_error": err}
 
@@ -417,8 +422,10 @@ def to_markdown(t: dict) -> str:
            "brackets).", ""]
     if "pose" in t:
         p = t["pose"]
-        out += [f"## Pose ({p['n_samples']} images, {p['n_segments']} segments, {p['n_videos']} videos)", "",
-                "| Run | Body @0.1 | Ski @0.1 | Ski @0.05 | Body, shared joints @0.1 | Poles @0.1 (suppl.) |",
+        out += [f"## Pose ({p['n_samples']} images, {p['n_segments']} segments, {p['n_videos']} videos)", ""]
+        if p.get("bootstrap_unit") == "video":
+            out += [f"Intervals here resample the {p['n_videos']} videos, each a single segment (D27).", ""]
+        out += ["| Run | Body @0.1 | Ski @0.1 | Ski @0.05 | Body, shared joints @0.1 | Poles @0.1 (suppl.) |",
                 "| --- | --- | --- | --- | --- | --- |"]
         cell = {(r["run"], r["group"], r["threshold"]): r for r in p["rows"]}
         for run in [x for x in ("E0", "E1", "E2") if any(k[0] == x for k in cell)]:
@@ -544,7 +551,7 @@ def main(argv: list[str] | None = None) -> int:
     t: dict = {"partition": args.partition, "split_sha256": manifest["content_sha256"]}
     try:
         if (args.root / "pose").is_dir():
-            t["pose"] = pose_tables(args.root / "pose", by_id, schema, args.n_boot)
+            t["pose"] = pose_tables(args.root / "pose", by_id, schema, args.n_boot, by_video=args.partition == "followcam")
         if args.d21_dir is not None:
             if args.partition != "val":
                 raise ValueError("the augmentation table is val only (D16)")

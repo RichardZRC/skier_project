@@ -4,7 +4,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 **Deadline: Fri 2026-11-20** (D14; plan §4). If the schedule slips, cut stretch goals first, then extra seeds, then E2/E3.
 
-**Read first:** `PROJECT_NOTES.md` (start with its **Handoff** section: machine state, what's waiting, AWS lessons; then status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D26; append only).
+**Read first:** `PROJECT_NOTES.md` (start with its **Handoff** section: machine state, what's waiting, AWS lessons; then status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D27; append only).
 
 ## Working rules (Ruichao's instructions; follow them exactly)
 
@@ -26,7 +26,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 ## Environment
 
-- Run the tests with `.venv/bin/python -m pytest -q`. Currently **320 tests**; all must pass on the GPU machine. The Mac skips 12: 6 `torch`, 4 `stack`, the SkiTB-toolkit cross-check (it needs the vendored toolkit) and the figure test (it needs matplotlib).
+- Run the tests with `.venv/bin/python -m pytest -q`. Currently **321 tests**; all must pass on the GPU machine. The Mac skips 12: 6 `torch`, 4 `stack`, the SkiTB-toolkit cross-check (it needs the vendored toolkit) and the figure test (it needs matplotlib).
   - Markers: `torch` needs PyTorch; `stack` needs the pinned torch, mmcv and mmpose; `gpu` needs CUDA.
 - **Paths:** code reads `SKIER_DATA` (default `~/skier_data`) and `SKIER_RESULTS` (default `~/skier_results`) through `skier.paths`. Never hard-code absolute paths.
 - **Data on this Mac:**

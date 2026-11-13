@@ -668,6 +668,9 @@ If video alignment failed in Step 1, use the crop-error set as the quantitative 
 > - **Every step runs from one script,** `results/step8/run_final.sh val|test`, which writes `freeze.json` first and refuses a second test run.
 > - **The report's demos are the Step 7 val clips,** and the failure categories come from the automatic hints (Ruichao had no time for the manual review).
 > - **2026-11-08 (D26):** the run also scores the refined crop at the val-chosen setting, with refined − tracked intervals. The test freeze becomes D27.
+> - **2026-11-12: test run done once (D27)** at `bf546e3`. Two reporting-only fixes afterwards: the tracking AUC check
+>   tolerance, and follow-cam intervals over its 6 videos (each one segment). Evidence in `results/step8/test/`.
+>   Remaining: the final report (`final_report/`), failure analysis, demo clips.
 
 ### Offline coding block
 - `[CODE]` `scripts/make_tables.py`: pose, tracking and replay tables from saved predictions, with point counts and per-video rows.

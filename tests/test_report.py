@@ -1,5 +1,6 @@
 """Step 8: bootstrap, per-sample hits, the SkiTB toolkit port, partition-wide replay, report tables and figures."""
 
+import dataclasses
 import json
 import math
 import os
@@ -311,6 +312,22 @@ def test_pose_tables(tmp_path, pose_records, schema):
     (tmp_path / "pose" / "E2-s231" / "metrics.json").write_text(json.dumps(m))
     with pytest.raises(ValueError, match="E2-s231"):
         tab.pose_tables(tmp_path / "pose", by_id, schema, n_boot=50)
+
+
+def test_pose_tables_by_video(tmp_path, pose_records, schema):
+    # D27: every follow-cam video is one segment, so segments within videos can't be resampled; whole videos are
+    one = [dataclasses.replace(r, source_video_id=f"{r.source_video_id}-{r.segment_id}") for r in pose_records]
+    fake_pose_runs(tmp_path / "pose", one, schema)
+    by_id = {r.sample_id: r for r in one}
+    with pytest.raises(ValueError, match="1 cluster"):
+        tab.pose_tables(tmp_path / "pose", by_id, schema, n_boot=50)
+    t = tab.pose_tables(tmp_path / "pose", by_id, schema, n_boot=200, by_video=True)
+    d = next(x for x in t["deltas"] if (x["a"], x["b"], x["group"], x["threshold"]) == ("E2", "E1", "ski", 0.1))
+    assert d["n_clusters"] == t["n_videos"] == t["n_segments"] == 6 and d["ci95"][0] <= d["delta"] <= d["ci95"][1]
+    assert t["bootstrap_unit"] == "video" and len(t["rows"][0]["per_video"]) == 6
+    assert "resample the 6 videos" in tab.to_markdown({"partition": "followcam", "pose": t})
+    assert tab.pose_tables(tmp_path / "pose", {r.sample_id: r for r in pose_records}, schema,
+                           n_boot=50)["bootstrap_unit"] == "segment within video"
 
 
 def test_pose_tables_with_e0(tmp_path, pose_records, schema):
