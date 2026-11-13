@@ -24,6 +24,14 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
 - **Reminder for Ruichao before submitting:** check whether the GitHub repo is private; if so, add the CA.
 - Next: the final report in `final_report/` (template from Ruichao; Claude prepares the skeleton, outlines, tables
   and figures; Ruichao writes the prose, per the template's AI policy), then failure analysis and demo clips.
+- **Done the same evening (Claude's part):**
+  - the report skeleton with test tables, the test strata figure and the appendix val tables;
+  - a qualitative val figure (`final_report/figures/qualitative_fig.py`; the PNG shows dataset frames, so it is
+    gitignored and goes to Overleaf only);
+  - 3 val demo clips with refinement on (E2-s230), as H.264 copies (`*_h264.mp4`) in
+    `\\wsl$\Ubuntu-22.04\home\ruichaoz\skier_results\final\demos\{AL0027__3,AL0073__7,qxfgw1Kd98A__3}`
+    (good tracking, a tracker failure, a Ski 2DPose segment);
+  - the README status and a "Reproducing the reported results" section.
 
 ### 2026-11-12: run the test now; STARK deferred
 - **No waiting for TA feedback** (Ruichao): everything must be finished by Fri 2026-11-20. Order: test run → final

@@ -14,3 +14,5 @@ CLAUDE.local.md
 
 # Never commit dataset images or labels (Ski 2DPose terms; SkiTB is CC BY-NC).
 # Overlays, contact sheets, clips and predictions stay under $SKIER_RESULTS.
+# The report's qualitative figure shows dataset frames: it goes to Overleaf only.
+final_report/figures/qualitative_*.png

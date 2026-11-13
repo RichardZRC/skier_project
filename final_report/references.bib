@@ -1,0 +1,143 @@
+% Checked 2026-11-08 against the publisher or proceedings records. CVF papers use the CVF open-access page
+% numbers (IEEE Xplore paginates them differently). Every entry has authors, title, venue, publisher and year.
+% Youden added 2026-11-08 after the reference audit (checked against its Crossref record).
+% siamfc-pytorch added 2026-11-08: repository, fork commit and weights file checked against the vendored copy;
+% the year is the MIT license date of the version that released the weights.
+% Added 2026-11-12 for the final report: xiao2018simple (title, authors, venue and year from arXiv 1804.06208; the
+% CVF page refused access, so pages and publisher are left out) and hirano2025skitechcoach (from the project page's
+% BibTeX, https://skitechcoach.pages.dev/; the ACM page refused access).
+
+@inproceedings{xiao2018simple,
+  title     = {Simple Baselines for Human Pose Estimation and Tracking},
+  author    = {Xiao, Bin and Wu, Haiping and Wei, Yichen},
+  booktitle = {European Conference on Computer Vision (ECCV)},
+  year      = {2018},
+  note      = {arXiv:1804.06208}
+}
+
+@inproceedings{hirano2025skitechcoach,
+  title     = {{SkiTechCoach}: A Multimodal Alpine Skiing Dataset with {3D} Body Pose, Sole Pressure, and Expert Coaching},
+  author    = {Hirano, Toshihiro and Tabei, Yuki and Peng, Yichen and Liao, Chen-Chieh and Wu, Erwin and Koike, Hideki},
+  booktitle = {Proceedings of the 8th International ACM Workshop on Multimedia Content Analysis in Sports (MMSports '25)},
+  pages     = {39--46},
+  publisher = {Association for Computing Machinery},
+  address   = {Dublin, Ireland},
+  year      = {2025},
+  doi       = {10.1145/3728423.3759413}
+}
+
+@inproceedings{bachmann2019motion,
+  title     = {Motion Capture from Pan-Tilt Cameras with Unknown Orientation},
+  author    = {Bachmann, Roman and Sp{\"o}rri, J{\"o}rg and Fua, Pascal and Rhodin, Helge},
+  booktitle = {International Conference on 3D Vision (3DV)},
+  pages     = {308--317},
+  publisher = {IEEE},
+  year      = {2019},
+  note      = {Ski 2DPose dataset: \url{https://www.epfl.ch/labs/cvlab/data/ski-2dpose-dataset/}}
+}
+
+@inproceedings{dunnhofer2024tracking,
+  title     = {Tracking Skiers from the Top to the Bottom},
+  author    = {Dunnhofer, Matteo and Sordi, Luca and Martinel, Niki and Micheloni, Christian},
+  booktitle = {IEEE/CVF Winter Conference on Applications of Computer Vision (WACV)},
+  pages     = {8511--8521},
+  publisher = {IEEE},
+  year      = {2024},
+  note      = {SkiTB dataset and toolkit: \url{https://github.com/matteo-dunnhofer/SkiTB-toolkit}}
+}
+
+@inproceedings{bertinetto2016fully,
+  title     = {Fully-Convolutional {S}iamese Networks for Object Tracking},
+  author    = {Bertinetto, Luca and Valmadre, Jack and Henriques, Jo{\~a}o F. and Vedaldi, Andrea and Torr, Philip H. S.},
+  booktitle = {Computer Vision -- {ECCV} 2016 Workshops},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {9914},
+  pages     = {850--865},
+  publisher = {Springer},
+  year      = {2016}
+}
+
+@misc{huang2019siamfcpytorch,
+  title        = {{SiamFC - PyTorch}},
+  author       = {Huang, Lianghua},
+  howpublished = {GitHub, \url{https://github.com/huanglianghua/siamfc-pytorch}. We use the fork
+                  \url{https://github.com/matteo-dunnhofer/siamfc-pytorch} (commit a87f140) and the released weights
+                  \texttt{siamfc\_alexnet\_e50.pth}},
+  year         = {2019}
+}
+
+@inproceedings{sun2019deep,
+  title     = {Deep High-Resolution Representation Learning for Human Pose Estimation},
+  author    = {Sun, Ke and Xiao, Bin and Liu, Dong and Wang, Jingdong},
+  booktitle = {IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  pages     = {5693--5703},
+  publisher = {IEEE},
+  year      = {2019}
+}
+
+@misc{mmpose2020,
+  title        = {{OpenMMLab} Pose Estimation Toolbox and Benchmark},
+  author       = {{MMPose Contributors}},
+  howpublished = {OpenMMLab, \url{https://github.com/open-mmlab/mmpose}},
+  year         = {2020}
+}
+
+@inproceedings{kingma2015adam,
+  title     = {Adam: A Method for Stochastic Optimization},
+  author    = {Kingma, Diederik P. and Ba, Jimmy},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2015},
+  note      = {arXiv:1412.6980}
+}
+
+@inproceedings{lin2014microsoft,
+  title     = {Microsoft {COCO}: Common Objects in Context},
+  author    = {Lin, Tsung-Yi and Maire, Michael and Belongie, Serge and Hays, James and Perona, Pietro and Ramanan, Deva and Doll{\'a}r, Piotr and Zitnick, C. Lawrence},
+  booktitle = {Computer Vision -- {ECCV} 2014},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {8693},
+  pages     = {740--755},
+  publisher = {Springer},
+  year      = {2014}
+}
+
+@article{huang2019got,
+  title     = {{GOT-10k}: A Large High-Diversity Benchmark for Generic Object Tracking in the Wild},
+  author    = {Huang, Lianghua and Zhao, Xin and Huang, Kaiqi},
+  journal   = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  volume    = {43},
+  number    = {5},
+  pages     = {1562--1577},
+  publisher = {IEEE},
+  year      = {2021}
+}
+
+@inproceedings{yan2021learning,
+  title     = {Learning Spatio-Temporal Transformer for Visual Tracking},
+  author    = {Yan, Bin and Peng, Houwen and Fu, Jianlong and Wang, Dong and Lu, Huchuan},
+  booktitle = {IEEE/CVF International Conference on Computer Vision (ICCV)},
+  pages     = {10448--10457},
+  publisher = {IEEE},
+  year      = {2021}
+}
+
+@article{youden1950index,
+  title     = {Index for Rating Diagnostic Tests},
+  author    = {Youden, W. J.},
+  journal   = {Cancer},
+  volume    = {3},
+  number    = {1},
+  pages     = {32--35},
+  publisher = {Wiley},
+  year      = {1950}
+}
+
+@book{efron1994introduction,
+  title     = {An Introduction to the Bootstrap},
+  author    = {Efron, Bradley and Tibshirani, Robert J.},
+  series    = {Monographs on Statistics and Applied Probability},
+  volume    = {57},
+  publisher = {Chapman \& Hall},
+  address   = {New York},
+  year      = {1993}
+}

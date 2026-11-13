@@ -1,0 +1,392 @@
+\documentclass{article}
+
+% CS230 project report template, built on the official NeurIPS 2026 style file.
+% Keep the [final] option: it prints the author block and omits line numbers.
+% natbib is loaded by the style file; this makes citations numeric, e.g. [1, 2].
+\PassOptionsToPackage{numbers,compress}{natbib}
+\usepackage[final]{neurips_2026}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{amsmath}        % \operatorname
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{xcolor}         % colors
+\usepackage{graphicx}       % figures
+% Page limit for the main content, used in the text below. Update it here only.
+\newcommand{\pagelimit}{5}
+
+% DRAFTING AIDS, to be removed before submission (search for \outline and \tbd):
+%   \outline{...}  blue: Claude's outline of the facts a section needs. Replace it with your own prose.
+%   \tbd{...}      red: a number or item still to come (test numbers arrive with the Step 8 test run).
+\newcommand{\outline}[1]{{\color{blue!55!black}\small #1}}
+\newcommand{\tbd}[1]{{\color{red}[#1]}}
+
+\title{Skier Tracking and 2D Body-and-Ski Landmark Estimation}
+
+\author{%
+  Ruichao Zhang \\
+  \texttt{ruichaoz@stanford.edu} \\
+}
+
+\begin{document}
+
+\makeatletter\global\@topnum\z@\makeatother % no floats above the title, as article.cls does
+\maketitle
+
+\begin{abstract}
+\outline{One paragraph.
+\begin{itemize}
+  \item Motivation: video review of ski runs; long-term goal of technique feedback; COCO pose models have no skis.
+  \item Method: fixed SiamFC tracker $\to$ COCO-pretrained HRNet-W32 fine-tuned to 24 body/ski/pole landmarks on
+    crops around the tracker box $\to$ pose-guided crop refinement (a second pass) $\to$ smoothed skier-centered
+    replay.
+  \item Results (test, E2): ski PCK@0.1 94.8\% on well-framed crops; tracker crops cost 28.0 ski points;
+    refinement recovers 9.3 of them (a third) without retraining; the replay keeps 93.7\% of ski ends in view.
+  \item Takeaway: the pose model is accurate on well-framed crops; tracker drift is the bottleneck.
+\end{itemize}}
+\end{abstract}
+
+\section{Introduction}
+\outline{\begin{itemize}
+  \item Motivation: reviewing a run on video is hard (broadcast cameras pan and zoom, the skier is small and hidden
+    by gates, skis are thin, fast and overlapping). The long-term goal is automatic technique feedback; the
+    datasets have no expert annotations, so this project builds the tracking and pose layer it would rest on.
+  \item Why existing tools are not enough: COCO-trained pose models predict no ski landmarks; generic trackers drift
+    on broadcast skiing (SkiTB~\cite{dunnhofer2024tracking}); SkiTB also shows better trackers give better poses.
+  \item Explicit input/output (required by the template): the input is a single-camera skiing video and a box around
+    the skier in the first frame; a CNN (HRNet-W32) outputs 24 2D landmarks per frame (14 body, 8 ski, 2 pole), and
+    a geometric controller outputs a smooth, skier-centered replay with the skeleton drawn on it (Figure~\ref{fig:pipeline}).
+  \item Core ideas / contributions: (1) tracker-aware training: a controlled augmentation study (crop jitter,
+    blur, occlusion) with paired seeds and a selection rule fixed in advance; (2) pose-guided crop refinement;
+    (3) a paired measurement of how much tracking error costs pose accuracy at each level of tracker overlap.
+  \item Main results (test): 94.8\% ski / 95.9\% body PCK@0.1 on reference crops; tracker crops cost 28.0 ski
+    points; refinement +9.3 ski [6.7, 12.1] and +3.5 body [1.3, 6.0]; crop jitter +4.6 ski on the follow-cam set.
+  \item Not shared with another class (the template asks to say so if it were).
+\end{itemize}}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{figures/pipeline.pdf}
+  \caption{The system, per video frame. Only the pose model is trained; refinement runs it twice.}
+  \label{fig:pipeline}
+\end{figure}
+
+\section{Related work}
+\outline{Group by approach; for each: what it does, strengths/weaknesses, how we relate and differ.
+All entries below are checked and in \texttt{references.bib}.
+\begin{itemize}
+  \item \emph{Skiing datasets and analysis.} Ski 2DPose~\cite{bachmann2019motion}: 24 landmarks incl.\ skis and
+    poles on broadcast footage (used for 3D motion capture from pan-tilt cameras). SkiTB~\cite{dunnhofer2024tracking}:
+    skier tracking benchmark; fine-tunes AlphaPose on Ski 2DPose and shows tracker quality changes pose accuracy
+    (their Sec.~6.2, Table~6, PCK at 50\% of head--neck). We differ: skis as landmarks in the same model, tracker-aware
+    training, refinement, paired per-overlap measurement. SkiTechCoach~\cite{hirano2025skitechcoach}: indoor ski
+    simulator sequences with 3D poses, sole pressure, FIS points and expert coaching feedback; baselines for FIS
+    point estimation and LLM-generated coaching, i.e.\ our long-term goal, on lab data rather than broadcast video.
+  \item \emph{Top-down 2D pose estimation.} HRNet~\cite{sun2019deep} (keeps a high-resolution branch; heatmaps),
+    trained on COCO~\cite{lin2014microsoft}, via MMPose~\cite{mmpose2020}. Simple Baselines~\cite{xiao2018simple}
+    (deconvolution head on a ResNet). Strength: accurate on well-framed person crops; weakness: they depend on the person box.
+  \item \emph{Single-object tracking.} SiamFC~\cite{bertinetto2016fully} (implementation and weights
+    \cite{huang2019siamfcpytorch}; GOT-10k~\cite{huang2019got}); transformer trackers such as STARK~\cite{yan2021learning}
+    are stronger. We keep SiamFC fixed and measure its effect instead of improving it.
+  \item \emph{Coupling tracking and pose.} Xiao et al.~\cite{xiao2018simple} (Sec.~3.1) move the previous frame's
+    predicted joints to the next frame with optical flow and use a box around them (enlarged 15\%) to complement
+    detector boxes. Our refinement is a second pass on the same frame that corrects a tracker crop.
+    Box jitter during training mimics detector error.
+\end{itemize}}
+
+\section{Dataset}
+\outline{\begin{itemize}
+  \item Ski 2DPose~\cite{bachmann2019motion}: 1,982 images, 16 alpine videos (Creative Commons YouTube sources),
+    sparse labels in 158 single-camera segments, 24 landmarks with visibility flags.
+  \item Our split by source video: train 4 videos / 1,194 images, val 3 / 293, test 3 / 360; the 6 follow-cam videos
+    (134 images) are a separate set, evaluated once; 1 record excluded. Only visible labels are supervised and scored
+    (val 3,759 body / 1,752 ski labels; test 4,664 / 2,197 per seed). Val labels verified against their video frames.
+  \item SkiTB~\cite{dunnhofer2024tracking} (CC BY-NC 4.0): skier boxes, no landmarks, 100 alpine sequences; official
+    athlete split (53/6/41 sequences); single-camera clips: 75 val (12,925 scored frames), 471 test. Frame rates
+    (25/30 fps) estimated per sequence from frame span and race time.
+  \item Preprocessing: reference box tight around reliable body + ski labels, $\times1.25$, fitted to 3:4, warped
+    to $256\times192$; targets $64\times48$ Gaussian heatmaps ($\sigma=2$ px). Standard augmentation: flip
+    ($p=0.5$, left/right swapped), rotation $\pm15^\circ$, scale 0.8--1.2.
+  \item Pretrained weights: MMPose COCO HRNet-W32 (COCO keypoints); SiamFC released weights (training script
+    defaults to GOT-10k).
+  \item Optional (template): example images; Figure~\ref{fig:qualitative} shows val frames with labeled ski points.
+\end{itemize}}
+
+\section{Methods}
+\outline{\begin{itemize}
+  \item \emph{Pose model.} HRNet-W32: high-resolution branch kept throughout, parallel lower-resolution branches,
+    repeated fusion; top-down (one person per crop). Replace the last $1\times1$ layer to output $K=24$ heatmaps.
+  \item \emph{Loss.} Masked MSE over heatmaps:
+    $\mathcal{L} = \sum_{i,j} v_{ij} \operatorname{mean}_{u,v}(\hat H_{ij} - H_{ij})^2 / \max(1, \sum_{i,j} v_{ij})$,
+    $v_{ij}=1$ for a visible label inside the crop. Decoding: heatmap peak with MMPose's sub-pixel step; matches
+    MMPose's own inference to 0.014 px on average.
+  \item \emph{Optimization.} Adam~\cite{kingma2015adam}, batch 16; 3 warm-up epochs with the backbone frozen (head
+    $10^{-3}$), then 150 epochs at $10^{-4}$ (backbone) / $5\times10^{-4}$ (head), $\times0.1$ at epochs 90 and 127;
+    best val ski PCK checkpoint; 2 seeds; identical data order within a seed.
+  \item \emph{Tracker-aware augmentation.} E1 standard; E2 crop jitter (center $\pm10\%$ per axis, size
+    $\times$0.9--1.1); E3 motion blur ($p=0.5$, 3--9 px) + occluding patch ($p=0.5$, 5--15\%); E4 all three.
+  \item \emph{Tracking and confidence.} SiamFC initialized once per clip; confidence = peak of its sum-normalized
+    response map; threshold by Youden's $J$~\cite{youden1950index} on val (ROC AUC 0.83 for failure, IoU $<0.1$).
+  \item \emph{Pose crop from the tracker box:} expand the box $\times1.1$, then the usual 1.25 padding.
+  \item \emph{Pose-guided crop refinement (ours).} Pass 1 on the tracker crop; box $B = k_{\mathrm{ref}} \cdot
+    \mathrm{tight}\{\hat x_j : j \in \text{body} \cup \text{ski},\ s_j \ge s_{\min}\}$; crop like a training crop;
+    pass 2 is the output; fewer than 4 such points $\Rightarrow$ keep pass 1. No labels, no retraining.
+  \item \emph{Replay.} Tracker box $\times2.5$, fitted to 16:9, exponential smoothing ($\tau = 0.2$ s); on flagged frames
+    hold the center and zoom out; minimum size $\max(240\,\text{px}, H/3)$.
+\end{itemize}}
+
+\section{Experiments and Results}
+\subsection{Setup}
+\outline{\begin{itemize}
+  \item Every choice made on val by a rule written before the run (Table~\ref{tab:choices}); test evaluated once
+    (2026-11-12, commit \texttt{bf546e3}; hashes of data splits, configs and checkpoints recorded first).
+  \item Baselines: E0 (COCO model, 10 shared body landmarks), E1 (plain fine-tuning); for the integrated system the
+    tracker crop is the baseline and the reference crop (needs labels) the upper bound.
+  \item Metrics: PCK@$t$ ($t$ times the reference-box diagonal; 0.1 and 0.05), body and ski separately, poles
+    supplementary; tracking: IoU, success AUC, the SkiTB toolkit's F-score; replay: box containment, ski ends inside,
+    acceleration. 95\% intervals: cluster bootstrap~\cite{efron1994introduction} over segments within videos (pose)
+    or SkiTB sequences (tracking), 10,000 resamples.
+  \item Integration experiment: tracker starts at each segment's first labeled frame; every later labeled frame is
+    scored on reference, tracker and refined crops against the same labels.
+\end{itemize}}
+
+\begin{table}[h]
+  \centering
+  \small
+  \begin{tabular}{p{0.21\linewidth}p{0.32\linewidth}p{0.08\linewidth}p{0.25\linewidth}}
+    \toprule
+    Choice & Values tried (val) & Picked & How \\
+    \midrule
+    Fine-tune epochs & 50, 150 & 150 & ski tails unlearned at 50 \\
+    Augmentation recipe & E1--E4, 2 seeds each & E2 & pre-registered rule \\
+    Pose crop factor & 1.0, 1.1, 1.2, 1.35, 1.5 & 1.1 & rule (best tracked PCK) \\
+    Confidence signal & raw score, relative score (AUC 0.83 / 0.63) & raw & rule (higher AUC) \\
+    Replay $\tau$ (s) $\times$ width $k$ & \{0, 0.1, 0.2, 0.4\} $\times$ \{1.5, 2, 2.5, 3\} & 0.2, 2.5 & trade-off on val \\
+    Replay zoom-out gating & on, off & on & rule (containment) \\
+    Refinement $s_{\min} \times k_{\mathrm{ref}}$ & \{0.1, 0.2, 0.3, 0.5\} $\times$ \{1.0, 1.15, 1.3\} & 0.3, 1.3 & rule + gate \\
+    \bottomrule
+  \end{tabular}
+  \caption{Hyperparameters and design choices explored, all on val. Architecture (HRNet-W32), learning rates and the
+  schedule were fixed, not searched.}
+  \label{tab:choices}
+\end{table}
+
+\subsection{Pose model alone}
+\outline{Table~\ref{tab:pose} on test (val in the appendix). Facts to discuss:
+\begin{itemize}
+  \item E1 vs E0, shared body landmarks: @0.1 +1.5 [$-1.0$, 3.7] (no clear difference); @0.05 +4.9 [2.6, 7.0].
+  \item E2 vs E1: test ski @0.1 +0.7 [$-0.3$, 1.5] (val +1.2 [0.1, 2.3]); ski @0.05 +1.2 [0.2, 2.2] (val +1.5);
+    body $-0.5$ [$-1.3$, 0.2]. The rule fixed in advance picked E2 on val.
+  \item Val $\to$ test: no drop (E2 ski 93.1 $\to$ 94.8), but one test video holds 1,764 of the 2,197 ski labels
+    (per seed) at 96.7--98.1\%; the other two reach 62--87\% (per-video rows).
+  \item Follow-cam (different camera setup): ski drops to 73.5 (E1) / 78.1 (E2); E2 $-$ E1 +4.6 [2.9, 6.7]
+    (intervals over its 6 videos); body stays at 97.5.
+  \item The 50-epoch problem (val): ski tails barely learned, seed-dependent; 150 epochs fixed it for all 8 runs.
+\end{itemize}}
+
+\begin{table}[h]
+  \centering
+  \small
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{lcccc}
+    \toprule
+    Run & Body @0.1 & Ski @0.1 & Ski @0.05 & Follow-cam ski @0.1 \\
+    \midrule
+    E0 (COCO, not fine-tuned) & 94.7$^{*}$ & -- & -- & -- \\
+    E1 (fine-tuned) & 96.3 & 94.1 & 89.8 & 73.5 \\
+    E2 (+ crop jitter) & 95.9 & 94.8 & 91.0 & 78.1 \\
+    \midrule
+    E2 $-$ E1 & $-0.5$ $[-1.3, 0.2]$ & $+0.7$ $[-0.3, 1.5]$ & $+1.2$ $[0.2, 2.2]$ & $+4.6$ $[2.9, 6.7]$ \\
+    \bottomrule
+  \end{tabular}
+  \caption{Pose accuracy on test (360 images; 4,664 body / 2,197 ski labels per seed) and the follow-cam set (134
+  images, 6 videos), PCK (\%), two seeds pooled, reference crops; last row: 95\% CI. $^{*}$10 shared COCO
+  landmarks (E1: 96.2, E2: 95.6). \outline{Val results in the appendix.}}
+  \label{tab:pose}
+\end{table}
+
+\subsection{Integrated system}
+\outline{Table~\ref{tab:system} and Figure~\ref{fig:strata} on test. Facts:
+\begin{itemize}
+  \item SiamFC on 471 SkiTB test clips: mean IoU 0.404 [0.380, 0.428], toolkit F-score 0.406 [0.387, 0.428];
+    258 failure episodes (IoU $<0.1$ for $\ge0.5$ s) in 234 clips.
+  \item Replay: box containment 0.963 [0.951, 0.973]; ski ends in view 93.7\% (974/1040) [86.5, 99.4], below the
+    95\% target (val 99.4\%); acceleration 1.38 vs 4.11 unsmoothed (3.0$\times$ lower).
+  \item Tracker crops cost E2 18.1 body / 28.0 ski points [19.3, 37.7] (val 14.8 / 18.4); 30.5\% of ski labels fall
+    outside the tracker crop, 19.9\% after refinement.
+  \item By overlap (E2 ski, ref $\to$ tracker $\to$ refined): IoU $\ge0.5$ (131 frames) 94.1 $\to$ 90.5 $\to$ 94.9;
+    0.1--0.5 (136) 96.3 $\to$ 68.6 $\to$ 84.4; $<0.1$ (50) 98.4 $\to$ 6.7 $\to$ 14.3.
+  \item Refinement recovers 33\% of the ski loss (val 32\%) and 19\% of the body loss; fallback 8--10\% of frames.
+  \item By time since start (E2 ski, tracker crop): $<2$ s 79.3, 2--5 s 68.4, $\ge5$ s 51.8 (drift accumulates).
+  \item E2 vs E1 under tracker crops: +1.6 ski [0.8, 2.5]; after refinement +1.9 [1.0, 2.8].
+  \item Confidence flag: tracker-crop ski PCK 56.2 on flagged frames vs 73.5 on the rest.
+\end{itemize}}
+
+\begin{table}[h]
+  \centering
+  \small
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{lcccc}
+    \toprule
+    Crop & E1 body & E1 ski & E2 body & E2 ski \\
+    \midrule
+    Reference (upper bound) & 97.1 & 94.5 & 97.1 & 95.7 \\
+    Tracker (baseline) & 79.0 & 66.1 & 78.9 & 67.7 \\
+    Refined (ours) & 82.1 & 75.1 & 82.4 & 77.0 \\
+    \midrule
+    Refined $-$ tracker & $+3.0$ $[0.9, 5.6]$ & $+9.0$ $[6.4, 11.9]$ & $+3.5$ $[1.3, 6.0]$ & $+9.3$ $[6.7, 12.1]$ \\
+    \bottomrule
+  \end{tabular}
+  \caption{Pose under tracking on test, PCK@0.1 (\%) on the same 317 labeled frames (40 segments), seeds pooled.
+  Reference crops need the labels; last row: gain over the tracker crop, 95\% CI.}
+  \label{tab:system}
+\end{table}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.6\linewidth]{figures/propagation_strata_test.png}
+  \caption{E2 pose accuracy from reference (gray), tracker (orange) and refined (brown) crops on test, by IoU between
+  tracker and reference box.}
+  \label{fig:strata}
+\end{figure}
+
+\subsection{Analysis}
+\outline{\begin{itemize}
+  \item Where it fails, and why: the skier lost (IoU $<0.1$) cannot be fixed by refinement; SiamFC drifts to
+    spectators and locks onto on-screen graphics, and its box can grow 8--10$\times$ too large (Step 7 failure review).
+  \item Poles: PCK 4--8\% per basket because 48\% of visible basket labels lie outside the body + ski crop
+    (val 224/466), so they are also half-unsupervised in training; future work: include them in the crop box.
+  \item A val pattern that did not replicate: on val, E2's lead over E1 shrank after refinement (+2.4 $\to$ +1.3),
+    suggesting the two overlap; on test it does not (+1.6 $\to$ +1.9). The milestone's claim should not be repeated.
+  \item Crop jitter helps most where crops differ from training: under tracker crops (+1.6) and on follow-cam
+    (+4.6), not on clean test crops (+0.7, no clear difference). Your interpretation.
+  \item Limitations: few videos (test 3, one dominant; val 3; 6 SkiTB val sequences); intervals are conditional on
+    these videos; val also chose epochs and every setting; $k_{\mathrm{ref}}=1.3$ is the largest value tried; the
+    replay misses its ski-end target on test; broadcast footage only.
+  \item Qualitative examples: Figure~\ref{fig:qualitative} (val). (a) IoU 0.24: the tracker crop is far too large
+    and the skis are missed (0/8); refinement tightens it (7/8). (b) IoU 0.20: 4/8 $\to$ 7/8. (c) the tracker has
+    drifted to the snow spray (IoU 0.00); pass 1 sees no skier, so the refined box follows it (0/8).
+\end{itemize}}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{figures/qualitative_val.png}
+  \caption{Val examples (E2), picked by a fixed rule: (a, b) the two partial-overlap frames (different videos) with
+  the largest ski gain from refinement; (c) the lost-tracker frame with the most ski labels. Rectangles: the model's
+  input crop; lines: predicted skeleton; white dots: labeled ski points; counts: ski labels hit at PCK@0.1.}
+  \label{fig:qualitative}
+\end{figure}
+
+\section{Conclusion, Future Work and Code}
+\outline{\begin{itemize}
+  \item Summary and which parts worked best, and why (your interpretation).
+  \item Future work: a stronger tracker (e.g.\ STARK), poles inside the crop box, temporal smoothing of landmarks,
+    amateur footage, technique feedback on top of the landmarks.
+\end{itemize}}
+
+Code is available at: \url{https://github.com/RichardZRC/skier_project}.
+\tbd{Before submitting: check whether the repo is private; if so, add your assigned CA as a collaborator.}
+
+\section{Contributions}
+\outline{Single author: Ruichao Zhang did all of the work. Acknowledge anyone who advised; the datasets' authors are
+cited. AI assistance is described in the next section.}
+
+\section{AI Disclosure}
+\outline{List the tools and how they were used, in your words. For example: Claude Code (Anthropic) wrote and tested
+most of the code, ran the experiments on the laptop, debugged, checked references, and outlined and edited text;
+the design decisions and the selection rules were reviewed and approved by you.}
+
+\section*{References}
+\renewcommand{\bibsection}{}   % the "References" heading is already typeset above
+\medskip
+{\small
+\bibliographystyle{plainnat}
+\bibliography{references}
+}
+
+\appendix
+\section{Appendix}
+\label{sec:appendix}
+\outline{Val results that chose the system (TAs may not read this, so nothing essential goes here only). Each
+table needs one sentence of text from you.}
+
+\begin{table}[h]
+  \centering
+  \small
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{lcccc}
+    \toprule
+    & \multicolumn{2}{c}{Clean crops} & \multicolumn{2}{c}{Moderate crop error$^{\dagger}$} \\
+    \cmidrule(lr){2-3} \cmidrule(lr){4-5}
+    Recipe & Body @0.1 & Ski @0.1 & Body @0.1 & Ski @0.1 \\
+    \midrule
+    E1 standard & 95.2 & 91.9 & 95.2 & 90.4 \\
+    E2 + crop jitter & 95.5 & \textbf{93.1} & 95.3 & \textbf{92.9} \\
+    E3 + blur, occlusion & 96.9 & 92.0 & \textbf{96.6} & 90.9 \\
+    E4 all three & \textbf{97.1} & 91.0 & 96.5 & 89.5 \\
+    \midrule
+    E2 $-$ E1 & $+0.3$ $[-0.7, 1.2]$ & $+1.2$ $[0.1, 2.3]$ & $+0.2$ $[-0.9, 1.2]$ & $+2.5$ $[1.5, 3.6]$ \\
+    E3 $-$ E1 & $+1.7$ $[0.7, 2.7]$ & $+0.1$ $[-1.1, 1.5]$ & $+1.4$ $[0.7, 2.4]$ & $+0.5$ $[-0.9, 2.1]$ \\
+    E4 $-$ E1 & $+1.9$ $[0.9, 3.0]$ & $-0.9$ $[-2.0, 0.1]$ & $+1.4$ $[0.6, 2.3]$ & $-0.9$ $[-2.4, 0.9]$ \\
+    \bottomrule
+  \end{tabular}
+  \caption{Augmentation study on val (293 images; 3,759 body / 1,752 ski labels per seed), PCK (\%), mean of two
+  seeds; differences with 95\% CI. Ski @0.05 (E1--E4): 82.9 / 84.3 / 82.0 / 78.8. The rule fixed in advance (highest ski @0.1, at most 2 points of body loss)
+  picks E2. $^{\dagger}$Boxes shifted by 10\% and rescaled by up to $1.1\times$.}
+  \label{tab:aug_val}
+\end{table}
+
+\begin{table}[h]
+  \centering
+  \small
+  \begin{tabular}{lcccc}
+    \toprule
+    Crop & E1 body & E1 ski & E2 body & E2 ski \\
+    \midrule
+    Reference (upper bound) & 95.1 & 92.3 & 95.9 & 93.8 \\
+    Tracker (baseline) & 80.2 & 73.0 & 81.1 & 75.4 \\
+    Refined (ours) & 84.0 & 80.0 & 83.9 & 81.3 \\
+    \midrule
+    Refined $-$ tracker & $+3.8$ $[1.8, 6.3]$ & $+7.1$ $[4.6, 9.8]$ & $+2.8$ $[1.2, 4.5]$ & $+5.9$ $[3.6, 8.4]$ \\
+    \bottomrule
+  \end{tabular}
+  \caption{Pose under tracking on val, PCK@0.1 (\%) on the same 261 labeled frames (31 segments), seeds pooled.
+  SiamFC on the 75 SkiTB val clips: mean IoU 0.363 [0.299, 0.453], toolkit F-score 0.384; the replay keeps
+  99.4\% of ski ends in view.}
+  \label{tab:system_val}
+\end{table}
+
+\begin{table}[h]
+  \centering
+  \small
+  \begin{tabular}{lccccc}
+    \toprule
+    Pose crop factor (tracker box $\times$) & 1.0 & \textbf{1.1} & 1.2 & 1.35 & 1.5 \\
+    Mean of tracked body and ski PCK@0.1 & 77.2 & \textbf{78.3} & 77.9 & 77.4 & 76.9 \\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.6em}
+  \begin{tabular}{lccc}
+    \toprule
+    $s_{\min}$ \textbackslash{} $k_{\mathrm{ref}}$ & 1.0 & 1.15 & 1.3 \\
+    \midrule
+    0.1 & 81.3 & 82.3 & 82.9 \\
+    0.2 & 81.2 & 82.5 & 83.1 \\
+    0.3 & 80.9 & 82.0 & \textbf{82.6} \\
+    0.5 & 79.2 & 81.0 & 81.5 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Selection grids on val (E2, mean of two seeds). Top: the pose crop factor (ties within 0.5 go to the
+  smaller value). Bottom: refinement, mean of refined body and ski PCK@0.1 (single tracker crop: 78.3); within 0.5 of
+  the best (83.1) is a tie, broken toward $k_{\mathrm{ref}}$ nearest 1.0, then the higher $s_{\min}$, which picks
+  0.3 / 1.3. Every row is best at the largest $k_{\mathrm{ref}}$ tried.}
+  \label{tab:grids_val}
+\end{table}
+
+\end{document}

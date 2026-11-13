@@ -4,38 +4,32 @@ CS230 project, Fall 2026 · Ruichao Zhang (ruichaoz@stanford.edu)
 
 Given a single-camera skiing video and a box around the skier in the first frame, the system:
 - tracks the skier with a fixed, pretrained SiamFC;
-- produces a smooth, centered 16:9 replay;
-- predicts **24 landmarks** (14 body, 8 ski, 2 pole) with a fine-tuned COCO HRNet-W32.
+- predicts **24 landmarks** (14 body, 8 ski, 2 pole) with a fine-tuned COCO HRNet-W32 on a crop around the tracker box;
+- predicts again on a crop around those landmarks (**pose-guided crop refinement**, D26);
+- produces a smooth, skier-centered 16:9 replay with the skeleton drawn on it.
 
 The learning study asks whether targeted augmentation (crop jitter, motion blur, occlusion) improves ski-landmark accuracy and robustness to imperfect crops. Proposal: `skier_proposal.pdf`. Plan: `skier_implementation_plan.md`.
 
 ```mermaid
 flowchart LR
     A["Video + first-frame box"] --> B["Fixed SiamFC tracker"]
-    B --> C["Pose crop"] --> D["Fine-tuned 24-point HRNet"]
-    B --> E["Smoothed 16:9 replay crop"]
-    D --> F["Landmarks drawn into the replay"]
+    B --> C["Crop + fine-tuned 24-point HRNet"]
+    C --> R["Refinement: re-crop around the landmarks, predict again"]
+    B --> E["Smoothed 16:9 replay window"]
+    R --> F["Landmarks drawn into the replay"]
     E --> F
 ```
 
-## Status (2026-10-18)
+## Status (2026-11-12)
 
-**Target completion: Friday 2026-11-20.** The week-by-week schedule is in plan §4.
+**All steps are done, and the test set was evaluated once on 2026-11-12 (D27).** The final report is due Fri 2026-11-20 (`final_report/`).
 
-| Step | Code | Real runs |
-| --- | --- | --- |
-| 1 Setup and data checks | ✅ done | ✅ Ski 2DPose and SkiTB `AL/` downloaded and audited (0 problems). ⏳ Overlay review, alignment check, GPU smoke tests |
-| 2 Split, geometry, metrics | ✅ done | ⏳ Split freeze (after the overlay review) |
-| 3 Baselines (E0, tracker) | ✅ done | ⏳ AWS |
-| 4 Centered replay | ✅ done | ⏳ Needs tracker output (AWS) |
-| 5 Train 24-point model (E1) | ✅ done | ⏳ AWS |
-| 6 Augmentation study (E2–E4) | ✅ done | ⏳ AWS, after the split freeze. ✅ Augmentation preview on pilot images |
-| 7–8 Integration, report | not started | — |
-
-- **GPU machine:** a Windows laptop (RTX 4070, WSL2) for now (D17; `docs/laptop_setup.md`). The AWS account is still being verified and stays for heavier work later.
-- **SkiTB** data arrived 2026-10-18 and is audited. The frame rate of each sequence is still open.
-- The test suite has 250 passing tests; 9 more need PyTorch or mmpose and run on the GPU machine.
-- Detailed status and next actions: `PROJECT_NOTES.md`.
+- **Results:** `results/step8/test/tables.md` (test), `results/step8/followcam/tables.md` (follow-cam set), `results/step8/val/tables.md` (val, which chose every setting).
+  - E2 on test, reference crops: ski PCK@0.1 94.8%, body 95.9%.
+  - Tracker crops cost 28.0 ski points; refinement recovers +9.3 [6.7, 12.1] of them, with no retraining.
+  - SiamFC on 471 SkiTB test clips: mean IoU 0.404, toolkit F-score 0.406.
+- **Decisions:** D1–D27 in `docs/decisions.md`; running notes in `PROJECT_NOTES.md`.
+- **Tests:** 321 pass on the GPU machine (a Windows laptop with WSL2, D17; `docs/laptop_setup.md`). Without torch and mmpose, 12 skip.
 
 ## Setup
 
@@ -103,6 +97,43 @@ Every tool has `--help`. Outputs go under `$SKIER_RESULTS` unless `--out` is giv
 
 `CFG` and `COCO.pth` come from `mim download mmpose --config td-hm_hrnet-w32_8xb64-210e_coco-256x192 --dest $SKIER_DATA/pretrained`.
 
+## Reproducing the reported results
+
+On the GPU machine, inside Ubuntu, with the data in `$SKIER_DATA` and the vendored SiamFC fork and weights in `$SKIER_DATA/vendor/siamfc_pytorch` (`docs/laptop_setup.md`). Each training run takes about 40 minutes on an RTX 4070.
+
+```bash
+SPLIT=data/manifests/pose_split_v1.json
+CFG=$SKIER_DATA/pretrained/td-hm_hrnet-w32_8xb64-210e_coco-256x192.py
+COCO=$SKIER_DATA/pretrained/td-hm_hrnet-w32_8xb64-210e_coco-256x192-81c58e40_20220909.pth
+SIAM="--siamfc-repo $SKIER_DATA/vendor/siamfc_pytorch --weights $SKIER_DATA/vendor/siamfc_pytorch/pretrained/siamfc_alexnet_e50.pth"
+
+# 1. Augmentation study (D21): E1-E4, seeds 230 and 231, 150 fine-tune epochs (set in configs/pose/e*.yaml)
+for e in 1 2 3 4; do for s in 230 231; do
+  python scripts/train_pose.py --split $SPLIT --hrnet-config $CFG --checkpoint $COCO \
+    --config configs/pose/e$e.yaml --experiment E$e --seed $s --out $SKIER_RESULTS/pose/d21/E$e-s$s
+done; done
+# then evaluate each on val (scripts/eval_pose.py) and apply the D16 rule (scripts/compare_experiments.py): picks E2
+
+# 2. Val-only choices (Step 7; each by a rule written in advance, D24 and D26)
+python scripts/check_tracker_confidence.py --track-dir TRACKS --skitb-root $SKIER_DATA/skitb \
+  --split-json $SKIER_DATA/skitb/AL/AL_train_val_test_athlete_60-40.json      # confidence signal and threshold
+python scripts/eval_propagation.py --split $SPLIT --partition val --usable USABLE.json --track-dir TRACKS2D \
+  --checkpoint E2-s230=$SKIER_RESULTS/pose/d21/E2-s230/best.pt ... --hrnet-config $CFG --refine-grid
+                                                    # k_pose grid and the 12-setting refinement grid
+
+# 3. The frozen evaluation: the identical chain on val, then test once (refuses a second run)
+bash results/step8/run_final.sh val
+bash results/step8/run_final.sh test
+
+# 4. One clip end to end, with refinement on (configs/integration/default.yaml)
+python scripts/process_clip.py --skitb-clip AL0027/3 --skitb-root $SKIER_DATA/skitb \
+  --split-json $SKIER_DATA/skitb/AL/AL_train_val_test_athlete_60-40.json --partition val $SIAM \
+  --checkpoint $SKIER_RESULTS/pose/d21/E2-s230/best.pt --hrnet-config $CFG --out $SKIER_RESULTS/final/demos/AL0027__3
+```
+
+- `run_final.sh` writes `freeze.json` (hashes of the splits, configs and checkpoints) before any output, and checks that the tree is clean and equal to `origin/main`.
+- Report figures: `milestone/figures/*.py` and `final_report/figures/*.py`. The qualitative figure shows dataset frames, so it is not committed.
+
 ## Evaluation protocol (summary)
 
 The full definitions are in `docs/evaluation_protocol.md`.
@@ -111,19 +142,21 @@ The full definitions are in `docs/evaluation_protocol.md`.
 - **Pose:** PCK@0.1 (and @0.05 for skis), normalized by the diagonal of the reliable body + ski box. Body and ski are reported separately; a missing prediction counts as a miss; hits and totals are always reported.
 - **Tracking:** mean IoU on visible frames (excluding the initialization frame), a success curve, and failure episodes.
 - **Replay:** containment (ski endpoints separately), centering, crop acceleration and zoom, always reported together.
-- **Usage:** all tuning happens on val. Test is evaluated once.
+- **Usage:** all tuning happens on val. Test is evaluated once (done 2026-11-12, D27).
+- **Intervals:** a cluster bootstrap over segments within videos (Ski 2DPose) or sequences (SkiTB), 10,000 resamples (D25); the follow-cam set resamples its 6 videos, each one segment (D27).
 
 ## Repository layout
 
 | Path | Contents |
 | --- | --- |
-| `src/skier/` | The package: `data/`, `pose/`, `tracking/`, `replay/`, `eval/`, plus `geometry`, `schema`, `splits`, `viz` |
+| `src/skier/` | The package: `data/`, `pose/`, `tracking/`, `replay/`, `integration/` (confidence, propagation, refinement, one-clip pipeline), `eval/` (metrics, bootstrap, SkiTB toolkit port), `report/` (tables, figures), plus `geometry`, `schema`, `splits`, `viz` |
 | `scripts/` | Command-line entry points (thin wrappers) |
-| `configs/` | `ski24_schema.json`, `pose/e1.yaml`–`e4.yaml`, `replay/default.yaml` |
-| `data/manifests/` | `pose_inventory.csv`, `pilot_videos.txt`, and (after the freeze) `pose_split_v1.json` and `crop_error_set_v1.json` |
+| `configs/` | `ski24_schema.json`, `pose/e1.yaml`–`e4.yaml`, `replay/default.yaml`, `integration/default.yaml` |
+| `data/manifests/` | `pose_inventory.csv`, `pilot_videos.txt`, the frozen `pose_split_v1.json` and `crop_error_set_v1.json`, `skitb_fps_v1.csv` |
 | `docs/` | `scope.md`, `decisions.md`, `data_audit_ski2dpose.md`, `data_audit_skitb.md`, `evaluation_protocol.md`, `laptop_setup.md` |
 | `tests/` | Unit tests on synthetic data (`tests/synth.py`) |
-| `results/` | Small committed evidence; large outputs stay under `$SKIER_RESULTS` |
+| `results/` | Small committed evidence per step (`results/step8/{val,test,followcam}/` for the final numbers); large outputs stay under `$SKIER_RESULTS` |
+| `milestone/`, `final_report/` | The CS230 milestone and final report (LaTeX, figures and the scripts that draw them) |
 | `skier_implementation_plan.md`, `skier_step_1_guide.md`, `skier_step_1_code_spec.md`, `PROJECT_NOTES.md` | The plan, the setup guide, the Step 1 spec, and the running notes |
 
 ## References
