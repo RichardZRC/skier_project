@@ -1,0 +1,33 @@
+=== 2026-11-12 20:34:44 run_final test at bf546e3; k_pose 1.1; refine s_min 0.3 k_refine 1.3
+freeze.json: 14 files hashed, commit bf546e3
+=== pose (test)
+E1-s230 test: body PCK@0.1 96.6% (4506/4664), ski 94.5% (2076/2197) -> /home/ruichaoz/skier_results/final/test/pose/E1-s230
+E1-s231 test: body PCK@0.1 96.1% (4480/4664), ski 93.8% (2060/2197) -> /home/ruichaoz/skier_results/final/test/pose/E1-s231
+E2-s230 test: body PCK@0.1 96.2% (4485/4664), ski 95.2% (2091/2197) -> /home/ruichaoz/skier_results/final/test/pose/E2-s230
+E2-s231 test: body PCK@0.1 95.5% (4456/4664), ski 94.4% (2074/2197) -> /home/ruichaoz/skier_results/final/test/pose/E2-s231
+E0 test: body (shared joints) PCK@0.1 94.7% (3113/3287) → /home/ruichaoz/skier_results/final/test/pose/E0
+=== pose (followcam)
+E1-s230 followcam: body PCK@0.1 97.6% (1684/1725), ski 74.5% (697/936) -> /home/ruichaoz/skier_results/final/followcam/pose/E1-s230
+E1-s231 followcam: body PCK@0.1 97.1% (1675/1725), ski 72.5% (679/936) -> /home/ruichaoz/skier_results/final/followcam/pose/E1-s231
+E2-s230 followcam: body PCK@0.1 97.4% (1681/1725), ski 79.8% (747/936) -> /home/ruichaoz/skier_results/final/followcam/pose/E2-s230
+E2-s231 followcam: body PCK@0.1 97.6% (1683/1725), ski 76.4% (715/936) -> /home/ruichaoz/skier_results/final/followcam/pose/E2-s231
+E0 followcam: body (shared joints) PCK@0.1 97.4% (1192/1224) → /home/ruichaoz/skier_results/final/followcam/pose/E0
+=== SkiTB tracking (test)
+471 clips, pooled mean IoU 0.40350897811960207, AUC 0.4037582760703338 → /home/ruichaoz/skier_results/final/test/tracking/skitb
+=== Ski 2DPose: alignment, tracking, propagation (k_pose 1.1; refined crop D26)
+43/43 segments usable → /home/ruichaoz/skier_results/final/test/propagation
+tracked 43 test segments → /home/ruichaoz/skier_results/final/test/tracking/ski2dpose
+E1-s230 k_pose 1.1: body 97.3 → 79.2, ski 94.6 → 66.5 (reference → tracked, PCK@0.1)
+E1-s230 k_pose 1.1 refined s0.3_k1.3: body 82.4, ski 75.4 (291/317 refined)
+E1-s231 k_pose 1.1: body 97.0 → 78.9, ski 94.3 → 65.6 (reference → tracked, PCK@0.1)
+E1-s231 k_pose 1.1 refined s0.3_k1.3: body 81.8, ski 74.8 (292/317 refined)
+E2-s230 k_pose 1.1: body 97.2 → 78.7, ski 96.0 → 67.7 (reference → tracked, PCK@0.1)
+E2-s230 k_pose 1.1 refined s0.3_k1.3: body 82.9, ski 78.2 (287/317 refined)
+E2-s231 k_pose 1.1: body 96.9 → 79.1, ski 95.3 → 67.7 (reference → tracked, PCK@0.1)
+E2-s231 k_pose 1.1 refined s0.3_k1.3: body 81.9, ski 75.8 (284/317 refined)
+k_pose rule (E2): pick 1.1
+317 scored labels in 43 segments → /home/ruichaoz/skier_results/final/test/propagation
+=== replay (test)
+replay over 514 clips (test) → /home/ruichaoz/skier_results/final/test/replay
+=== tables and figures
+error: tracking: rebuilt numbers differ from /home/ruichaoz/skier_results/final/test/tracking/skitb/summary.json

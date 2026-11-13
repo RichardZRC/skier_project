@@ -1,0 +1,29 @@
+=== 2026-11-12 20:57:40 tables and figures for test at bf546e3 + working-tree fix:
+ 2 files changed, 13 insertions(+), 7 deletions(-)
+tables (pose, tracking, replay, propagation) → /home/ruichaoz/skier_results/final/test/tables
+error: stratum '37HtpPpdvp0' has 1 cluster(s); a bootstrap needs at least 2
+=== 2026-11-12 21:09:09 tables and figures for test at 64cf4ca (clean, = origin/main; D27)
+tables (pose, tracking, replay, propagation) → /home/ruichaoz/skier_results/final/test/tables
+tables (pose) → /home/ruichaoz/skier_results/final/followcam/tables
+8 figures → /home/ruichaoz/skier_results/final/test/figures
+=== 2026-11-12 21:09:29 done
+/home/ruichaoz/skier_results/final/followcam/tables:
+pose_per_joint.csv
+tables.json
+tables.md
+
+/home/ruichaoz/skier_results/final/test/figures:
+augmentation_val.png
+learning_curves.png
+per_joint_delta_followcam.png
+per_joint_delta_test.png
+per_joint_delta_val.png
+propagation_strata_test.png
+propagation_strata_val.png
+tracking_success.png
+
+/home/ruichaoz/skier_results/final/test/tables:
+pose_per_joint.csv
+tables.json
+tables.md
+tracking_per_sequence.csv
