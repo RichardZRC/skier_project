@@ -243,8 +243,10 @@ def tracking_tables(track_dir: Path, skitb_root: Path, split_json: Path, partiti
     seqs = [c["sequence"] for c in per_clip]
     pooled_iou = iou_sum.sum() / n.sum()
     curve = succ.sum(axis=0) / n.sum()
-    # summary.json comes from the tracker's in-memory boxes; the CSVs keep 3 decimals, which moves IoU by ~1e-8
-    if s is not None and (abs(s["pooled_mean_iou"] - pooled_iou) > 1e-6 or abs(s["success"]["auc"] - curve.mean()) > 1e-6
+    # summary.json comes from the tracker's in-memory boxes; the CSVs keep 3 decimals, which moves IoU by ~1e-8. That
+    # can flip an IoU lying on a success threshold (test: 5 of 87,753 frames, AUC off by 1.6e-6; each flip moves it by
+    # 1 / (21 n)), so the AUC check allows 1e-5: far below a real mismatch and the 3 decimals reported.
+    if s is not None and (abs(s["pooled_mean_iou"] - pooled_iou) > 1e-6 or abs(s["success"]["auc"] - curve.mean()) > 1e-5
                           or s["n_failure_episodes"] != sum(c["n_failures"] for c in per_clip)):
         raise ValueError(f"tracking: rebuilt numbers differ from {summary_path}")
     names = [c["clip"] for c in per_clip]

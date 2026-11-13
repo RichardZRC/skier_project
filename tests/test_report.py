@@ -419,11 +419,15 @@ def test_tracking_tables_match_run_skitb_and_the_port(tmp_path):
     assert 0 < t["official_toolkit"]["f_score"] <= 1 and t["official_toolkit"]["n_clips"] == 4
     assert "**Toolkit** F-score" in tab.to_markdown({"partition": "train", "tracking": t})
     with open(tracks / "summary.json") as f:
-        bad = json.load(f)
-    bad["pooled_mean_iou"] += 0.01
-    write_json(bad, tracks / "summary.json")
-    with pytest.raises(ValueError, match="differ"):
-        tab.tracking_tables(tracks, tmp_path / "skitb", split, "train", fps, n_boot=50)
+        orig = json.load(f)
+    # CSV rounding can flip an IoU lying on a success threshold; the AUC check allows that, not a real mismatch
+    write_json({**orig, "success": {**orig["success"], "auc": orig["success"]["auc"] + 5e-6}}, tracks / "summary.json")
+    tab.tracking_tables(tracks, tmp_path / "skitb", split, "train", fps, n_boot=50)
+    for bad in ({**orig, "pooled_mean_iou": orig["pooled_mean_iou"] + 0.01},
+                {**orig, "success": {**orig["success"], "auc": orig["success"]["auc"] + 1e-4}}):
+        write_json(bad, tracks / "summary.json")
+        with pytest.raises(ValueError, match="differ"):
+            tab.tracking_tables(tracks, tmp_path / "skitb", split, "train", fps, n_boot=50)
 
 
 def test_replay_tables(tmp_path):
