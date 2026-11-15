@@ -16,6 +16,7 @@ from skier.io_utils import ensure_dir, read_csv, read_json
 
 RECIPE_COLORS = {"E1": "#4c72b0", "E2": "#dd8452", "E3": "#55a868", "E4": "#c44e52"}
 SEED_STYLES = {"230": "-", "231": "--"}
+TRACKER_LABELS = {"siamfc": "SiamFC", "stark": "STARK-ST50"}
 
 
 def _plt():
@@ -102,7 +103,8 @@ def per_joint_delta(per_joint: list[dict], path: Path, title: str) -> Path:
     return path
 
 
-def success_curves(curves: dict[str, tuple[list, list, float]], path: Path) -> Path:
+def success_curves(curves: dict[str, tuple[list, list, float]], path: Path,
+                   title: str = "SiamFC success curve (SkiTB AL, SC clips)") -> Path:
     """``curves``: ``{label: (thresholds, success, auc)}``."""
     plt = _plt()
     fig, ax = plt.subplots(figsize=(5.5, 4.2))
@@ -110,7 +112,7 @@ def success_curves(curves: dict[str, tuple[list, list, float]], path: Path) -> P
         ax.plot(t, s, label=f"{label} (AUC {auc:.3f})")
     ax.set_xlabel("IoU threshold")
     ax.set_ylabel("share of frames with IoU above it")
-    ax.set_title("SiamFC success curve (SkiTB AL, SC clips)")
+    ax.set_title(title)
     ax.grid(alpha=0.3)
     ax.legend()
     fig.tight_layout()
@@ -147,9 +149,19 @@ def propagation_strata(strata: list[dict], path: Path, run: str = "E2") -> Path:
     return path
 
 
+def tracker_curves(compare: dict, path: Path) -> Path:
+    """Both trackers' success curves from a ``compare.json`` (D28), one partition."""
+    t = compare["tracking"]
+    auc = next(r for r in t["rows"] if r["metric"] == "auc")
+    th = t["success_curves"]["thresholds"]
+    curves = {TRACKER_LABELS[compare[k]["tracker"]]: (th, t["success_curves"][k], auc[k]) for k in ("a", "b")}
+    return success_curves(curves, path, f"SkiTB AL {compare['partition']}, SC clips (D28)")
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Report figures (plan Step 8) from tables.json files and training logs.")
-    p.add_argument("--tables", type=Path, nargs="+", required=True, help="tables.json files (e.g. val and test)")
+    p.add_argument("--tables", type=Path, nargs="*", default=[], help="tables.json files (e.g. val and test)")
+    p.add_argument("--compare", type=Path, nargs="*", default=[], help="compare.json files from compare_trackers (D28)")
     p.add_argument("--d21-dir", type=Path, help="$SKIER_RESULTS/pose/d21 (training logs for the learning curves)")
     p.add_argument("--out", type=Path, required=True)
     return p
@@ -159,7 +171,8 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     out = ensure_dir(args.out)
     tables = [read_json(p) for p in args.tables]
-    made = []
+    made = [tracker_curves(c, out / f"tracker_success_{c['partition']}.png")
+            for c in (read_json(p) for p in args.compare) if "tracking" in c]
     if args.d21_dir is not None:
         logs = {d.name: read_log(d / "log.csv") for d in sorted(args.d21_dir.glob("E*-s23*")) if (d / "log.csv").is_file()}
         if logs:
@@ -178,7 +191,9 @@ def main(argv: list[str] | None = None) -> int:
         if "propagation" in t:
             made.append(propagation_strata(t["propagation"]["strata"], out / f"propagation_strata_{part}.png"))
     if curves:
-        made.append(success_curves(curves, out / "tracking_success.png"))
+        names = {t.get("tracker", "siamfc") for t in tables if "tracking" in t}
+        label = TRACKER_LABELS[names.pop()] if len(names) == 1 else "Tracker"
+        made.append(success_curves(curves, out / "tracking_success.png", f"{label} success curve (SkiTB AL, SC clips)"))
     if not made:
         print("error: nothing to draw", file=sys.stderr)
         return 1

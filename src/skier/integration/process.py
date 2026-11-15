@@ -45,6 +45,8 @@ from skier.replay.controller import ReplayConfig, run_controller
 from skier.replay.render import render_debug, render_replay, write_crops_csv
 from skier.schema import Schema, load_schema
 from skier.tracking.run import boxes_of, read_track_csv, track_clip, write_track_csv
+from skier.tracking.trackers import (add_tracker_args, check_tracker, tracker_factory, tracker_info,
+                                     write_tracker_info)
 
 JSONL_FIELDS = ["video_id", "frame_index", "timestamp", "tracker_box", "tracker_score", "tracking_status",
                 "pose_crop_M", "pose_refined", "raw_keypoints_xy", "raw_keypoint_scores", "replay_crop",
@@ -225,9 +227,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--pose-split", type=Path, help="default: data/manifests/pose_split_v1.json")
     p.add_argument("--partition", default="val", help="the clip's partition (checked)")
     p.add_argument("--final-test", action="store_true", help="allow test/followcam (Step 8, once)")
-    p.add_argument("--track-csv", type=Path, help="use this tracker output instead of running SiamFC")
-    p.add_argument("--siamfc-repo", type=Path)
-    p.add_argument("--weights", type=Path, help="SiamFC weights")
+    p.add_argument("--track-csv", type=Path, help="use this tracker output instead of running a tracker")
+    add_tracker_args(p, weights_required=False)
     p.add_argument("--checkpoint", type=Path, required=True, help="our best.pt (Step 7 demos: E2-s230)")
     p.add_argument("--hrnet-config", type=Path, required=True)
     p.add_argument("--config", type=Path, help="default: configs/integration/default.yaml")
@@ -309,18 +310,26 @@ def main(argv: list[str] | None = None) -> int:
     out = ensure_dir(args.out or results_root() / "integration" / "clips" / name)
 
     if args.track_csv is not None:
+        try:
+            check_tracker(args.track_csv.parent, icfg.tracker)  # the gating threshold is the tracker's own (D28)
+        except ValueError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
         rows = read_track_csv(args.track_csv)
         if rows[0]["status"] != "init" or rows[0]["frame_index"] != init_index:
             print(f"error: {args.track_csv} doesn't start with an init row at frame {init_index}", file=sys.stderr)
             return 1
     else:
-        if not (args.siamfc_repo and args.weights):
-            print("error: give --siamfc-repo and --weights, or --track-csv", file=sys.stderr)
+        try:
+            if args.tracker != icfg.tracker:
+                raise ValueError(f"--tracker {args.tracker}, but the integration config is for {icfg.tracker} (D28)")
+            tracker = tracker_factory(args)
+            info = tracker_info(args)
+        except ValueError as exc:
+            print(f"error: {exc}; or give --track-csv", file=sys.stderr)
             return 1
-        from skier.tracking.siamfc_adapter import SiamFCTracker
-
-        rows = track_stage(SiamFCTracker(args.siamfc_repo, args.weights), factory(), init_index, init_box,
-                           out / "track.csv")
+        rows = track_stage(tracker(), factory(), init_index, init_box, out / "track.csv")
+        write_tracker_info(info, out)
 
     schema = load_schema()
     from skier.pose.model import build_hrnet, torch_heatmap_fn  # torch + mmpose from here on

@@ -48,6 +48,7 @@ from skier.pose.crop_error import FINAL_ONLY
 from skier.pose.evaluate import cut_off, inside_crop, score
 from skier.pose.infer import HeatmapFn, predict_records
 from skier.schema import Schema, load_schema
+from skier.tracking.trackers import check_tracker
 
 K_POSE_GRID = (1.0, 1.1, 1.2, 1.35, 1.5)
 K_TIE = 0.5  # points
@@ -309,6 +310,12 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         checkpoints[name] = Path(path)
     icfg = IntegrationConfig.from_yaml(args.config or configs_dir() / "integration" / "default.yaml")
+    try:
+        check_tracker(args.track_dir, icfg.tracker)  # the status stratum uses the tracker's own threshold (D28)
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    tracker = icfg.tracker
     icfg = icfg if icfg.conf_signal is not None else None  # no status stratum until the confidence check is done
     ks = tuple(args.k_pose or K_POSE_GRID)
     settings = list(REFINE_GRID) if args.refine_grid else ([tuple(args.refine)] if args.refine else [])
@@ -331,7 +338,7 @@ def main(argv: list[str] | None = None) -> int:
     from skier.pose.train import load_checkpoint
 
     result = {"partition": args.partition, "split_sha256": manifest["content_sha256"], "n_segments": len(init),
-              "n_scored": len(scored), "track_dir": str(args.track_dir), "k_pose_grid": list(ks),
+              "n_scored": len(scored), "track_dir": str(args.track_dir), "tracker": tracker, "k_pose_grid": list(ks),
               "refine_settings": [setting_key(s, kr) for s, kr in settings], "refine_n_min": N_MIN,
               "integration_config": None if icfg is None else dataclasses.asdict(icfg), "checkpoints": {}}
     long, preds, by_k, by_setting = [], {}, defaultdict(list), defaultdict(list)

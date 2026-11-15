@@ -15,6 +15,8 @@ from pathlib import Path
 
 import yaml
 
+from skier.tracking.trackers import TRACKERS
+
 SIGNALS = ("none", "raw", "relative")
 
 
@@ -27,10 +29,13 @@ class IntegrationConfig:
     pose_refine: bool | None = None  # pose-guided crop refinement in process_clip (D26)
     refine_min_score: float | None = None  # D26 s_min; the setting Step 8 scores even if pose_refine is false
     refine_k: float | None = None  # D26 k_refine
+    tracker: str = "siamfc"  # whose tracks these settings were chosen for (D28; skier.tracking.trackers)
 
     def __post_init__(self):
         if self.conf_signal is not None and self.conf_signal not in SIGNALS:
             raise ValueError(f"conf_signal must be one of {SIGNALS}, got {self.conf_signal!r}")
+        if self.tracker not in TRACKERS:
+            raise ValueError(f"tracker must be one of {TRACKERS}, got {self.tracker!r}")
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> "IntegrationConfig":
@@ -51,8 +56,8 @@ class IntegrationConfig:
         if "pose_refine" in names and self.pose_refine:
             missing += [n for n in ("refine_min_score", "refine_k") if getattr(self, n) is None and n not in names]
         if missing:
-            raise ValueError(f"integration settings not chosen yet: {missing} (Step 7 val runs, D24, D26); set them in "
-                             "configs/integration/default.yaml or on the command line")
+            raise ValueError(f"integration settings not chosen yet: {missing} (Step 7 val runs, D24, D26, D28); set "
+                             f"them in the integration config for {self.tracker} or on the command line")
         return self
 
 

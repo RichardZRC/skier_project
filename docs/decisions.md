@@ -344,3 +344,35 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
      - The alternative considered was no intervals, with per-video rows only.
 - **Tables and figures** were then built with the same commands as `run_final.sh`, from the commit that records this decision. The commit and the commands are in `$SKIER_RESULTS/final/test/tables_rerun.log`.
 - **Effect:** test is spent. Any later change, such as STARK, is reported as an extra experiment, never as a replacement of these numbers.
+
+## D28 — Step 7b: off-the-shelf STARK-ST50 as a labeled post-freeze extra (2026-11-12)
+- Choice, recorded before any STARK number exists (Ruichao approved the plan 2026-11-12; work on branch `stark`):
+  - **Tracker:** STARK-ST50 `baseline` [yan2021learning], off the shelf.
+    - Code: `researchmm/Stark` @ `162e1d37a38f92251cb380e90ccdb59608f2df3c` (MIT) in `$SKIER_DATA/vendor/Stark`.
+    - Weights: `checkpoints/train/stark_st2/baseline/STARKST_ep0050.pth.tar` (model-zoo Drive file `1sV_idlYLyxeCIO2o4AQDvUFO5b-X-E4w`; trained on LaSOT, GOT-10k, COCO, TrackingNet), 114,324,945 bytes, sha256 `23c8a677d9c2163e96e5225c1648ac4803e43232aef7c79044a367bde4a86b95`.
+    - STARK's own test parameters (`experiments/stark_st2/baseline.yaml`): template 2.0 / 128 px, search 5.0 / 320 px. Dataset name `skitb` is not in STARK's table, so the template update interval is its default, `DATA.MAX_SAMPLE_INTERVAL` = [200] (the same as LaSOT); updates need confidence > 0.5.
+    - No STARK setting is tuned. Initialization as for SiamFC: the first visible frame's GT box (SkiTB) or the first label's reference box (Ski 2DPose); no re-init.
+    - STARK's code runs unedited under our torch 2.1.2; six import-time snags are handled in `skier.tracking.stark_adapter` (its docstring lists them). Nothing is installed: easydict, which STARK's config imports, was approved but not installed, so a tested attribute-dict stand-in replaces it (the real package is used if present). The backend checks that the parsed config gives the test parameters above and the update interval [200].
+  - **Only the tracker changes:** `k_pose` 1.1 and the D26 refinement (`s_min` 0.3, `k_refine` 1.3) stay as chosen for SiamFC; the checkpoints, replay τ/k, splits and bootstrap (D25) are unchanged.
+  - **Re-derived for STARK by the D24 rules**, because they depend on the score scale, on STARK's SkiTB val tracks: the confidence signal (raw vs. relative; the higher ROC AUC for failure, IoU < 0.1), the Youden threshold (gate only if AUC ≥ 0.70) and `replay_uses_status` (only if it raises val GT-box containment). They go into `configs/integration/stark.yaml` (`tracker: stark`); `default.yaml` is not edited.
+  - **Pre-registered comparison, STARK − SiamFC, paired, D25 units:**
+    - SkiTB: pooled mean IoU, success AUC, toolkit F-score (sequence bootstrap); failure-episode counts.
+    - Ski 2DPose propagation: E2 and E1, seeds pooled, tracked and refined crops; body and ski PCK@0.1, ski PCK@0.05 (segments within videos).
+    - Replay: SkiTB GT-box containment (sequences), Ski 2DPose ski-end containment (segments within videos), crop area as the cost.
+  - **Test:** after the val run, the STARK chain runs **once** on test, whatever the val result (no selection on the outcome), from a pushed commit of branch `stark`. It is labeled a post-freeze extra everywhere; SiamFC's D27 numbers stay the main result.
+  - **Outputs:** `$SKIER_RESULTS/final_stark/<part>/` (run by `results/step7b/run_stark.sh`); evidence in `results/step7b/`.
+  - **Guard:** every new track folder gets a `tracker.json`; a folder without one is SiamFC's. `eval_propagation`, `make_replay --evaluate`, `process_clip` and `make_tables` refuse a tracker that differs from the integration config's `tracker` (default `siamfc`), so STARK tracks can't be gated with SiamFC's raw-scale threshold.
+- Reason:
+  - SiamFC drift is the largest measured error (D27: tracker crops cost 28.0 ski points on test; 258 failure episodes in 234 of 471 clips). The SkiTB paper ranks off-the-shelf STARK first among the untuned trackers on SkiTB AL (F 0.671; arXiv 2312.09723, Table 9). The milestone listed it as optional.
+  - The test was used once (D27), so STARK cannot replace the SiamFC result; a single pre-registered extra run keeps the comparison honest.
+- Result on val (2026-11-14):
+  - **R1, smoke** (`results/step7b/smoke.json`): the checkpoint loads `strict=True`; boxes are bit-identical on a rerun and with a shared or a fresh backend; 23–28 frames/s with JPEG decoding on the RTX 4070. Clip IoU, STARK vs. SiamFC: AL0027 cam 3 0.850 vs. 0.697; AL0073 cam 7 0.351 vs. 0.005.
+  - **R2, SkiTB val tracking:** 75 clips, pooled mean IoU 0.668 (SiamFC 0.363), AUC 0.660. Failure frames (IoU < 0.1, visible, after init): 557 of 12,925 (SiamFC 3,817).
+  - **Confidence settings by the D24 rules** (`$SKIER_RESULTS/integration/confidence-val-stark/confidence.json`, in `configs/integration/stark.yaml`):
+    - `conf_signal: raw` (ROC AUC 0.829; relative 0.805), `conf_threshold: 0.3258288` (Youden; TPR 0.72, FPR 0.18). 21% of val frames are `low_conf`.
+    - `replay_uses_status: true`: GT-box containment 0.992 with it vs. 0.986 without; crop area 42% vs. 38%.
+  - **R3, the val chain** (`bash results/step7b/run_stark.sh val`, from the uncommitted branch on top of `9cdcafc`; evidence `results/step7b/val/`): its SkiTB CSVs equal R2's byte for byte; reference-crop hits equal SiamFC's val run exactly; `final/val` unchanged. STARK − SiamFC, paired 95% intervals:
+    - SkiTB: pooled IoU 0.668 vs. 0.363 (+0.305 [0.254, 0.336]); AUC +0.295 [0.245, 0.326]; toolkit F 0.681 vs. 0.384 (+0.297 [0.250, 0.328]); failure episodes 6 in 6 clips vs. 46 in 40.
+    - Pose, E2 seeds pooled, 261 labels (PCK@0.1): tracker crop body 95.2 vs. 81.1 (+14.1 [6.4, 23.4]), ski 88.0 vs. 75.4 (+12.6 [7.1, 20.2]); refined crop ski 90.9 vs. 81.3 (+9.6 [3.8, 17.1]). Labels with tracker IoU ≥ 0.5: 232 vs. 99; < 0.1: 2 vs. 33.
+    - Replay: SkiTB containment 0.992 vs. 0.943 (+0.049 [0.018, 0.074]); crop area 42% vs. 46%. Ski 2DPose ski ends inside 100.0% vs. 99.4%.
+    - Not pre-registered, noted: with STARK, refinement still raises ski PCK (88.0 → 90.9) but lowers body slightly (95.2 → 94.7).

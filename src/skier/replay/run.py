@@ -226,6 +226,7 @@ def evaluate_main(args, cfg: ReplayConfig, schema: Schema, skitb_fps) -> int:
     from skier.integration.config import IntegrationConfig
     from skier.io_utils import read_json
     from skier.pose.crop_error import FINAL_ONLY
+    from skier.tracking.trackers import check_tracker
 
     if args.partition in FINAL_ONLY and not args.final_test:
         print(f"error: {args.partition!r} is used once, in Step 8; pass --final-test then", file=sys.stderr)
@@ -238,6 +239,9 @@ def evaluate_main(args, cfg: ReplayConfig, schema: Schema, skitb_fps) -> int:
     icfg = IntegrationConfig.from_yaml(args.integration_config or configs_dir() / "integration" / "default.yaml")
     try:
         icfg.require("conf_signal", "replay_uses_status")
+        for d in (args.track_dir if skitb else None, args.ski2dpose_track_dir):
+            if d is not None:
+                check_tracker(d, icfg.tracker)  # low_conf uses the tracker's own threshold (D28)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
@@ -280,7 +284,7 @@ def evaluate_main(args, cfg: ReplayConfig, schema: Schema, skitb_fps) -> int:
     out = ensure_dir(args.out or results_root() / "replay" / f"eval-{args.partition}")
     for key, rows in result.items():
         write_csv(rows, out / f"{key}.csv", EVAL_COLUMNS)
-    write_json({"partition": args.partition, "config": dataclasses.asdict(cfg),
+    write_json({"partition": args.partition, "tracker": icfg.tracker, "config": dataclasses.asdict(cfg),
                 "integration_config": dataclasses.asdict(icfg),
                 "n_clips": {s: sum(c[0] == s for c in clips) for s in ("skitb", "ski2dpose")}, **result},
                out / "replay_eval.json")

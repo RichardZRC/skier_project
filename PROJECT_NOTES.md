@@ -6,13 +6,29 @@ Companion docs: `README.md` (setup and commands), `CLAUDE.md` (rules for Claude 
 `skier_proposal.pdf`, `skier_implementation_plan.md` (status table at the top), `skier_step_1_guide.md`,
 `skier_step_1_code_spec.md`, `docs/decisions.md`.
 
-Last updated: 2026-11-12
+Last updated: 2026-11-14
 
 ---
 
 ## Handoff: where things stand (2026-10-26)
 
 Start here in a new session, on any machine. Claude's own notes stay on the machine they were written on, so everything a new session needs is in the repo: this section, `CLAUDE.md`, the decisions log and the plan's status table.
+
+### 2026-11-14: Step 7b, STARK-ST50 as a labeled post-freeze extra (D28), on branch `stark`
+- **Branch:** Ruichao asked to "branch out" for STARK (2026-11-12), so this work lives on `stark` (from `main` @
+  `9cdcafc`), in both clones. Merge into `main` only when Ruichao asks.
+- **Setup:** STARK at `162e1d3` in `$SKIER_DATA/vendor/Stark`, ST50 `baseline` weights (sha256 in D28 and
+  `docs/laptop_setup.md` 3.4). Nothing installed: six torch-2 snags are handled in `tracking/stark_adapter.py`
+  (easydict was approved but not installed; a tested stand-in replaces it).
+- **Code:** `--tracker stark` in `run_tracker` / `process_clip` / `smoke_tracker`; `tracker.json` in every new track
+  folder and a guard so STARK tracks never get SiamFC's raw-scale gating; `compare_trackers.py` (paired B − A, D25
+  intervals); `results/step7b/run_stark.sh val|test`. 344 tests on the laptop; mutation check 32/32.
+- **Val (evidence `results/step7b/`):** STARK's own confidence settings by the D24 rules (raw, 0.3258, replay status
+  on; `configs/integration/stark.yaml`). STARK − SiamFC: SkiTB IoU 0.668 vs. 0.363; E2 ski PCK@0.1 under tracker crops
+  88.0 vs. 75.4 (+12.6 [7.1, 20.2]), refined 90.9 vs. 81.3; replay containment 0.992 vs. 0.943.
+- **Next:** the single STARK test run (`run_stark.sh test`, Ruichao's go-ahead 2026-11-14), from the pushed branch;
+  then its evidence into `results/step7b/test/` and a labeled extra table in the final report. SiamFC's D27 numbers
+  stay the main result.
 
 ### 2026-11-12: test run done (D27)
 - `run_final.sh test` ran once at `bf546e3`; every evaluation step finished. Two reporting-only fixes followed

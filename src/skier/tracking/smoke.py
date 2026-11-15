@@ -16,7 +16,8 @@ import cv2
 from skier.io_utils import ensure_dir, read_csv, write_csv
 from skier.paths import results_root
 from skier.tracking.frames import VideoFrames
-from skier.tracking.siamfc_adapter import SiamFCTracker, Tracker, xywh1_to_xyxy, xyxy_to_xywh1  # noqa: F401
+from skier.tracking.siamfc_adapter import Tracker, xywh1_to_xyxy, xyxy_to_xywh1  # noqa: F401
+from skier.tracking.trackers import add_tracker_args, tracker_factory
 from skier.viz import FONT, draw_box
 
 BOX_COLUMNS = ["frame_index", "x1", "y1", "x2", "y2"]
@@ -76,9 +77,9 @@ def render_track(video_path, rows: list[tuple], out_path) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="Run pretrained SiamFC on one video (qualitative smoke test).")
-    p.add_argument("--siamfc-repo", type=Path, required=True, help="clone of the siamfc-pytorch fork")
-    p.add_argument("--weights", type=Path, required=True, help="siamfc_alexnet_e50.pth")
+    p = argparse.ArgumentParser(description="Run a pretrained tracker (SiamFC, or STARK for D28) on one video "
+                                            "(qualitative smoke test).")
+    add_tracker_args(p)
     p.add_argument("--video", type=Path, required=True)
     p.add_argument("--init-frame", type=int, required=True)
     p.add_argument("--init-box", type=float, nargs=4, required=True, metavar=("X1", "Y1", "X2", "Y2"))
@@ -90,8 +91,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     out = ensure_dir(args.out or results_root() / "step1" / "smoke_tracker")
-    tracker = SiamFCTracker(args.siamfc_repo, args.weights)
     try:
+        tracker = tracker_factory(args)()
         rows = run_on_video(tracker, args.video, args.init_frame, args.init_box, args.max_frames)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)

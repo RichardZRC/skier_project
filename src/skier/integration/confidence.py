@@ -221,7 +221,10 @@ def main(argv: list[str] | None = None) -> int:
     icfg = IntegrationConfig(**result["choice"])
     rcfg = ReplayConfig.from_yaml(args.replay_config or configs_dir() / "replay" / "default.yaml")
     result["replay"] = replay_gating_check([c for *_, c in inputs], rcfg, icfg, load_schema())
-    result.update(partition=args.partition, n_clips=len(inputs), replay_config=dataclasses.asdict(rcfg))
+    from skier.tracking.trackers import read_tracker_name
+
+    result.update(partition=args.partition, tracker=read_tracker_name(args.track_dir), n_clips=len(inputs),
+                  replay_config=dataclasses.asdict(rcfg))
     out = ensure_dir(args.out or results_root() / "integration" / f"confidence-{args.partition}")
     write_json(result, out / "confidence.json")
     for s, d in result["signals"].items():

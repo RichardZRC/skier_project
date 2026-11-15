@@ -1,0 +1,43 @@
+{
+ "stark_commit": "162e1d37a38f92251cb380e90ccdb59608f2df3c",
+ "weights": "/home/ruichaoz/skier_data/vendor/Stark/checkpoints/train/stark_st2/baseline/STARKST_ep0050.pth.tar",
+ "build_s": 1.6,
+ "easydict": "stand-in",
+ "update_intervals": [
+  200
+ ],
+ "params": {
+  "template_factor": 2.0,
+  "template_size": 128,
+  "search_factor": 5.0,
+  "search_size": 320
+ },
+ "torch": "2.1.2+cu121",
+ "gpu": "NVIDIA GeForce RTX 4070 Laptop GPU",
+ "clips": {
+  "AL0027__3": {
+   "n_rows": 226,
+   "frames_per_s_with_decoding": 23.1,
+   "stark_mean_iou": 0.8496809096503585,
+   "siamfc_mean_iou": 0.6971490879945914,
+   "stark_failure_episodes": 0,
+   "siamfc_failure_episodes": 0,
+   "score_min": 0.057341523468494415,
+   "score_median": 0.9747032523155212,
+   "score_max": 0.9997895359992981
+  },
+  "AL0073__7": {
+   "n_rows": 290,
+   "frames_per_s_with_decoding": 28.2,
+   "stark_mean_iou": 0.3507516634769358,
+   "siamfc_mean_iou": 0.004757639817866449,
+   "stark_failure_episodes": 1,
+   "siamfc_failure_episodes": 1,
+   "score_min": 0.011237083002924919,
+   "score_median": 0.36146098375320435,
+   "score_max": 0.987936794757843
+  }
+ },
+ "deterministic_rerun": true,
+ "shared_backend_equals_fresh": true
+}

@@ -1,0 +1,62 @@
+{
+  "choice": {
+    "conf_signal": "raw",
+    "conf_threshold": 0.3258288
+  },
+  "n_clips": 75,
+  "n_failure": 557,
+  "n_frames": 12925,
+  "partition": "val",
+  "replay": {
+    "low_conf_share": 0.2094081942336874,
+    "replay_uses_status": true,
+    "status_drives_replay": {
+      "acceleration_mean": 1.6386940518127902,
+      "area_fraction_mean": 0.4197106299550049,
+      "box_containment_mean": 0.9916894804569677,
+      "frac_fully_inside": 0.9777670451400259
+    },
+    "status_ignored": {
+      "acceleration_mean": 1.481701054036176,
+      "area_fraction_mean": 0.37700507038388614,
+      "box_containment_mean": 0.9862453642632022,
+      "frac_fully_inside": 0.9722552386106823
+    }
+  },
+  "replay_config": {
+    "aspect": 1.7777777777777777,
+    "k": 2.5,
+    "lost_score": null,
+    "lost_zoom_out_per_s": 0.5,
+    "max_zoom": 3.0,
+    "min_crop_h_px": 240.0,
+    "reset_gap_s": 1.0,
+    "tau_grow": 0.1,
+    "tau_pos": 0.2,
+    "tau_shrink": 0.6,
+    "tau_urgent": 0.03,
+    "urgent_margin": 0.05
+  },
+  "rule": "failure = IoU < 0.1 on visible frames after init; take the signal (raw, relative) with the higher ROC AUC, threshold at Youden's J; if the best AUC < 0.7, no gating. Replay: low_conf drives the replay as lost only if that raises mean GT-box containment",
+  "signals": {
+    "raw": {
+      "auc": 0.8294344471515069,
+      "youden": {
+        "fpr": 0.1803848641655886,
+        "j": 0.543133986821844,
+        "threshold": 0.3258288,
+        "tpr": 0.7235188509874326
+      }
+    },
+    "relative": {
+      "auc": 0.8049939497539257,
+      "youden": {
+        "fpr": 0.11974450194049159,
+        "j": 0.5427330564078029,
+        "threshold": 0.24546974814989483,
+        "tpr": 0.6624775583482945
+      }
+    }
+  },
+  "tracker": "stark"
+}

@@ -7,7 +7,7 @@ from skier import envcheck, splits
 from skier.data import alignment, audit, overlays
 from skier.integration import confidence, process, propagation
 from skier.paths import repo_root
-from skier.report import figures, tables
+from skier.report import compare_trackers, figures, tables
 from skier.pose import aug_preview, compare, crop_error, crosscheck, eval_generic, evaluate, train as pose_train
 from skier.pose import smoke as pose_smoke
 from skier.replay import run as replay_run
@@ -36,6 +36,7 @@ TOOLS = {
     "process_clip": process,
     "make_tables": tables,
     "make_figures": figures,
+    "compare_trackers": compare_trackers,
 }
 
 
@@ -49,7 +50,7 @@ def test_help_in_process(name, capsys):
 
 @pytest.mark.parametrize("name", TOOLS)
 def test_script_help_and_lazy_imports(name):
-    """The script runs `--help` without importing torch, mmpose or siamfc."""
+    """The script runs `--help` without importing torch, mmpose, siamfc or STARK (``lib``, easydict)."""
     script = repo_root() / "scripts" / f"{name}.py"
     code = (
         "import runpy, sys\n"
@@ -58,7 +59,7 @@ def test_script_help_and_lazy_imports(name):
         f"    runpy.run_path({str(script)!r}, run_name='__main__')\n"
         "except SystemExit as e:\n"
         "    assert e.code == 0, e.code\n"
-        "heavy = [m for m in ('torch', 'mmpose', 'mmcv', 'siamfc', 'got10k') if m in sys.modules]\n"
+        "heavy = [m for m in ('torch', 'mmpose', 'mmcv', 'siamfc', 'got10k', 'lib', 'easydict') if m in sys.modules]\n"
         "assert not heavy, heavy\n"
     )
     res = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
@@ -78,4 +79,4 @@ def test_smoke_tracker_parser():
         ["--siamfc-repo", "r", "--weights", "w.pth", "--video", "v.mp4", "--init-frame", "3",
          "--init-box", "1", "2", "3", "4"]
     )
-    assert args.init_box == [1.0, 2.0, 3.0, 4.0] and args.max_frames == 300
+    assert args.init_box == [1.0, 2.0, 3.0, 4.0] and args.max_frames == 300 and args.tracker == "siamfc"

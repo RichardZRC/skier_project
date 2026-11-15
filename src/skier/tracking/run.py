@@ -23,6 +23,7 @@ from skier.paths import data_root, repo_root, results_root
 from skier.pose.crop_error import FINAL_ONLY
 from skier.tracking.frames import ImageFrames, VideoFrames
 from skier.tracking.siamfc_adapter import Tracker
+from skier.tracking.trackers import add_tracker_args, tracker_factory, tracker_info, write_tracker_info
 
 TRACK_COLUMNS = ["frame_index", "x1", "y1", "x2", "y2", "score", "status"]
 POSE_SPLIT = "data/manifests/pose_split_v1.json"
@@ -140,9 +141,9 @@ def run_ski2dpose_segments(tracker_factory: Callable[[], Tracker], records, segm
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="Run the fixed SiamFC tracker over clips (plan Step 3.5).")
-    p.add_argument("--siamfc-repo", type=Path, required=True)
-    p.add_argument("--weights", type=Path, required=True)
+    p = argparse.ArgumentParser(description="Run a fixed tracker over clips (plan Step 3.5): SiamFC, or STARK-ST50 "
+                                            "for the D28 comparison.")
+    add_tracker_args(p)
     src = p.add_mutually_exclusive_group(required=True)
     src.add_argument("--skitb-root", type=Path, help="SkiTB root (with --split-json, --partition)")
     src.add_argument("--pilot-segments", action="store_true", help="all segments of the pilot videos (Ski 2DPose)")
@@ -162,10 +163,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    from skier.tracking.siamfc_adapter import SiamFCTracker
-
-    def factory():
-        return SiamFCTracker(args.siamfc_repo, args.weights)
+    try:
+        factory = tracker_factory(args)  # imports torch and the tracker only when the first clip starts
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
 
     if args.skitb_root:
         if args.split_json is None:
@@ -179,9 +181,11 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         fps = args.fps if args.fps is not None else load_fps_table(args.fps_table or repo_root() / FPS_TABLE)
         out = ensure_dir(args.out or results_root() / "tracking" / f"skitb-{args.partition}")
+        write_tracker_info(tracker_info(args), out)
         s = run_skitb(factory, args.skitb_root, args.split_json, args.partition, out, fps,
                       max_frames=args.max_frames)
-        print(f"{s['n_clips']} clips, pooled mean IoU {s['pooled_mean_iou']}, AUC {s['success']['auc']} → {out}")
+        print(f"{args.tracker}: {s['n_clips']} clips, pooled mean IoU {s['pooled_mean_iou']}, "
+              f"AUC {s['success']['auc']} → {out}")
         return 0
 
     from skier.data.ski2dpose import load_records
@@ -205,6 +209,7 @@ def main(argv: list[str] | None = None) -> int:
         apply_split(records, manifest)
         segments = sorted({(r.source_video_id, r.segment_id) for r in records if r.split == part})
     out = ensure_dir(args.out or results_root() / "tracking" / ("pilots" if part is None else f"ski2dpose-{part}"))
+    write_tracker_info(tracker_info(args), out)
     names = run_ski2dpose_segments(factory, records, segments, s2d / "videos", out, args.max_frames)
-    print(f"tracked {len(names)} {'pilot' if part is None else part} segments → {out}")
+    print(f"{args.tracker}: tracked {len(names)} {'pilot' if part is None else part} segments → {out}")
     return 0

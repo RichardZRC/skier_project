@@ -506,3 +506,161 @@ def test_final_only_gates(tmp_path):
     assert eval_generic.main(["--config", "x", "--checkpoint", "y", "--split", "z", "--partition", "followcam"]) == 1
     assert tracking_run.main(["--siamfc-repo", "x", "--weights", "y", "--skitb-root", "r", "--split-json", "s",
                               "--partition", "test"]) == 1
+    assert tracking_run.main(["--tracker", "stark", "--stark-repo", "x", "--weights", "y", "--skitb-root", "r",
+                              "--split-json", "s", "--partition", "test"]) == 1
+
+
+# --- tracker comparison (D28) ---------------------------------------------------------------
+
+class ExactTracker(DriftTracker):
+    """Moves like the GT of ``make_skitb_multi`` (+2 px per frame), score 0.9."""
+
+    def update(self, frame):
+        self.box = self.box + np.array([2, 0, 2, 0])
+        return self.box, 0.9
+
+
+def two_trackers(tmp_path):
+    from skier.tracking.trackers import write_tracker_info
+
+    split, fps = make_skitb_multi(tmp_path / "skitb")
+    for name, cls in (("a", DriftTracker), ("b", ExactTracker)):
+        d = tmp_path / name / "tracking" / "skitb"
+        d.mkdir(parents=True)
+        run_skitb(cls, tmp_path / "skitb", split, "train", d, fps=25.0)
+    write_tracker_info({"tracker": "stark"}, tmp_path / "b" / "tracking" / "skitb")
+    return split, fps
+
+
+def test_compare_tracking_is_paired(tmp_path):
+    from skier.report import compare_trackers as ct
+
+    split, fps = two_trackers(tmp_path)
+    a, b = (tmp_path / x / "tracking" / "skitb" for x in "ab")
+    c = ct.compare_tracking(a, b, tmp_path / "skitb", split, "train", fps, n_boot=300)
+    rows = {r["metric"]: r for r in c["rows"]}
+    ta = tab.tracking_tables(a, tmp_path / "skitb", split, "train", fps, n_boot=50)
+    assert rows["pooled_mean_iou"]["a"] == pytest.approx(ta["ours"]["pooled_mean_iou"])
+    assert rows["auc"]["a"] == pytest.approx(ta["ours"]["auc"])
+    assert rows["official_f_score"]["a"] == pytest.approx(ta["official_toolkit"]["f_score"])
+    assert rows["pooled_mean_iou"]["b"] == pytest.approx(1.0)  # B follows the GT exactly
+    for r in rows.values():
+        assert r["delta"] == pytest.approx(r["b"] - r["a"]) and r["delta"] > 0  # B − A, B is better
+        assert r["ci95"][0] <= r["delta"] <= r["ci95"][1] and r["n_clusters"] == 3
+    assert c["failures"]["episodes"]["b"] == 0 and c["n_clips"] == 4
+    assert c["success_curves"]["a"] == pytest.approx(ta["ours"]["success_curve"])
+    assert c["success_curves"]["b"][:-1] == pytest.approx([1.0] * 20)  # IoU 1 everywhere: above every threshold < 1
+    same = ct.compare_tracking(a, a, tmp_path / "skitb", split, "train", fps, n_boot=100)
+    assert all(r["delta"] == 0 and r["ci95"] == [0, 0] for r in same["rows"])
+    (b / "AL0003__0.csv").unlink()
+    with pytest.raises(FileNotFoundError, match="AL0003__0"):
+        ct.compare_tracking(a, b, tmp_path / "skitb", split, "train", fps, n_boot=50)
+
+
+def fake_propagation(d: Path, records, schema, ref, trk_sd: float, seed: int, iou: float):
+    """A propagation run whose reference predictions are ``ref`` (shared) and whose tracker crops add noise."""
+    gt, _, _, _ = gt_arrays(records)
+    rng = np.random.default_rng(seed)
+    boxes = np.array([r.reference_box_xyxy for r in records])
+    keys = {"tracker_iou": ["iou>=0.5"] * len(records)}
+    key = "s0.3_k1.3"
+    ckpts = {}
+    npz = {"sample_ids": np.array([r.sample_id for r in records]), "tracker_iou": np.full(len(records), iou)}
+    for name in ("E1-s230", "E1-s231", "E2-s230", "E2-s231"):
+        trk, rfd = (gt + rng.normal(0, f * trk_sd, gt.shape) for f in (1.0, 0.5))
+        npz[f"{name}__reference"], npz[f"{name}__k1.1"], npz[f"{name}__k1.1__{key}"] = ref[name], trk, rfd
+        block = prop.compare_crops(records, schema, ref[name], trk, boxes, 1.25, keys)
+        block["refined"] = {key: {"s_min": 0.3, "k_refine": 1.3, "n_refined": len(records), "fallback_share": 0.0,
+                                  **prop.compare_crops(records, schema, ref[name], rfd, boxes, 1.25, keys)}}
+        ckpts[name] = {"by_k_pose": {"1.1": block}}
+    d.mkdir(parents=True)
+    write_json({"checkpoints": ckpts, "refine_settings": [key]}, d / "propagation.json")
+    np.savez(d / "predictions.npz", **npz)
+
+
+def test_compare_propagation_is_paired_and_checks_the_reference(tmp_path, pose_records, schema):
+    from skier.report import compare_trackers as ct
+
+    gt, _, _, _ = gt_arrays(pose_records)
+    rng = np.random.default_rng(2)
+    ref = {n: gt + rng.normal(0, 3, gt.shape) for n in ("E1-s230", "E1-s231", "E2-s230", "E2-s231")}
+    fake_propagation(tmp_path / "a", pose_records, schema, ref, 30.0, 1, iou=0.3)
+    fake_propagation(tmp_path / "b", pose_records, schema, ref, 8.0, 2, iou=0.7)
+    by_id = {r.sample_id: r for r in pose_records}
+    c = ct.compare_propagation(tmp_path / "a", tmp_path / "b", by_id, schema, 1.1, 1.1, n_boot=300)
+    assert {(r["run"], r["crop"]) for r in c["rows"]} == {(r, k) for r in ("E1", "E2") for k in ("tracked", "refined")}
+    ta, tb = (tab.propagation_tables(tmp_path / x, by_id, schema, 1.1, n_boot=50) for x in "ab")
+    for r in c["rows"]:
+        pa, pb = (next(x["pct"] for x in t["rows"] if (x["run"], x["crop"], x["group"], x["threshold"]) ==
+                       (r["run"], r["crop"], r["group"], r["threshold"])) for t in (ta, tb))
+        assert (r["a"], r["b"]) == (pytest.approx(pa), pytest.approx(pb))
+        assert r["delta"] == pytest.approx(pb - pa) and r["ci95"][0] <= r["delta"] <= r["ci95"][1]
+    e2 = next(r for r in c["rows"] if (r["run"], r["crop"], r["group"], r["threshold"]) == ("E2", "tracked", "ski", 0.1))
+    assert e2["delta"] > 0 and c["n_segments"] == 6 and c["n_videos"] == 2
+    n = len(pose_records)
+    assert c["tracker_iou_bins"] == {"a": {"iou>=0.5": 0, "0.1<=iou<0.5": n, "iou<0.1": 0},
+                                     "b": {"iou>=0.5": n, "0.1<=iou<0.5": 0, "iou<0.1": 0}}
+    pv = next(p for p in c["per_video"] if (p["run"], p["crop"], p["group"]) == ("E2", "tracked", "ski"))
+    assert sum(v["hits"] for v in pv["b"].values()) == round(e2["b"] / 100 * sum(v["total"] for v in pv["b"].values()))
+    ref2 = {**ref, "E2-s231": ref["E2-s231"] + 25.0}  # B's reference crops differ: not the same pose model and labels
+    fake_propagation(tmp_path / "c", pose_records, schema, ref2, 8.0, 2, iou=0.7)
+    with pytest.raises(ValueError, match="E2 reference-crop hits differ"):
+        ct.compare_propagation(tmp_path / "a", tmp_path / "c", by_id, schema, 1.1, 1.1, n_boot=50)
+    fake_propagation(tmp_path / "d", pose_records[:-2], schema, {k: v[:-2] for k, v in ref.items()}, 8.0, 2, iou=0.7)
+    with pytest.raises(ValueError, match="different labels"):
+        ct.compare_propagation(tmp_path / "a", tmp_path / "d", by_id, schema, 1.1, 1.1, n_boot=50)
+
+
+def replay_rows(cont: list[float], ski_inside: list[int]):
+    cols = replay_run.EVAL_COLUMNS
+    rows = [{c: "" for c in cols} | {"clip": f"S{q}__{i}", "source": "skitb", "sequence": f"S{q}", "n_frames": 10,
+                                     "box_containment_mean": v, "frac_fully_inside": v / 2, "area_fraction_mean": 0.3,
+                                     "acceleration_mean": 1.0}
+            for i, (q, v) in enumerate(zip((1, 1, 2, 3), cont))]
+    rows += [{c: "" for c in cols} | {"clip": f"{s.replace('/', '__')}", "source": "ski2dpose", "sequence": s,
+                                      "n_frames": 10, "ski_end_inside": k, "ski_end_total": 8, "body_ski_inside": 20,
+                                      "body_ski_total": 22}
+             for s, k in zip(("v/1", "v/2", "w/1", "w/2"), ski_inside)]
+    return rows
+
+
+def test_compare_replay_and_the_cli(tmp_path):
+    from skier.report import compare_trackers as ct
+
+    split, fps = two_trackers(tmp_path)
+    for name, cont, ski in (("a", [0.8, 0.7, 0.9, 0.6], [6, 7, 5, 8]), ("b", [0.9, 0.9, 0.95, 0.8], [8, 8, 7, 8])):
+        (tmp_path / name / "replay").mkdir()
+        write_csv(replay_rows(cont, ski), tmp_path / name / "replay" / "smoothed.csv", replay_run.EVAL_COLUMNS)
+    c = ct.compare_replay(tmp_path / "a" / "replay", tmp_path / "b" / "replay", n_boot=300)
+    cont = next(r for r in c["skitb"]["rows"] if r["metric"] == "box_containment_mean")
+    assert cont["a"] == pytest.approx(0.75) and cont["b"] == pytest.approx(0.8875)
+    assert cont["delta"] == pytest.approx(0.1375) and cont["n_clusters"] == 3
+    ski = next(r for r in c["ski2dpose"]["rows"] if r["group"] == "ski_endpoints")
+    assert (ski["a"], ski["b"], ski["total"]) == (pytest.approx(100 * 26 / 32), pytest.approx(100 * 31 / 32), 32)
+    assert ski["delta"] == pytest.approx(100 * 5 / 32) and ski["ci95"][0] <= ski["delta"] <= ski["ci95"][1]
+    other = replay_rows([0.9, 0.9, 0.95, 0.8], [8, 8, 7, 8])
+    other[-1]["ski_end_total"] = 6  # not the same labels
+    (tmp_path / "c").mkdir()
+    write_csv(other, tmp_path / "c" / "smoothed.csv", replay_run.EVAL_COLUMNS)
+    with pytest.raises(ValueError, match="ski_endpoints label totals differ"):
+        ct.compare_replay(tmp_path / "a" / "replay", tmp_path / "c", n_boot=50)
+    cfg_b = tmp_path / "stark.yaml"
+    cfg_b.write_text("tracker: stark\nk_pose: 1.1\n")
+    args = ["--a", str(tmp_path / "a"), "--b", str(tmp_path / "b"), "--config-b", str(cfg_b), "--partition", "train",
+            "--skitb-root", str(tmp_path / "skitb"), "--skitb-split", str(split), "--fps-table", str(fps),
+            "--n-boot", "100", "--out", str(tmp_path / "cmp")]
+    assert ct.main(args) == 0
+    out = json.loads((tmp_path / "cmp" / "compare.json").read_text())
+    assert (out["a"]["tracker"], out["b"]["tracker"]) == ("siamfc", "stark") and set(out) >= {"tracking", "replay"}
+    md = (tmp_path / "cmp" / "compare.md").read_text()
+    assert "stark − siamfc" in md and "| pooled_mean_iou |" in md and "| ski_endpoints | 32 |" in md
+    assert ct.main(args[:4] + ["--config-b", str(configs_dir_default())] + args[6:]) == 1  # B holds STARK tracks
+    pytest.importorskip("matplotlib")
+    assert figs.main(["--compare", str(tmp_path / "cmp" / "compare.json"), "--out", str(tmp_path / "f")]) == 0
+    assert (tmp_path / "f" / "tracker_success_train.png").stat().st_size > 0
+
+
+def configs_dir_default() -> Path:
+    from skier.paths import configs_dir
+
+    return configs_dir() / "integration" / "default.yaml"

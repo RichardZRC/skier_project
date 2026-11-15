@@ -143,6 +143,13 @@ ls $SKIER_DATA/pretrained   # one .py config, one .pth checkpoint
   - Put them in `$SKIER_DATA/skitb/AL/`.
   - Verify them with `results/step1/skitb_audit/audit_skitb_al.py` (compare the per-sequence digests with `skitb_al_sequences.csv`).
 
+### 3.4 STARK-ST50 (Step 7b, D28; done 2026-11-12)
+- **Code:** `git clone https://github.com/researchmm/Stark.git $SKIER_DATA/vendor/Stark`, then `git -C $SKIER_DATA/vendor/Stark checkout 162e1d37a38f92251cb380e90ccdb59608f2df3c`.
+- **Weights:** from the model-zoo Drive folder (`MODEL_ZOO.md`), only `baseline/STARKST_ep0050.pth.tar`:
+  `python -m gdown 1sV_idlYLyxeCIO2o4AQDvUFO5b-X-E4w -O $SKIER_DATA/vendor/Stark/checkpoints/train/stark_st2/baseline/STARKST_ep0050.pth.tar`.
+  It is 114,324,945 bytes, sha256 `23c8a677d9c2163e96e5225c1648ac4803e43232aef7c79044a367bde4a86b95`.
+- **No extra package.** STARK's dependencies that the pinned venv lacks (easydict, timm, tensorboard, jpeg4py, old torch APIs) are worked around in `skier.tracking.stark_adapter`, and no STARK file is edited. easydict was approved (2026-11-12) but isn't needed: a tested stand-in replaces it, and `pip install easydict==1.13` would simply be used instead.
+
 ---
 
 ## Part 4: First GPU session (the trial)

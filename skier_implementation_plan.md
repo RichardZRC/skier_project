@@ -619,6 +619,12 @@ Provisional target, not a promise: at least 95% of visible ski endpoints kept on
 > - **Code:** `integration/refine.py`; `eval_propagation.py --refine-grid | --refine S K`; `process_clip` adds a second pass when `pose_refine` is set, and the JSONL gains a `pose_refined` field; tables and the strata figure get a third crop.
 > - **Val selection:** `s_min` 0.3, `k_refine` 1.3. The E2 mean of body and ski goes from 78.3 to 82.6, so the gate adopts it (`pose_refine: true`). On the 129 partial-overlap labels, ski PCK goes from 76.8 to 88.0.
 > - Evidence: `results/step7/refine_val_summary.json`.
+>
+> **Status, 2026-11-14: 7b, off-the-shelf STARK-ST50, done on val (D28; plan approved 2026-11-12; branch `stark`).**
+> - A labeled post-freeze extra: SiamFC's D27 test numbers stay the main result. Only the tracker changes; STARK's confidence settings come from the D24 rules on val (`configs/integration/stark.yaml`).
+> - **Code:** `tracking/stark_adapter.py` (STARK unedited under torch 2.1), `tracking/trackers.py` (`--tracker`, `tracker.json`, the guard), `report/compare_trackers.py`, `results/step7b/run_stark.sh`.
+> - **Val, STARK − SiamFC:** SkiTB IoU 0.668 vs. 0.363; E2 ski PCK@0.1 under tracker crops 88.0 vs. 75.4 (+12.6 [7.1, 20.2]). Evidence: `results/step7b/`.
+> - **Next:** the single STARK test run, whatever the val result (D28).
 
 ### Offline coding block
 - `[CODE]` `scripts/process_clip.py`: video + first-frame box → tracker → pose crop → pose model → replay → outputs. Writes a per-frame JSONL with:

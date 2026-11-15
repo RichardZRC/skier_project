@@ -216,11 +216,14 @@ def augmentation_table(d21_dir: Path, records_by_id: dict, schema: Schema, n_boo
 
 # --- tracking --------------------------------------------------------------------------------
 
-def tracking_tables(track_dir: Path, skitb_root: Path, split_json: Path, partition: str, fps_table: Path,
-                    n_boot: int = N_BOOT) -> dict:
-    """Our metrics and the toolkit's official ones over every SC clip of the partition; intervals over sequences."""
+def tracking_arrays(track_dir: Path, skitb_root: Path, split_json: Path, partition: str, fps_table: Path) -> dict:
+    """Per-clip counts over every SC clip of the partition, in the split's clip order (shared with compare_trackers).
+
+    ``n``, ``iou_sum``: frames and IoU sums; ``succ``: frames above each success threshold; ``f_curves``: the
+    toolkit's per-clip F curves; ``seqs``: each clip's sequence (the D25 unit).
+    """
     from skier.data.skitb import fps_for, load_fps_table, load_skitb_clips
-    from skier.eval.skitb_official import clip_metrics, overall, skitb_clip_inputs
+    from skier.eval.skitb_official import clip_metrics, skitb_clip_inputs
     from skier.eval.track_metrics import SUCCESS_THRESHOLDS
     from skier.tracking.run import evaluate_clip, read_track_csv
 
@@ -239,13 +242,25 @@ def tracking_tables(track_dir: Path, skitb_root: Path, split_json: Path, partiti
                          "mean_iou": st["mean_iou"], "n_failures": len(st["failure_episodes"]),
                          "success_counts": [int((ious > t).sum()) for t in SUCCESS_THRESHOLDS],
                          "official_f": official[name]["f_score"]})
+    return {"per_clip": per_clip, "official": official, "names": [c["clip"] for c in per_clip],
+            "seqs": [c["sequence"] for c in per_clip],
+            "n": np.array([c["n_frames"] for c in per_clip], dtype=np.float64),
+            "iou_sum": np.array([c["iou_sum"] for c in per_clip], dtype=np.float64),
+            "succ": np.array([c["success_counts"] for c in per_clip], dtype=np.float64),
+            "f_curves": np.array([official[c["clip"]]["f_curve"] for c in per_clip])}
+
+
+def tracking_tables(track_dir: Path, skitb_root: Path, split_json: Path, partition: str, fps_table: Path,
+                    n_boot: int = N_BOOT) -> dict:
+    """Our metrics and the toolkit's official ones over every SC clip of the partition; intervals over sequences."""
+    from skier.eval.skitb_official import overall
+    from skier.eval.track_metrics import SUCCESS_THRESHOLDS
+
+    a = tracking_arrays(track_dir, skitb_root, split_json, partition, fps_table)
+    per_clip, official = a["per_clip"], a["official"]
+    n, iou_sum, succ, f_curves, seqs = a["n"], a["iou_sum"], a["succ"], a["f_curves"], a["seqs"]
     summary_path = track_dir / "summary.json"
     s = read_json(summary_path) if summary_path.is_file() else None
-    n = np.array([c["n_frames"] for c in per_clip], dtype=np.float64)
-    iou_sum = np.array([c["iou_sum"] for c in per_clip])
-    succ = np.array([c["success_counts"] for c in per_clip], dtype=np.float64)
-    f_curves = np.array([official[c["clip"]]["f_curve"] for c in per_clip])
-    seqs = [c["sequence"] for c in per_clip]
     pooled_iou = iou_sum.sum() / n.sum()
     curve = succ.sum(axis=0) / n.sum()
     # summary.json comes from the tracker's in-memory boxes; the CSVs keep 3 decimals, which moves IoU by ~1e-8. That
@@ -324,12 +339,12 @@ def replay_tables(replay_dir: Path, n_boot: int = N_BOOT, target_pct: float = 95
 
 # --- propagation -----------------------------------------------------------------------------
 
-def propagation_tables(prop_dir: Path, records_by_id: dict, schema: Schema, k_pose: float, n_boot: int = N_BOOT,
+def propagation_arrays(prop_dir: Path, records_by_id: dict, schema: Schema, k_pose: float,
                        recipes=("E1", "E2")) -> dict:
-    """Reference vs. tracker crop on the same labels (Step 7), seed-pooled per recipe, with intervals.
+    """Per-label hit arrays for each recipe and crop, rebuilt from ``predictions.npz`` and checked against the stored
+    counts (shared with compare_trackers). ``arrays[(recipe, crop)]`` is seed-pooled; ``per_seed`` keeps the seeds.
 
-    When the run scored exactly one crop-refinement setting (D26, ``--refine``), the refined crop is a
-    third crop with refined − tracked intervals.
+    The crops are reference and tracked, plus refined when the run scored exactly one D26 setting (``--refine``).
     """
     p = read_json(prop_dir / "propagation.json")
     with np.load(prop_dir / "predictions.npz") as z:
@@ -360,6 +375,20 @@ def propagation_tables(prop_dir: Path, records_by_id: dict, schema: Schema, k_po
                 seeds.append(a)
             arrays[(r, crop)] = pooled(seeds)
             per_seed[(r, crop)] = seeds
+    return {"p": p, "npz": npz, "recs": recs, "clusters": clusters, "strata": strata, "k": k, "rkey": rkey,
+            "crops": crops, "arrays": arrays, "per_seed": per_seed}
+
+
+def propagation_tables(prop_dir: Path, records_by_id: dict, schema: Schema, k_pose: float, n_boot: int = N_BOOT,
+                       recipes=("E1", "E2")) -> dict:
+    """Reference vs. tracker crop on the same labels (Step 7), seed-pooled per recipe, with intervals.
+
+    When the run scored exactly one crop-refinement setting (D26, ``--refine``), the refined crop is a
+    third crop with refined − tracked intervals.
+    """
+    pa = propagation_arrays(prop_dir, records_by_id, schema, k_pose, recipes)
+    p, recs, clusters, strata, k, rkey = pa["p"], pa["recs"], pa["clusters"], pa["strata"], pa["k"], pa["rkey"]
+    arrays, per_seed = pa["arrays"], pa["per_seed"]
     rows = [{"run": r, "crop": crop, "group": g, "threshold": t, **_cell(*arrays[(r, crop)][(g, t)]),
              "per_seed": [pct(*a[(g, t)]) for a in per_seed[(r, crop)]],
              "per_video": _per_video(*arrays[(r, crop)][(g, t)], strata)}
@@ -416,7 +445,8 @@ def _ci(c, nd=1) -> str:
 
 
 def to_markdown(t: dict) -> str:
-    out = [f"# Report tables: {t['partition']}", "",
+    extra = t.get("tracker", "siamfc") != "siamfc"
+    out = [f"# Report tables: {t['partition']}" + (f" ({t['tracker']} tracks; D28 post-freeze extra)" if extra else ""), "",
            "Intervals: 95% cluster bootstrap (D25): segments within videos for pose and propagation, sequences for "
            "SkiTB; 10,000 resamples, seed 230. E1 and E2 are pooled over seeds 230 and 231 (per-seed values in "
            "brackets).", ""]
@@ -531,9 +561,25 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--skitb-split", type=Path, help="SkiTB split JSON (with --skitb-root)")
     p.add_argument("--fps-table", type=Path, help="default: data/manifests/skitb_fps_v1.csv")
     p.add_argument("--d21-dir", type=Path, help="val only: $SKIER_RESULTS/pose/d21 for the augmentation table")
+    p.add_argument("--integration-config", type=Path,
+                   help="the run's integration config (k_pose; its tracker is checked, D28); default: "
+                        "configs/integration/default.yaml")
     p.add_argument("--n-boot", type=int, default=N_BOOT)
     p.add_argument("--out", type=Path, help="default: <root>/tables")
     return p
+
+
+def check_root_tracker(root: Path, expected: str) -> None:
+    """Every tracker-dependent output under ``root`` must come from ``expected``'s tracks (D28)."""
+    from skier.tracking.trackers import DEFAULT, check_tracker
+
+    for d in (root / "tracking" / "skitb", root / "tracking" / "ski2dpose"):
+        if d.is_dir():
+            check_tracker(d, expected)
+    for f in (root / "propagation" / "propagation.json", root / "replay" / "replay_eval.json"):
+        if f.is_file() and read_json(f).get("tracker", DEFAULT) != expected:
+            raise ValueError(f"{f} was made from {read_json(f).get('tracker', DEFAULT)} tracks, but the integration "
+                             f"config is for {expected} (D28)")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -550,6 +596,9 @@ def main(argv: list[str] | None = None) -> int:
     by_id = {r.sample_id: r for r in select_partition(records, manifest, args.partition)[0]}
     t: dict = {"partition": args.partition, "split_sha256": manifest["content_sha256"]}
     try:
+        icfg = IntegrationConfig.from_yaml(args.integration_config or configs_dir() / "integration" / "default.yaml")
+        check_root_tracker(args.root, icfg.tracker)
+        t["tracker"] = icfg.tracker
         if (args.root / "pose").is_dir():
             t["pose"] = pose_tables(args.root / "pose", by_id, schema, args.n_boot, by_video=args.partition == "followcam")
         if args.d21_dir is not None:
@@ -564,7 +613,7 @@ def main(argv: list[str] | None = None) -> int:
         if (args.root / "replay" / "smoothed.csv").is_file():
             t["replay"] = replay_tables(args.root / "replay", args.n_boot)
         if (args.root / "propagation" / "propagation.json").is_file():
-            k = IntegrationConfig.from_yaml(configs_dir() / "integration" / "default.yaml").require("k_pose").k_pose
+            k = icfg.require("k_pose").k_pose
             t["propagation"] = propagation_tables(args.root / "propagation", by_id, schema, k, args.n_boot)
     except (ValueError, FileNotFoundError) as exc:
         print(f"error: {exc}", file=sys.stderr)
@@ -577,5 +626,5 @@ def main(argv: list[str] | None = None) -> int:
                   ["sequence", "n_clips", "pooled_mean_iou", "n_failure_episodes"])
     if "pose" in t:
         write_csv(t["pose"]["per_joint"], out / "pose_per_joint.csv", list(t["pose"]["per_joint"][0]))
-    print(f"tables ({', '.join(k for k in t if k not in ('partition', 'split_sha256'))}) → {out}")
+    print(f"tables ({', '.join(k for k in t if k not in ('partition', 'split_sha256', 'tracker'))}) → {out}")
     return 0

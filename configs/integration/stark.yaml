@@ -1,0 +1,11 @@
+# Integration settings for STARK-ST50 tracks (Step 7b, D28: a labeled post-freeze extra; SiamFC's are default.yaml).
+# Only the tracker changes: k_pose and the D26 refinement are SiamFC's, kept fixed. The score-dependent settings
+# are chosen by the D24 rules on STARK's SkiTB val tracks (check_tracker_confidence.py). null = not chosen yet.
+tracker: stark
+k_pose: 1.1               # as default.yaml (D24), not re-selected (D28)
+conf_signal: raw          # D24 rule on STARK's SkiTB val tracks: raw AUC 0.829, relative 0.805
+conf_threshold: 0.3258288 # Youden's J (STARK's conf_score, a sigmoid): flags 72% of failure frames, 18% of the others
+replay_uses_status: true  # SkiTB val GT-box containment 0.992 with it vs. 0.986 without (crop area 42% vs. 38%)
+pose_refine: true         # as default.yaml (D26), not re-selected (D28)
+refine_min_score: 0.3     # D26 s_min
+refine_k: 1.3             # D26 k_refine

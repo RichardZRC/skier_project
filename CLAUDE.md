@@ -4,7 +4,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 **Deadline: Fri 2026-11-20** (D14; plan §4). If the schedule slips, cut stretch goals first, then extra seeds, then E2/E3.
 
-**Read first:** `PROJECT_NOTES.md` (start with its **Handoff** section: machine state, what's waiting, AWS lessons; then status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D27; append only).
+**Read first:** `PROJECT_NOTES.md` (start with its **Handoff** section: machine state, what's waiting, AWS lessons; then status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D28; append only).
 
 ## Working rules (Ruichao's instructions; follow them exactly)
 
@@ -26,7 +26,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 ## Environment
 
-- Run the tests with `.venv/bin/python -m pytest -q`. Currently **321 tests**; all must pass on the GPU machine. The Mac skips 12: 6 `torch`, 4 `stack`, the SkiTB-toolkit cross-check (it needs the vendored toolkit) and the figure test (it needs matplotlib).
+- Run the tests with `.venv/bin/python -m pytest -q`. Currently **344 tests**; all must pass on the GPU machine. The Mac skips 15: 7 `torch`, 4 `stack`, the real-STARK test (it needs CUDA and the vendored STARK), the SkiTB-toolkit cross-check (it needs the vendored toolkit) and two figure tests (they need matplotlib).
   - Markers: `torch` needs PyTorch; `stack` needs the pinned torch, mmcv and mmpose; `gpu` needs CUDA.
 - **Paths:** code reads `SKIER_DATA` (default `~/skier_data`) and `SKIER_RESULTS` (default `~/skier_results`) through `skier.paths`. Never hard-code absolute paths.
 - **Data on this Mac:**
@@ -76,6 +76,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 - **`wsl -- bash -c "..."`** expands `$VAR` before bash sees it, whether called from PowerShell or Git Bash. Put anything with variables in a script file.
 - **The SkiTB toolkit doesn't run as vendored:** `np.loadtxt(delimiter='\n')` fails on numpy 1.26, and SC mode lists `ST/` instead of `SC/`. Use `eval/skitb_official.py`; `results/step8/toolkit_crosscheck.py` shows the port matches `report()`.
 - **Laptop interruptions:** Windows sleep (Modern Standby), Windows Update restarts and closing the last `wsl` connection have each stopped a run. Every epoch is checkpointed; resume with `--resume <run>/last.pt` and the same arguments.
+- **STARK (D28):** its scores are a sigmoid in [0, 1], SiamFC's about 1e-5, so each tracker has its own integration config (`stark.yaml` has `tracker: stark`); the tools refuse a track folder whose `tracker.json` doesn't match. STARK's code needs six torch-2 workarounds, all in `stark_adapter.py`; never edit the clone. The STARK work lives on branch `stark` (Ruichao's request).
 - **Minimum crop:** replay crops are at least `max(240 px, frame_h / 3)`, so design controller tests around that.
 - **SkiTB:**
   - `frames.txt` holds bare frame indices, and `frame_file` maps them (`197` → `00197.jpg`).
@@ -91,8 +92,8 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 | Data | `data/ski2dpose_raw.py` (raw labels, path template, info), `data/ski2dpose.py` + `data/records.py` (`PoseRecord`), `data/audit.py`, `data/overlays.py`, `data/alignment.py`, `data/skitb.py` (layout confirmed 2026-10-18), `splits.py` |
 | Geometry and drawing | `geometry.py`, `viz.py`, `schema.py` (+ `configs/ski24_schema.json`) |
 | Pose | `pose/preprocess.py`, `pose/heatmap.py`, `pose/infer.py`, `pose/model.py`, `pose/coco_map.py`, `pose/eval_generic.py` (E0), `pose/crosscheck.py`, `pose/augment.py`, `pose/dataset.py`, `pose/loss.py`, `pose/train.py`, `pose/crop_error.py`, `pose/evaluate.py`, `pose/compare.py`, `pose/aug_preview.py` |
-| Tracking and replay | `tracking/siamfc_adapter.py`, `tracking/frames.py`, `tracking/run.py`, `replay/controller.py`, `replay/render.py`, `replay/run.py` |
+| Tracking and replay | `tracking/siamfc_adapter.py`, `tracking/stark_adapter.py` (D28), `tracking/trackers.py` (tracker choice, `tracker.json`, the guard), `tracking/frames.py`, `tracking/run.py`, `replay/controller.py`, `replay/render.py`, `replay/run.py` |
 | Integration (Step 7) | `integration/config.py` (+ `configs/integration/default.yaml`), `integration/confidence.py`, `integration/propagation.py`, `integration/refine.py` (D26 crop refinement), `integration/process.py` |
 | Metrics | `eval/pose_metrics.py`, `eval/track_metrics.py`, `eval/replay_metrics.py`, `eval/bootstrap.py` (D25), `eval/skitb_official.py` (the toolkit's F/Pr/Re/GSR, ported) |
-| Report (Step 8) | `report/tables.py` (`make_tables.py`), `report/figures.py` (`make_figures.py`); the frozen run is `results/step8/run_final.sh` |
+| Report (Step 8) | `report/tables.py` (`make_tables.py`), `report/figures.py` (`make_figures.py`), `report/compare_trackers.py` (`compare_trackers.py`, D28); the frozen run is `results/step8/run_final.sh`, the STARK extra `results/step7b/run_stark.sh` |
 | Tools | `envcheck.py`, `io_utils.py`, `paths.py` |
