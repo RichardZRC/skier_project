@@ -255,6 +255,50 @@ All entries below are checked and in \texttt{references.bib}.
   \label{fig:strata}
 \end{figure}
 
+\subsection{Extra experiment after the test freeze: a stronger tracker}
+\outline{Table~\ref{tab:stark}. Say clearly that this was decided and run after the main test result, so it does not
+replace Table~\ref{tab:system}. Facts:
+\begin{itemize}
+  \item Off-the-shelf STARK-ST50~\cite{yan2021learning} (not fine-tuned on skiing) replaces SiamFC; nothing else
+    changes. Only its confidence threshold is re-derived on val by the same rule (its score is a probability, SiamFC's
+    is not). Val first, then one test run regardless of the val result (2026-11-15, commit \texttt{86dd90c}).
+  \item Val showed the same direction: SkiTB IoU 0.668 vs 0.363; E2 tracker-crop ski 88.0 vs 75.4 (+12.6 [7.1, 20.2]).
+  \item Its toolkit F-score on test (0.677) is close to the SkiTB paper's number for off-the-shelf STARK (0.671).
+  \item No test label is lost any more (IoU $<0.1$: 50 $\to$ 0 frames); IoU $\ge0.5$: 131 $\to$ 262 of 317.
+  \item The tracker crop still costs 9.2 ski points [4.9, 15.2] vs the reference crop (body 0.5); refinement
+    recovers 5.6 [2.7, 9.0] of them, with no body change ($-0.1$ [$-0.9$, 0.7]).
+  \item The replay keeps 99.8\% of ski ends in view (meets the 95\% target that SiamFC missed), with a smaller crop,
+    but it moves more (acceleration 1.69 vs 1.38; on val it did not, $-0.18$ [$-0.65$, 0.22]). Your interpretation.
+\end{itemize}}
+
+\begin{table}[h]
+  \centering
+  \small
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{lccc}
+    \toprule
+    Metric (test) & SiamFC & STARK-ST50 & Difference [95\% CI] \\
+    \midrule
+    SkiTB mean IoU (471 clips) & 0.404 & 0.679 & $+0.276$ $[0.251, 0.301]$ \\
+    SkiTB toolkit F-score & 0.406 & 0.677 & $+0.270$ $[0.246, 0.294]$ \\
+    Failure episodes (clips) & 258 (234) & 66 (61) & -- \\
+    \midrule
+    E2 body @0.1, tracker crop & 78.9 & 96.5 & $+17.6$ $[9.1, 27.0]$ \\
+    E2 ski @0.1, tracker crop & 67.7 & 86.5 & $+18.8$ $[11.1, 27.8]$ \\
+    E2 ski @0.1, refined crop & 77.0 & 92.1 & $+15.1$ $[7.6, 24.1]$ \\
+    \midrule
+    Replay box containment & 0.963 & 0.990 & $+0.027$ $[0.016, 0.040]$ \\
+    Replay ski ends in view (\%) & 93.7 & 99.8 & $+6.2$ $[0.6, 13.2]$ \\
+    Replay crop area (share of frame) & 0.48 & 0.43 & $-0.056$ $[-0.075, -0.034]$ \\
+    \bottomrule
+  \end{tabular}
+  \caption{Extra experiment run after the test freeze: off-the-shelf STARK-ST50 in place of SiamFC, everything else
+  unchanged; one run on test. Pose: the same 317 labeled frames as Table~\ref{tab:system} (reference crop: body
+  97.1, ski 95.7), PCK@0.1 (\%), seeds pooled. Paired 95\% CI over SkiTB sequences or segments within videos.
+  SiamFC (Table~\ref{tab:system}) remains the main result.}
+  \label{tab:stark}
+\end{table}
+
 \subsection{Analysis}
 \outline{\begin{itemize}
   \item Where it fails, and why: the skier lost (IoU $<0.1$) cannot be fixed by refinement; SiamFC drifts to
@@ -285,8 +329,9 @@ All entries below are checked and in \texttt{references.bib}.
 \section{Conclusion, Future Work and Code}
 \outline{\begin{itemize}
   \item Summary and which parts worked best, and why (your interpretation).
-  \item Future work: a stronger tracker (e.g.\ STARK), poles inside the crop box, temporal smoothing of landmarks,
-    amateur footage, technique feedback on top of the landmarks.
+  \item Future work: a tracker fine-tuned on skiing (off-the-shelf STARK already closes most of the gap,
+    Table~\ref{tab:stark}; the SkiTB paper's STARK variants fine-tuned on skiing reach F 0.875--0.882), poles inside the crop box, temporal
+    smoothing of landmarks, amateur footage, technique feedback on top of the landmarks.
 \end{itemize}}
 
 Code is available at: \url{https://github.com/RichardZRC/skier_project}.
@@ -388,5 +433,16 @@ table needs one sentence of text from you.}
   0.3 / 1.3. Every row is best at the largest $k_{\mathrm{ref}}$ tried.}
   \label{tab:grids_val}
 \end{table}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.6\linewidth]{figures/tracker_success_test.png}
+  \caption{Extra experiment (Table~\ref{tab:stark}): share of SkiTB test frames whose tracker box overlaps the
+  ground truth above each IoU threshold, SiamFC vs off-the-shelf STARK-ST50 (471 clips). On val (75 clips): mean IoU
+  0.363 vs 0.668 (+0.305 [0.254, 0.336]); E2 ski @0.1 under tracker crops 75.4 vs 88.0 (+12.6 [7.1, 20.2]), refined
+  81.3 vs 90.9; replay box containment 0.943 vs 0.992. STARK's confidence threshold (0.33 on its probability) was
+  chosen on val by the rule of Table~\ref{tab:choices}.}
+  \label{fig:stark_success}
+\end{figure}
 
 \end{document}

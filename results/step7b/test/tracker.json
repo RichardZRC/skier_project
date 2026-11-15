@@ -1,0 +1,7 @@
+{
+  "repo": "/home/ruichaoz/skier_data/vendor/Stark",
+  "repo_commit": "162e1d37a38f92251cb380e90ccdb59608f2df3c",
+  "tracker": "stark",
+  "weights": "/home/ruichaoz/skier_data/vendor/Stark/checkpoints/train/stark_st2/baseline/STARKST_ep0050.pth.tar",
+  "weights_sha256": "23c8a677d9c2163e96e5225c1648ac4803e43232aef7c79044a367bde4a86b95"
+}

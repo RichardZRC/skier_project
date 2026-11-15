@@ -376,3 +376,11 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
     - Pose, E2 seeds pooled, 261 labels (PCK@0.1): tracker crop body 95.2 vs. 81.1 (+14.1 [6.4, 23.4]), ski 88.0 vs. 75.4 (+12.6 [7.1, 20.2]); refined crop ski 90.9 vs. 81.3 (+9.6 [3.8, 17.1]). Labels with tracker IoU ≥ 0.5: 232 vs. 99; < 0.1: 2 vs. 33.
     - Replay: SkiTB containment 0.992 vs. 0.943 (+0.049 [0.018, 0.074]); crop area 42% vs. 46%. Ski 2DPose ski ends inside 100.0% vs. 99.4%.
     - Not pre-registered, noted: with STARK, refinement still raises ski PCK (88.0 → 90.9) but lowers body slightly (95.2 → 94.7).
+- Result on test (2026-11-15, the single run; evidence `results/step7b/test/`):
+  - `bash results/step7b/run_stark.sh test` ran once, at `86dd90c` (branch `stark`, pushed; clean tree), 23:41–00:22, exit 0. `freeze.json` (13 files) was written before any output; `final/test` unchanged (tree sha256 `05c6bd8ed440…` before and after). SiamFC's side of every comparison equals D27's tables (e.g. containment 0.963, ski ends 974/1040, 317 labels in 40 segments).
+  - SkiTB, 471 clips, 41 sequences: pooled IoU 0.679 vs. 0.404 (+0.276 [0.251, 0.301]); AUC +0.266 [0.242, 0.291]; toolkit F 0.677 vs. 0.406 (+0.270 [0.246, 0.294]), close to the SkiTB paper's off-the-shelf STARK (0.671); failure episodes 66 in 61 clips vs. 258 in 234.
+  - Pose, 317 labels, seeds pooled (PCK@0.1): E2 tracker crop body 96.5 vs. 78.9 (+17.6 [9.1, 27.0]), ski 86.5 vs. 67.7 (+18.8 [11.1, 27.8]); refined crop ski 92.1 vs. 77.0 (+15.1 [7.6, 24.1]). E1 shows the same (tracker-crop ski +19.0 [11.5, 27.6]). Labels with tracker IoU ≥ 0.5: 262 vs. 131; < 0.1: 0 vs. 50.
+  - With STARK, the tracker crop still costs E2 9.2 ski points [4.9, 15.2] (body 0.5 [−0.3, 1.5]); refinement recovers 5.6 [2.7, 9.0] of them and changes body by −0.1 [−0.9, 0.7].
+  - Replay: SkiTB containment 0.990 vs. 0.963 (+0.027 [0.016, 0.040]); crop area 43% vs. 48% (−0.056 [−0.075, −0.034]); Ski 2DPose ski ends inside 99.8% (1038/1040) vs. 93.7% (+6.2 [0.6, 13.2]).
+  - Not in the val direction, noted: replay acceleration is higher with STARK on test, 1.69 vs. 1.38 (+0.31 [0.14, 0.49]); on val −0.18 [−0.65, 0.22].
+  - These numbers are a labeled post-freeze extra; SiamFC's D27 numbers remain the main result.

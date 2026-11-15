@@ -1,0 +1,64 @@
+{
+ "partition": "test",
+ "tracker": "stark",
+ "stark_commit": "162e1d37a38f92251cb380e90ccdb59608f2df3c",
+ "branch": "stark",
+ "git_commit": "86dd90c3c17ce8d439d93fdecf75cd179ef05a6b",
+ "split_content_sha256": "46bd127b0e51c1293859c7ab86dab1f0759511fbbdfd9dad270a632443bb2e98",
+ "siamfc_root": "/home/ruichaoz/skier_results/final/test",
+ "siamfc_root_tree_sha256_before": "05c6bd8ed440c53577492cabed017fb4c97d83d60dba70a33165414fee1710bf",
+ "files": {
+  "pose_split": {
+   "path": "data/manifests/pose_split_v1.json",
+   "sha256": "afc93e1f0216733bc789b2c361af0469872acd4e25941b095c4bc22a578a7eef"
+  },
+  "skitb_split": {
+   "path": "/home/ruichaoz/skier_data/skitb/AL/AL_train_val_test_athlete_60-40.json",
+   "sha256": "0a15c719bad0dd98e854c267819b6d2895cdb240401daa8d162ae2d4b500926d"
+  },
+  "fps_table": {
+   "path": "data/manifests/skitb_fps_v1.csv",
+   "sha256": "f92afbbb8471b779b404c85d8ba261b9570d84e18f3065ebdf1ab221bcc687cc"
+  },
+  "integration_config": {
+   "path": "configs/integration/stark.yaml",
+   "sha256": "97ad349bca5a37cbf80fa1204db824423c242158f7d216e0de046a2013285e69"
+  },
+  "replay_config": {
+   "path": "configs/replay/default.yaml",
+   "sha256": "281570fe7fef1caa328af07e38adb376691200c9c771818f49fd7ce0b06a77ba"
+  },
+  "hrnet_config": {
+   "path": "/home/ruichaoz/skier_data/pretrained/td-hm_hrnet-w32_8xb64-210e_coco-256x192.py",
+   "sha256": "d9d456f7a04765c6bf539a10c04af52e91bb23483791f292b662e85cd2e8ec28"
+  },
+  "stark_weights": {
+   "path": "/home/ruichaoz/skier_data/vendor/Stark/checkpoints/train/stark_st2/baseline/STARKST_ep0050.pth.tar",
+   "sha256": "23c8a677d9c2163e96e5225c1648ac4803e43232aef7c79044a367bde4a86b95"
+  },
+  "siamfc_freeze": {
+   "path": "/home/ruichaoz/skier_results/final/test/freeze.json",
+   "sha256": "559d1719d2f151fca2b55c32f6a14818386a572b03b913d27a9a39a3b2bb6199"
+  },
+  "usable_segments": {
+   "path": "/home/ruichaoz/skier_results/final/test/propagation/usable_segments.json",
+   "sha256": "9e2412b3cad5715370894b1646e6b056dca5472e9b980105dcde4574b18d00dc"
+  },
+  "checkpoint_E1-s230": {
+   "path": "/home/ruichaoz/skier_results/pose/d21/E1-s230/best.pt",
+   "sha256": "e9639ede57bbc184c2dc19e86823a2e4b77acc30b65638d29ab519551b1798c1"
+  },
+  "checkpoint_E1-s231": {
+   "path": "/home/ruichaoz/skier_results/pose/d21/E1-s231/best.pt",
+   "sha256": "9f2707ae9712ea991e11715ee21bfe44195737827a913a90f5e7512279875399"
+  },
+  "checkpoint_E2-s230": {
+   "path": "/home/ruichaoz/skier_results/pose/d21/E2-s230/best.pt",
+   "sha256": "1385fe1615ca965f89e13891732964ef222c87df0aef82643111664cf77b1b71"
+  },
+  "checkpoint_E2-s231": {
+   "path": "/home/ruichaoz/skier_results/pose/d21/E2-s231/best.pt",
+   "sha256": "abc888a45da5b899c15ef632ffe8c0931a8f1d4140df20c3d972326bd7053423"
+  }
+ }
+}

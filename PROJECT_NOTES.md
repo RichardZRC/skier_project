@@ -6,7 +6,7 @@ Companion docs: `README.md` (setup and commands), `CLAUDE.md` (rules for Claude 
 `skier_proposal.pdf`, `skier_implementation_plan.md` (status table at the top), `skier_step_1_guide.md`,
 `skier_step_1_code_spec.md`, `docs/decisions.md`.
 
-Last updated: 2026-11-14
+Last updated: 2026-11-15
 
 ---
 
@@ -26,9 +26,12 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
 - **Val (evidence `results/step7b/`):** STARK's own confidence settings by the D24 rules (raw, 0.3258, replay status
   on; `configs/integration/stark.yaml`). STARK − SiamFC: SkiTB IoU 0.668 vs. 0.363; E2 ski PCK@0.1 under tracker crops
   88.0 vs. 75.4 (+12.6 [7.1, 20.2]), refined 90.9 vs. 81.3; replay containment 0.992 vs. 0.943.
-- **Next:** the single STARK test run (`run_stark.sh test`, Ruichao's go-ahead 2026-11-14), from the pushed branch;
-  then its evidence into `results/step7b/test/` and a labeled extra table in the final report. SiamFC's D27 numbers
-  stay the main result.
+- **Test (2026-11-15, the single run, D28):** `run_stark.sh test` at `86dd90c` (pushed), exit 0; `final/test`
+  unchanged; evidence `results/step7b/test/`. STARK − SiamFC: SkiTB IoU 0.679 vs. 0.404 (+0.276 [0.251, 0.301]),
+  toolkit F 0.677 vs. 0.406; E2 ski PCK@0.1 under tracker crops 86.5 vs. 67.7 (+18.8 [11.1, 27.8]), refined 92.1 vs.
+  77.0; replay containment 0.990 vs. 0.963, ski ends 99.8% vs. 93.7%; replay acceleration higher (1.69 vs. 1.38).
+- **Next:** a labeled extra table in the final report (`tab:stark`, drafted in `final_report/main.tex`; Ruichao
+  writes the prose). SiamFC's D27 numbers stay the main result. Merge `stark` into `main` only when Ruichao asks.
 
 ### 2026-11-12: test run done (D27)
 - `run_final.sh test` ran once at `bf546e3`; every evaluation step finished. Two reporting-only fixes followed

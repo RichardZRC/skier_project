@@ -1,0 +1,24 @@
+=== 2026-11-14 23:41:51 run_stark test at 86dd90c (stark); STARK 162e1d3; k_pose 1.1; refine s_min 0.3 k_refine 1.3
+freeze.json: 13 files hashed, commit 86dd90c
+=== SkiTB tracking (test, STARK)
+stark: 471 clips, pooled mean IoU 0.6792936222579339, AUC 0.6701732622897711 → /home/ruichaoz/skier_results/final_stark/test/tracking/skitb
+=== Ski 2DPose: tracking, propagation (k_pose 1.1; refined crop D26; status from configs/integration/stark.yaml)
+stark: tracked 43 test segments → /home/ruichaoz/skier_results/final_stark/test/tracking/ski2dpose
+E1-s230 k_pose 1.1: body 97.3 → 96.7, ski 94.6 → 85.5 (reference → tracked, PCK@0.1)
+E1-s230 k_pose 1.1 refined s0.3_k1.3: body 97.4, ski 92.0 (317/317 refined)
+E1-s231 k_pose 1.1: body 97.0 → 96.8, ski 94.3 → 84.7 (reference → tracked, PCK@0.1)
+E1-s231 k_pose 1.1 refined s0.3_k1.3: body 96.6, ski 90.7 (317/317 refined)
+E2-s230 k_pose 1.1: body 97.2 → 96.6, ski 96.0 → 87.0 (reference → tracked, PCK@0.1)
+E2-s230 k_pose 1.1 refined s0.3_k1.3: body 96.4, ski 92.8 (317/317 refined)
+E2-s231 k_pose 1.1: body 96.9 → 96.4, ski 95.3 → 86.1 (reference → tracked, PCK@0.1)
+E2-s231 k_pose 1.1 refined s0.3_k1.3: body 96.3, ski 91.5 (317/317 refined)
+k_pose rule (E2): pick 1.1
+317 scored labels in 43 segments → /home/ruichaoz/skier_results/final_stark/test/propagation
+=== replay (test)
+replay over 514 clips (test) → /home/ruichaoz/skier_results/final_stark/test/replay
+=== tables, comparison with /home/ruichaoz/skier_results/final/test, figures
+tables (tracking, replay, propagation) → /home/ruichaoz/skier_results/final_stark/test/tables
+compare (tracking, propagation, replay) → /home/ruichaoz/skier_results/final_stark/test/compare
+4 figures → /home/ruichaoz/skier_results/final_stark/test/figures
+/home/ruichaoz/skier_results/final/test unchanged (tree sha256 05c6bd8ed440)
+=== 2026-11-15 00:22:30 run_stark test done → /home/ruichaoz/skier_results/final_stark/test
