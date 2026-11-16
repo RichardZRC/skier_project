@@ -1,0 +1,64 @@
+{
+ "rules": {
+  "both_good": "highest min(IoU_siamfc, IoU_stark)",
+  "both_bad": "lowest max(IoU_siamfc, IoU_stark)",
+  "stark_better": "largest IoU_stark - IoU_siamfc"
+ },
+ "one_clip_per_sequence": true,
+ "min_seconds": 5.0,
+ "partition": "val",
+ "n_val_clips": 75,
+ "n_qualifying": 48,
+ "source": {
+  "siamfc": "final/val/tracking/skitb/summary.json",
+  "stark": "final_stark/val/tracking/skitb/summary.json"
+ },
+ "picks": {
+  "both_good": [
+   {
+    "clip": "AL0027__3",
+    "sequence": "AL0027",
+    "seconds": 9.0,
+    "siamfc": 0.697,
+    "stark": 0.85,
+    "diff": 0.153
+   },
+   {
+    "clip": "AL0044__3",
+    "sequence": "AL0044",
+    "seconds": 11.5,
+    "siamfc": 0.641,
+    "stark": 0.77,
+    "diff": 0.129
+   }
+  ],
+  "both_bad": [
+   {
+    "clip": "AL0073__10",
+    "sequence": "AL0073",
+    "seconds": 6.4,
+    "siamfc": 0.007,
+    "stark": 0.285,
+    "diff": 0.277
+   }
+  ],
+  "stark_better": [
+   {
+    "clip": "AL0026__4",
+    "sequence": "AL0026",
+    "seconds": 5.9,
+    "siamfc": 0.037,
+    "stark": 0.758,
+    "diff": 0.721
+   },
+   {
+    "clip": "AL0081__7",
+    "sequence": "AL0081",
+    "seconds": 7.2,
+    "siamfc": 0.048,
+    "stark": 0.746,
+    "diff": 0.698
+   }
+  ]
+ }
+}

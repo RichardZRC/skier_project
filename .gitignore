@@ -16,3 +16,7 @@ CLAUDE.local.md
 # Overlays, contact sheets, clips and predictions stay under $SKIER_RESULTS.
 # The report's qualitative figure shows dataset frames: it goes to Overleaf only.
 final_report/figures/qualitative_*.png
+# Stills from the STARK demo (stark_demo_stills.sh) are dataset frames too.
+final_report/figures/stark_demo/
+# Local copies of the demo videos (from $SKIER_RESULTS/final{,_stark}/demos/), for viewing on Windows.
+demos/

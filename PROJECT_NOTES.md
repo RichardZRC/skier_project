@@ -35,6 +35,18 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
 - **Merged 2026-11-15:** `stark` was fast-forwarded into `main` (Ruichao: keep both trackers, so the report and the
   graders can see the comparison). Work on `main` again; the `stark` branch stays on GitHub because STARK's
   `freeze.json` names it. README section "Trackers: SiamFC and STARK" has the commands.
+- **STARK demo (2026-11-15, val clip AL0073 cam 7, SiamFC's failure demo):** same system with `--tracker stark` and
+  `stark.yaml`; videos in `$SKIER_RESULTS/final_stark/demos/` (STARK alone, and SiamFC | STARK side by side), numbers
+  in `results/step7b/demo_AL0073_7.json`. Both trackers lose the skier from about 1 s to 3 s; STARK re-finds it and
+  holds it (clip IoU 0.35 vs. 0.005), SiamFC never does. STARK's flag is off on this clip: the skeleton is drawn on 86
+  frames where the box is off the skier (mostly the first 3 s), and hidden on 59 of the 110 frames where it is on.
+- **Demo set (2026-11-15, val):** 5 clips picked by fixed rules on the val clip IoUs (`results/step7b/demo_set.py`:
+  both good = highest min, both bad = lowest max, STARK better = largest difference; clips ≥ 5 s; one per race),
+  rendered from the val chains' own track CSVs by `results/step7b/make_demo_set.sh` → `$SKIER_RESULTS/demo_set/`
+  (side-by-side copies in the gitignored `demos/demo_set/{both_good,both_bad,stark_better}/` of the Windows clone). Picks (SiamFC / STARK clip IoU):
+  both good AL0027 cam 3 (0.697 / 0.850), AL0044 cam 3 (0.641 / 0.770); both bad AL0073 cam 10 (0.007 / 0.285);
+  STARK better AL0026 cam 4 (0.037 / 0.758), AL0081 cam 7 (0.048 / 0.746; SiamFC locks onto the TV logo).
+  `results/step7b/demo_set.json` records them.
 
 ### 2026-11-12: test run done (D27)
 - `run_final.sh test` ran once at `bf546e3`; every evaluation step finished. Two reporting-only fixes followed
