@@ -1,0 +1,67 @@
+{
+ "partition": "val",
+ "experiment": "D29 pseudo-label student PL (post-freeze extra)",
+ "branch": "pseudo",
+ "git_commit": "23eb8a719b1ea66d381c127e3ca8894e8a6cff08",
+ "split_content_sha256": "46bd127b0e51c1293859c7ab86dab1f0759511fbbdfd9dad270a632443bb2e98",
+ "frozen_root": "/home/ruichaoz/skier_results/final/val",
+ "frozen_root_tree_sha256_before": "fcb0313300a0a5ad28af16b2c74d720ecdfb32ad2c2dcdc604773c368f05a5fa",
+ "files": {
+  "pose_split": {
+   "path": "data/manifests/pose_split_v1.json",
+   "sha256": "afc93e1f0216733bc789b2c361af0469872acd4e25941b095c4bc22a578a7eef"
+  },
+  "crop_error_set": {
+   "path": "data/manifests/crop_error_set_v1.json",
+   "sha256": "b2db69e64b043299d4530299a3611b624b2fa2bc88cd93751cdfb0e7f2ee3a01"
+  },
+  "hrnet_config": {
+   "path": "/home/ruichaoz/skier_data/pretrained/td-hm_hrnet-w32_8xb64-210e_coco-256x192.py",
+   "sha256": "d9d456f7a04765c6bf539a10c04af52e91bb23483791f292b662e85cd2e8ec28"
+  },
+  "coco_checkpoint": {
+   "path": "/home/ruichaoz/skier_data/pretrained/td-hm_hrnet-w32_8xb64-210e_coco-256x192-81c58e40_20220909.pth",
+   "sha256": "81c58e403a1ba13a741eb02ba790b5b78bff2a45a9390feebf875f43b8502c8f"
+  },
+  "pose_config_e2": {
+   "path": "configs/pose/e2.yaml",
+   "sha256": "2344e7d1ff2c2e306f2fcea4cfdd79a4fcc98f1ab9b910d6ba284125242b00cd"
+  },
+  "integration_config": {
+   "path": "configs/integration/default.yaml",
+   "sha256": "6965d7aded4044e432e02d62e4681f07fefa4755c1422b2768d6b67d0aaf91b4"
+  },
+  "teacher_E2-s230": {
+   "path": "/home/ruichaoz/skier_results/pose/d21/E2-s230/best.pt",
+   "sha256": "1385fe1615ca965f89e13891732964ef222c87df0aef82643111664cf77b1b71"
+  },
+  "teacher_E2-s231": {
+   "path": "/home/ruichaoz/skier_results/pose/d21/E2-s231/best.pt",
+   "sha256": "abc888a45da5b899c15ef632ffe8c0931a8f1d4140df20c3d972326bd7053423"
+  },
+  "student_PL-s230": {
+   "path": "/home/ruichaoz/skier_results/pseudo/PL-s230/best.pt",
+   "sha256": "c8545f8871ea110fe6432cf77bebe8367549132c8babba7def4b350c5e71bc3b"
+  },
+  "student_PL-s231": {
+   "path": "/home/ruichaoz/skier_results/pseudo/PL-s231/best.pt",
+   "sha256": "e16f609c863e04502b37400450e7a7027236a4e73682bfc8a26801b1c5558ffe"
+  },
+  "pseudo_labels": {
+   "path": "/home/ruichaoz/skier_results/pseudo/labels/pseudo_labels.json",
+   "sha256": "df0db8abf07cf7435c1a77c11b962937069c74ffb612eb735a32a89cb815cb95"
+  },
+  "calibration": {
+   "path": "results/step6b/calibration.json",
+   "sha256": "89893eca1e1a3a15e423e7929ccf3f39fb8c4d006554419a8d063c0ca63e5965"
+  },
+  "frozen_freeze": {
+   "path": "/home/ruichaoz/skier_results/final/val/freeze.json",
+   "sha256": "1451f6e86d7993626de13757e532539b4426aa7bb9ff9df1d21a2516c1cd8502"
+  },
+  "usable_segments": {
+   "path": "/home/ruichaoz/skier_results/final/val/propagation/usable_segments.json",
+   "sha256": "d3a19f31cf19698f27d8ac29b89c2a40767ed7ade52ca6747fda0240072a9d9a"
+  }
+ }
+}

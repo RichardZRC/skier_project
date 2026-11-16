@@ -48,6 +48,28 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
   STARK better AL0026 cam 4 (0.037 / 0.758), AL0081 cam 7 (0.048 / 0.746; SiamFC locks onto the TV logo).
   `results/step7b/demo_set.json` records them.
 
+### 2026-11-15: Step 6b, pseudo-labels on SkiTB training races (D29), on branch `pseudo`
+- **Why:** the cross-event gap (below). A teacher (the two E2 models) labels SkiTB training frames; a student `PL`
+  trains on real plus filtered pseudo labels. Lite version; val first, then **one** test + follow-cam run, as a
+  labeled post-freeze extra (Ruichao, 2026-11-15). Branch `pseudo` (from `main` @ `c42959d`), in both clones.
+- **Code:** `pose/pseudo.py` (teacher, keep rule, filter rule, SkiTB sampling, loader, epoch mixing),
+  `train.py --pseudo-labels`, `report/events.py` (the event grouping, shared with `results/step8/cross_event.py`,
+  whose output is byte-identical), `report/compare_pseudo.py`, `results/step6b/run_pseudo.sh
+  calibrate|labels|train|val|test`. Mutation check 14/14.
+- **Done:** D29 written first. Calibration picked s_keep 0.7 / d_keep 0.02 (kept points 95.8% body / 95.2% ski
+  correct at PCK@0.05; the sanity row matches E2's val ski@0.05). Checkpoint C1 = `23eb8a7` (pushed). Labels: 6,307
+  of 7,997 frames kept from 50 races (AL0010/18/28 left out: Trentino region), 22,892 ski points; the left ski tail
+  is kept least (834 frames). Trials T2–T5 passed (T3 reproduces E2's warm-up log).
+- **Student:** both seeds trained 19:22–21:40 (best epochs 84 and 138). Full suite 374 passed on the laptop.
+- **Val (2026-11-15, evidence `results/step6b/val/`):** the E2 cells equal the frozen val tables; `final/val` was
+  unchanged. PL − E2, seeds pooled: clean ski@0.1 **+1.6 [+0.1, +3.6]** (94.7 vs. 93.1; per seed +0.8 / +2.4),
+  body@0.1 +2.4 [+1.2, +4.3], ski@0.05 +2.5 [+0.8, +4.7], moderate crops ski +1.3 [+0.0, +3.1], SiamFC tracker
+  crop ski +1.9 [+0.1, +4.0], refined +1.5 [−0.3, +4.2]. Tips, toes and heels gain; the left ski tail loses (84.8 →
+  78.3), the joint the keep rule kept least.
+- **Next:** C2 (commit + push) → `test` once → D29 test result → the report table `tab:pseudo` (extra).
+- **Laptop caution:** never overwrite `results/step6b/run_pseudo.sh` in the WSL clone while a stage is running it
+  (bash reads scripts as it goes).
+
 ### 2026-11-15: single-event data (SINGLE-EVENT) and the cross-event breakdown
 - **Found:** all 4 training videos are from one event (Almaty 2017 Universiade). One test video (`uLW74013Wp0`,
   Almaty 2017 GS) is from the same event and holds 80% of the test ski labels; val is entirely other events.

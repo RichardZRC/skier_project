@@ -266,6 +266,9 @@ def test_epoch_order_mixes_all_real_and_distinct_pseudo():
     assert len(o) == 9 and sorted(o[o < 5].tolist()) == [0, 1, 2, 3, 4]
     p = o[o >= 5]
     assert len(p) == 4 and len(set(p.tolist())) == 4 and p.max() <= 11
+    for e in range(60):  # distinct pseudo picks in every epoch, not by luck
+        p = epoch_order(5, 7, 4, seed=230, epoch=e)
+        assert len(set(p[p >= 5].tolist())) == 4
     np.testing.assert_array_equal(o, epoch_order(5, 7, 4, seed=230, epoch=3))
     assert not np.array_equal(o, epoch_order(5, 7, 4, seed=230, epoch=4))
     assert len(epoch_order(5, 3, 10, seed=230, epoch=0)) == 8  # capped at all pseudo frames

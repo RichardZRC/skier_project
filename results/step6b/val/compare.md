@@ -1,0 +1,47 @@
+# PL (pseudo-label student, D29) vs. E2: val (post-freeze extra)
+
+PCK (%) seed-pooled, paired 95% intervals (D25: segments within videos; follow-cam: videos).
+
+## Pose model, reference crops (clean)
+
+**val (all other events)** (SVYdH614G_M, qxfgw1Kd98A, v7PADD2_I00; 293 samples)
+
+| Run | body@0.1 | ski@0.1 | ski@0.05 |
+| --- | --- | --- | --- |
+| E2 | 95.5 [93.0, 97.1] (7178/7518) | 93.1 [89.8, 95.4] (3263/3504) | 84.3 [79.5, 88.1] (2955/3504) |
+| PL | 97.9 [97.0, 98.7] (7362/7518) | 94.7 [92.4, 96.3] (3319/3504) | 86.8 [82.8, 89.8] (3042/3504) |
+| Δ PL − E2 body@0.1 | +2.4 [+1.2, +4.3] | | |
+| Δ PL − E2 ski@0.1 | +1.6 [+0.1, +3.6] | | |
+| Δ PL − E2 ski@0.05 | +2.5 [+0.8, +4.7] | | |
+
+## Pose model, reference crops (moderate)
+
+**val (all other events)** (SVYdH614G_M, qxfgw1Kd98A, v7PADD2_I00; 293 samples)
+
+| Run | body@0.1 | ski@0.1 | ski@0.05 |
+| --- | --- | --- | --- |
+| E2 | 95.3 [92.8, 97.0] (7168/7518) | 92.9 [89.6, 95.2] (3254/3504) | 83.5 [78.5, 87.4] (2927/3504) |
+| PL | 97.6 [96.5, 98.4] (7334/7518) | 94.2 [91.7, 95.9] (3301/3504) | 86.4 [82.4, 89.3] (3027/3504) |
+| Δ PL − E2 body@0.1 | +2.2 [+1.1, +4.0] | | |
+| Δ PL − E2 ski@0.1 | +1.3 [+0.0, +3.1] | | |
+| Δ PL − E2 ski@0.05 | +2.9 [+1.4, +4.9] | | |
+
+## System, SiamFC tracks (k_pose, refined crop as frozen)
+
+**val (all other events)** (SVYdH614G_M, qxfgw1Kd98A, v7PADD2_I00; 261 samples)
+
+| Run | body@0.1 | ski@0.1 |
+| --- | --- | --- |
+| E2 reference | 95.9 [93.7, 97.4] (6440/6716) | 93.8 [90.6, 96.0] (2913/3106) |
+| PL reference | 98.0 [97.0, 98.7] (6579/6716) | 95.1 [93.0, 96.5] (2953/3106) |
+| E2 tracked | 81.1 [71.9, 88.5] (5449/6716) | 75.4 [67.7, 81.3] (2342/3106) |
+| PL tracked | 82.5 [74.0, 89.3] (5539/6716) | 77.3 [69.9, 83.1] (2400/3106) |
+| E2 refined | 83.9 [74.9, 91.0] (5638/6716) | 81.3 [73.1, 87.7] (2526/3106) |
+| PL refined | 85.6 [77.5, 92.4] (5751/6716) | 82.9 [75.8, 88.5] (2574/3106) |
+| Δ PL reference − E2 reference body@0.1 | +2.1 [+1.1, +3.6] | | |
+| Δ PL reference − E2 reference ski@0.1 | +1.3 [-0.0, +3.1] | | |
+| Δ PL tracked − E2 tracked body@0.1 | +1.3 [-0.4, +4.0] | | |
+| Δ PL tracked − E2 tracked ski@0.1 | +1.9 [+0.1, +4.0] | | |
+| Δ PL refined − E2 refined body@0.1 | +1.7 [-0.2, +4.9] | | |
+| Δ PL refined − E2 refined ski@0.1 | +1.5 [-0.3, +4.2] | | |
+

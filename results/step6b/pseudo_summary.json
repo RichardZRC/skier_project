@@ -1,0 +1,293 @@
+{
+ "counts": {
+  "candidates": 7997,
+  "clips": 527,
+  "eligible": 77710,
+  "excluded_sequences": [
+   "AL0010",
+   "AL0018",
+   "AL0028"
+  ],
+  "frame_step": 10,
+  "invisible": 1703,
+  "kept_frames": 6307,
+  "kept_points": 93992,
+  "kept_ski_points": 22892,
+  "short_clips": 2,
+  "small_box": 26879
+ },
+ "filter": {
+  "bar": 95.0,
+  "calibration_sha256": "89893eca1e1a3a15e423e7929ccf3f39fb8c4d006554419a8d063c0ca63e5965",
+  "d_keep": 0.02,
+  "n_keep": 8,
+  "s_keep": 0.7
+ },
+ "format": "skier.pseudo_labels.v1",
+ "git_commit": "23eb8a719b1ea66d381c127e3ca8894e8a6cff08",
+ "kept_per_joint": {
+  "ankle_left": 3976,
+  "ankle_right": 4533,
+  "elbow_left": 4844,
+  "elbow_right": 4818,
+  "hand_left": 4597,
+  "hand_right": 4613,
+  "head": 5946,
+  "heel_left": 1325,
+  "heel_right": 3937,
+  "hip_left": 5248,
+  "hip_right": 5154,
+  "knee_left": 5142,
+  "knee_right": 5034,
+  "neck": 5955,
+  "pole_basket_left": 0,
+  "pole_basket_right": 0,
+  "shoulder_left": 5644,
+  "shoulder_right": 5596,
+  "ski_tail_left": 834,
+  "ski_tail_right": 2103,
+  "ski_tip_left": 3054,
+  "ski_tip_right": 3901,
+  "toes_left": 3827,
+  "toes_right": 3911
+ },
+ "per_sequence": {
+  "AL0001": {
+   "candidates": 146,
+   "kept": 109
+  },
+  "AL0004": {
+   "candidates": 154,
+   "kept": 126
+  },
+  "AL0006": {
+   "candidates": 100,
+   "kept": 68
+  },
+  "AL0007": {
+   "candidates": 152,
+   "kept": 128
+  },
+  "AL0008": {
+   "candidates": 145,
+   "kept": 113
+  },
+  "AL0011": {
+   "candidates": 159,
+   "kept": 140
+  },
+  "AL0012": {
+   "candidates": 112,
+   "kept": 96
+  },
+  "AL0014": {
+   "candidates": 138,
+   "kept": 119
+  },
+  "AL0019": {
+   "candidates": 134,
+   "kept": 108
+  },
+  "AL0020": {
+   "candidates": 124,
+   "kept": 109
+  },
+  "AL0021": {
+   "candidates": 164,
+   "kept": 127
+  },
+  "AL0022": {
+   "candidates": 181,
+   "kept": 132
+  },
+  "AL0023": {
+   "candidates": 159,
+   "kept": 123
+  },
+  "AL0029": {
+   "candidates": 150,
+   "kept": 113
+  },
+  "AL0030": {
+   "candidates": 117,
+   "kept": 101
+  },
+  "AL0033": {
+   "candidates": 189,
+   "kept": 169
+  },
+  "AL0036": {
+   "candidates": 157,
+   "kept": 141
+  },
+  "AL0038": {
+   "candidates": 160,
+   "kept": 137
+  },
+  "AL0040": {
+   "candidates": 148,
+   "kept": 132
+  },
+  "AL0042": {
+   "candidates": 155,
+   "kept": 135
+  },
+  "AL0043": {
+   "candidates": 150,
+   "kept": 130
+  },
+  "AL0048": {
+   "candidates": 180,
+   "kept": 151
+  },
+  "AL0050": {
+   "candidates": 109,
+   "kept": 97
+  },
+  "AL0051": {
+   "candidates": 161,
+   "kept": 123
+  },
+  "AL0053": {
+   "candidates": 146,
+   "kept": 93
+  },
+  "AL0054": {
+   "candidates": 154,
+   "kept": 127
+  },
+  "AL0056": {
+   "candidates": 172,
+   "kept": 144
+  },
+  "AL0057": {
+   "candidates": 148,
+   "kept": 126
+  },
+  "AL0058": {
+   "candidates": 205,
+   "kept": 158
+  },
+  "AL0060": {
+   "candidates": 183,
+   "kept": 155
+  },
+  "AL0062": {
+   "candidates": 168,
+   "kept": 107
+  },
+  "AL0064": {
+   "candidates": 119,
+   "kept": 94
+  },
+  "AL0067": {
+   "candidates": 149,
+   "kept": 140
+  },
+  "AL0069": {
+   "candidates": 146,
+   "kept": 119
+  },
+  "AL0070": {
+   "candidates": 209,
+   "kept": 160
+  },
+  "AL0072": {
+   "candidates": 133,
+   "kept": 109
+  },
+  "AL0074": {
+   "candidates": 146,
+   "kept": 119
+  },
+  "AL0075": {
+   "candidates": 190,
+   "kept": 167
+  },
+  "AL0079": {
+   "candidates": 174,
+   "kept": 116
+  },
+  "AL0080": {
+   "candidates": 149,
+   "kept": 92
+  },
+  "AL0084": {
+   "candidates": 212,
+   "kept": 152
+  },
+  "AL0085": {
+   "candidates": 181,
+   "kept": 118
+  },
+  "AL0087": {
+   "candidates": 142,
+   "kept": 105
+  },
+  "AL0089": {
+   "candidates": 238,
+   "kept": 138
+  },
+  "AL0091": {
+   "candidates": 207,
+   "kept": 152
+  },
+  "AL0092": {
+   "candidates": 168,
+   "kept": 136
+  },
+  "AL0093": {
+   "candidates": 192,
+   "kept": 122
+  },
+  "AL0095": {
+   "candidates": 205,
+   "kept": 167
+  },
+  "AL0096": {
+   "candidates": 184,
+   "kept": 143
+  },
+  "AL0100": {
+   "candidates": 133,
+   "kept": 121
+  }
+ },
+ "pseudo_labels_sha256": "df0db8abf07cf7435c1a77c11b962937069c74ffb612eb735a32a89cb815cb95",
+ "refined_share": 0.9924971864449168,
+ "seconds": 129.4,
+ "settings": {
+  "k_pose": 1.1,
+  "k_refine": 1.3,
+  "max_clips": null,
+  "min_box_h": 64.0,
+  "min_clip_len": 10,
+  "n_min": 4,
+  "s_min": 0.3,
+  "target": 7500
+ },
+ "skitb_partition": "train",
+ "skitb_split": {
+  "path": "/home/ruichaoz/skier_data/skitb/AL/AL_train_val_test_athlete_60-40.json",
+  "sha256": "0a15c719bad0dd98e854c267819b6d2895cdb240401daa8d162ae2d4b500926d"
+ },
+ "split_sha256": "46bd127b0e51c1293859c7ab86dab1f0759511fbbdfd9dad270a632443bb2e98",
+ "teachers": [
+  {
+   "epoch": 112,
+   "expand": 1.25,
+   "name": "E2-s230",
+   "path": "/home/ruichaoz/skier_results/pose/d21/E2-s230/best.pt",
+   "sha256": "1385fe1615ca965f89e13891732964ef222c87df0aef82643111664cf77b1b71",
+   "split_sha256": "46bd127b0e51c1293859c7ab86dab1f0759511fbbdfd9dad270a632443bb2e98"
+  },
+  {
+   "epoch": 87,
+   "expand": 1.25,
+   "name": "E2-s231",
+   "path": "/home/ruichaoz/skier_results/pose/d21/E2-s231/best.pt",
+   "sha256": "abc888a45da5b899c15ef632ffe8c0931a8f1d4140df20c3d972326bd7053423",
+   "split_sha256": "46bd127b0e51c1293859c7ab86dab1f0759511fbbdfd9dad270a632443bb2e98"
+  }
+ ]
+}

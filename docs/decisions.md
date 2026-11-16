@@ -430,3 +430,18 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
     - Body 95.8% (of 2,859 verifiable kept points) and ski 95.2% (of 931).
     - It keeps 1,004 ski points on 260 of 293 images, covering 53% of the 1,752 ski labels.
     - The other settings with s_keep 0.7 miss the bar narrowly (95.0 / 94.7 and 94.8 / 94.5); none with s_keep 0.3 or 0.5 reaches it.
+- Labels (2026-11-15, `run_pseudo.sh labels` at `23eb8a7`; `results/step6b/pseudo_summary.json`):
+  - 7,997 candidates from 527 clips in 50 races (frame step 10 over 77,710 eligible frames). 6,307 frames pass the keep rule, with 93,992 kept points, 22,892 of them ski points. 99.2% of frames used the refined box.
+  - Kept frames per race: 68 to 169 (median 126).
+  - The left ski tail is kept least: 834 frames (right tail 2,103; tips 3,054 left / 3,901 right).
+- Student training (2026-11-15, 19:22–21:40; logs `results/step6b/PL-s23x_log.csv`): both seeds ran 3 + 150 epochs at 150 steps per epoch, nothing dropped. `best.pt` is epoch 84 (s230) and epoch 138 (s231).
+- Val result (2026-11-15, `run_pseudo.sh val`; evidence `results/step6b/val/`):
+  - Run at `23eb8a7`, with the comparison code (`report/events.py`, `report/compare_pseudo.py`) still uncommitted; checkpoint C2 commits it unchanged.
+  - The E2 cells equal the frozen val tables (ski 3263/3504; propagation 93.8 / 75.4 / 81.3), and `final/val` was unchanged.
+  - **Primary:** val clean ski PCK@0.1, PL 94.7 vs. E2 93.1, **Δ +1.6 [+0.1, +3.6]**. Per seed: s230 +0.8 (1635 vs. 1621 of 1752), s231 +2.4 (1684 vs. 1642).
+  - **Secondary:**
+    - clean body@0.1 +2.4 [+1.2, +4.3], ski@0.05 +2.5 [+0.8, +4.7];
+    - moderate crop error ski@0.1 +1.3 [+0.0, +3.1];
+    - SiamFC tracks: tracker crop ski +1.9 [+0.1, +4.0], refined crop ski +1.5 [−0.3, +4.2].
+  - **Per joint** (descriptive, not pre-registered; seeds pooled): ski tips, toes and heels each gain about 24 hits. The left ski tail falls from 84.8% to 78.3% (−18 hits), the joint the keep rule kept least.
+  - **Reading:** a small gain whose interval only just clears zero. Val also picked `best.pt` for both models, so both numbers are equally optimistic. The single test run (other-event ski is the key number) decides whether it carries over.
