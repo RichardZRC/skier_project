@@ -206,6 +206,12 @@ All entries below are checked and in \texttt{references.bib}.
     bullet ``crop jitter helps most where crops differ from training'' against these numbers.
   \item Follow-cam (different camera setup): ski drops to 73.5 (E1) / 78.1 (E2); E2 $-$ E1 +4.6 [2.9, 6.7]
     (intervals over its 6 videos); body stays at 97.5.
+  \item Why follow-cam is weak on skis: a viewpoint the model never saw (\texttt{results/step8/followcam\_views.txt},
+    from the dataset's view flags). Every follow-cam image includes a back view and 46\% are back-only, vs 14\% with
+    any back view and 1\% back-only in training. The loss sits at the ski \emph{ends}: E2 tips 57--60, tails 66--72,
+    while boots (toes, heels) stay at 90--95 and body at 97.5; on val the same ski points reach 85--97. From behind,
+    the skis point away from the camera (foreshortened, tips hidden by the legs). Crop jitter lifts the tails by
+    14--16 points (E1 52--56 $\to$ E2 66--72), most of E2's +4.6.
   \item The 50-epoch problem (val): ski tails barely learned, seed-dependent; 150 epochs fixed it for all 8 runs.
 \end{itemize}}
 
@@ -331,6 +337,10 @@ replace Table~\ref{tab:system}. Facts:
     suggesting the two overlap; on test it does not (+1.6 $\to$ +1.9). The milestone's claim should not be repeated.
   \item Crop jitter helps most where crops differ from training: under tracker crops (+1.6) and on follow-cam
     (+4.6), not on clean test crops (+0.7, no clear difference). Your interpretation.
+  \item Two kinds of generalization gap: new \emph{events} (other-event test 81.2, val 93.1 vs 98.1 on the training
+    event; Table~\ref{tab:cross_event}) and a new \emph{viewpoint} (follow-cam: rear views, ski tips/tails
+    57--72). More broadcast data from other events addresses the first; only rear-view training data addresses the
+    second.
   \item Limitations: \tbd{SINGLE-EVENT: training from one event, test dominated by a video from that event (Dataset
     section).} Few videos (test 3, one dominant; val 3; 6 SkiTB val sequences); intervals are conditional on
     these videos; val also chose epochs and every setting; $k_{\mathrm{ref}}=1.3$ is the largest value tried; the
@@ -354,7 +364,7 @@ replace Table~\ref{tab:system}. Facts:
 \outline{\begin{itemize}
   \item Summary and which parts worked best, and why (your interpretation).
   \item Future work: a tracker fine-tuned on skiing (off-the-shelf STARK already closes most of the gap,
-    Table~\ref{tab:stark}; the SkiTB paper's STARK variants fine-tuned on skiing reach F 0.875--0.882~\cite{dunnhofer2024tracking}), poles inside the crop box, temporal
+    Table~\ref{tab:stark}; the SkiTB paper's STARK variants fine-tuned on skiing reach F 0.875--0.882~\cite{dunnhofer2024tracking}), rear-view (follow-cam) training data for the ski ends, poles inside the crop box, temporal
     smoothing of landmarks, amateur footage, technique feedback on top of the landmarks.
 \end{itemize}}
 
