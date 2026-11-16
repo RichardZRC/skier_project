@@ -22,15 +22,16 @@ flowchart LR
 
 ## Status (2026-11-15)
 
-**All steps are done, and the test set was evaluated once on 2026-11-12 (D27).** One extra tracker run on test followed on 2026-11-15 (STARK-ST50, D28), reported separately. The final report is due Fri 2026-11-20 (`final_report/`).
+**All steps are done, and the test set was evaluated once on 2026-11-12 (D27).** Two extra experiments ran once on test on 2026-11-15 and are reported separately: STARK-ST50 in place of SiamFC (D28) and pseudo-labels from unlabeled races (D29). The final report is due Fri 2026-11-20 (`final_report/`).
 
 - **Results:** `results/step8/test/tables.md` (test), `results/step8/followcam/tables.md` (follow-cam set), `results/step8/val/tables.md` (val, which chose every setting).
   - E2 on test, reference crops: ski PCK@0.1 94.8%, body 95.9%.
   - Tracker crops cost 28.0 ski points; refinement recovers +9.3 [6.7, 12.1] of them, with no retraining.
   - SiamFC on 471 SkiTB test clips: mean IoU 0.404, toolkit F-score 0.406.
 - **Extra experiment, STARK-ST50 in place of SiamFC (D28):** `results/step7b/test/compare.md`. SkiTB mean IoU 0.679 vs. 0.404; E2 ski PCK@0.1 under tracker crops 86.5% vs. 67.7%. SiamFC stays the main result.
-- **Decisions:** D1–D28 in `docs/decisions.md`; running notes in `PROJECT_NOTES.md`.
-- **Tests:** 344 pass on the GPU machine (a Windows laptop with WSL2, D17; `docs/laptop_setup.md`). In the light environment 15 skip (they need torch, mmpose, CUDA, the vendored STARK or SkiTB toolkit, or matplotlib).
+- **Extra experiment, pseudo-labels from SkiTB training races (D29):** `results/step6b/test/compare.md`. On the other-event test videos, E2 ski PCK@0.1 81.2% → 89.3% (+8.1 [3.2, 13.9]); no gain on follow-cam. E2 stays the main result. See [Pseudo-labels](#pseudo-labels-from-unlabeled-races-extra-experiment-d29).
+- **Decisions:** D1–D29 in `docs/decisions.md`; running notes in `PROJECT_NOTES.md`.
+- **Tests:** 374 pass on the GPU machine (a Windows laptop with WSL2, D17; `docs/laptop_setup.md`). In the light environment the tests that need torch, mmpose, CUDA, the vendored STARK or SkiTB toolkit, or matplotlib skip.
 
 ## Setup
 
@@ -135,7 +136,7 @@ python scripts/process_clip.py --skitb-clip AL0027/3 --skitb-root $SKIER_DATA/sk
 
 - `run_final.sh` writes `freeze.json` (hashes of the splits, configs and checkpoints) before any output, and checks that the tree is clean and equal to `origin/main`.
 - Report figures: `milestone/figures/*.py` and `final_report/figures/*.py`. The qualitative figure shows dataset frames, so it is not committed.
-- The STARK comparison is reproduced separately: see [Trackers](#trackers-siamfc-and-stark).
+- The STARK comparison is reproduced separately: see [Trackers](#trackers-siamfc-and-stark). So is the pseudo-label experiment: see [Pseudo-labels](#pseudo-labels-from-unlabeled-races-extra-experiment-d29).
 
 ## Trackers: SiamFC and STARK
 
@@ -182,6 +183,61 @@ Test results (`results/step7b/test/compare.md`; paired 95% intervals, D25):
 | E2 ski PCK@0.1, refined crop | 77.0% | 92.1% | +15.1 [7.6, 24.1] |
 | Replay: ski ends in view | 93.7% | 99.8% | +6.2 [0.6, 13.2] |
 
+## Pseudo-labels from unlabeled races (extra experiment, D29)
+
+All four training videos come from one event (Almaty 2017), and the cross-event breakdown (`results/step8/cross_event/`) shows the pose model is much weaker on other events. This extra experiment, a lite form of Noisy Student self-training (Xie et al., CVPR 2020), adds SkiTB's training races (other events; skier boxes but no landmarks) as pseudo-labeled data.
+
+- **Teacher:** the two E2 models (seeds 230 and 231).
+  - Pass 1 crops the SkiTB box × 1.1; pass 2 crops the refined box (D26).
+  - The pseudo point is the mean of the two models' points.
+- **Filter:**
+  - A joint is kept only if both models score it ≥ 0.7 and agree within 2% of the box diagonal. Poles are never kept, and a frame needs ≥ 8 kept joints.
+  - The filter was chosen on val labels by a rule written in advance. 95.8% of the kept body points and 95.2% of the kept ski points are correct at PCK@0.05.
+- **Data:**
+  - 6,307 frames from 50 SkiTB training races; 3 races in the Trentino region were left out as a precaution.
+  - The labels, overlays and student checkpoints are SkiTB-derived, so they stay under `$SKIER_RESULTS/pseudo/` and are never committed.
+- **Student `PL`:**
+  - E2's recipe: COCO init, `configs/pose/e2.yaml`, seeds 230 and 231, 3 + 150 epochs.
+  - Each epoch uses every real training image plus as many pseudo-labeled frames (`train_pose.py --pseudo-labels`).
+- **Lite, not full:** no flip-averaged teacher; no image-level near-duplicate check (the leakage guard is event metadata); one round; about 1 in 10 eligible frames.
+- **Order of runs:**
+  - The experiment was decided after the main test result, prompted by the cross-event breakdown.
+  - The rules were committed before any label (`23eb8a7`). Val ran first (`624b1a4`), then test once (2026-11-15), whatever the val result.
+  - It is reported as an extra experiment; E2 stays the main result.
+
+Reproducing: inside Ubuntu on the GPU machine. You need the E2 checkpoints from the augmentation study in `$SKIER_RESULTS/pose/d21/` and the SkiTB training races in `$SKIER_DATA/skitb/AL/`. The script runs only on branch `pseudo`, where the experiment was done, so check it out first (it stays on GitHub).
+
+```bash
+git checkout pseudo
+bash results/step6b/run_pseudo.sh calibrate   # the filter, on Ski 2DPose val labels → results/step6b/calibration.json
+bash results/step6b/run_pseudo.sh labels      # pseudo-labels on SkiTB training frames (needs D29 and the calibration committed)
+bash results/step6b/run_pseudo.sh train       # the student PL, seeds 230 and 231 (about 70 min per seed on an RTX 4070)
+bash results/step6b/run_pseudo.sh val         # PL vs. E2 on val (compare/compare.md)
+bash results/step6b/run_pseudo.sh test        # once; refuses a second run
+```
+
+`run_pseudo.sh` guards each run:
+- Each stage refuses to overwrite its output.
+- `val` and `test` write `freeze.json` before any output, and check at the end that the frozen `final/<part>/` folders are unchanged.
+- `test` refuses unless the tree is clean and equal to its `origin` branch.
+
+The single tools are `scripts/make_pseudo_labels.py`, `scripts/train_pose.py --pseudo-labels` and `scripts/compare_pseudo.py`.
+
+Results (`results/step6b/{val,test,followcam}/compare.md`; seeds pooled, reference crops, paired 95% intervals, D25):
+
+| Set (images), PCK@0.1 | E2 | PL | Difference [95% CI] |
+| --- | --- | --- | --- |
+| Val, ski (293) | 93.1% | 94.7% | +1.6 [0.1, 3.6] |
+| Test, other events, ski (76) | 81.2% | 89.3% | +8.1 [3.2, 13.9] |
+| Test, other events, body (76) | 82.8% | 88.8% | +6.0 [2.0, 11.1] |
+| Test, training event, ski (284) | 98.1% | 97.2% | −0.9 [−1.4, −0.5] |
+| Test, all, ski (360) | 94.8% | 95.6% | +0.8 [−0.2, 2.0] |
+| Follow-cam, ski (134) | 78.1% | 77.2% | −0.9 [−3.8, 1.1] |
+
+- **Where it gains:** on the events the pseudo-labels add.
+- **No gain on follow-cam:** follow-cam needs rear views, and SkiTB is front and side broadcast footage.
+- **Weak spot:** the ski tails get worse; they are the joints the filter kept least.
+
 ## Evaluation protocol (summary)
 
 The full definitions are in `docs/evaluation_protocol.md`.
@@ -190,7 +246,7 @@ The full definitions are in `docs/evaluation_protocol.md`.
 - **Pose:** PCK@0.1 (and @0.05 for skis), normalized by the diagonal of the reliable body + ski box. Body and ski are reported separately; a missing prediction counts as a miss; hits and totals are always reported.
 - **Tracking:** mean IoU on visible frames (excluding the initialization frame), a success curve, and failure episodes.
 - **Replay:** containment (ski endpoints separately), centering, crop acceleration and zoom, always reported together.
-- **Usage:** all tuning happens on val. Test is evaluated once (done 2026-11-12, D27). The STARK extra experiment ran once on test afterwards (D28) and is reported separately.
+- **Usage:** all tuning happens on val. Test is evaluated once (done 2026-11-12, D27). The STARK (D28) and pseudo-label (D29) extra experiments each ran once on test afterwards and are reported separately.
 - **Intervals:** a cluster bootstrap over segments within videos (Ski 2DPose) or sequences (SkiTB), 10,000 resamples (D25); the follow-cam set resamples its 6 videos, each one segment (D27).
 
 ## Repository layout
@@ -203,7 +259,7 @@ The full definitions are in `docs/evaluation_protocol.md`.
 | `data/manifests/` | `pose_inventory.csv`, `pilot_videos.txt`, the frozen `pose_split_v1.json` and `crop_error_set_v1.json`, `skitb_fps_v1.csv` |
 | `docs/` | `scope.md`, `decisions.md`, `data_audit_ski2dpose.md`, `data_audit_skitb.md`, `evaluation_protocol.md`, `laptop_setup.md` |
 | `tests/` | Unit tests on synthetic data (`tests/synth.py`) |
-| `results/` | Small committed evidence per step (`results/step8/{val,test,followcam}/` for the final numbers, `results/step7b/{val,test}/` for the STARK comparison); large outputs stay under `$SKIER_RESULTS` |
+| `results/` | Small committed evidence per step (`results/step8/{val,test,followcam}/` for the final numbers, `results/step7b/{val,test}/` for the STARK comparison, `results/step6b/{val,test,followcam}/` for the pseudo-label experiment); large outputs stay under `$SKIER_RESULTS` |
 | `milestone/`, `final_report/` | The CS230 milestone and final report (LaTeX, figures and the scripts that draw them) |
 | `skier_implementation_plan.md`, `skier_step_1_guide.md`, `skier_step_1_code_spec.md`, `PROJECT_NOTES.md` | The plan, the setup guide, the Step 1 spec, and the running notes |
 
@@ -214,4 +270,5 @@ The full definitions are in `docs/evaluation_protocol.md`.
 - K. Sun, B. Xiao, D. Liu, J. Wang. *Deep high-resolution representation learning for human pose estimation.* CVPR 2019 (HRNet).
 - L. Bertinetto et al. *Fully-convolutional siamese networks for object tracking.* ECCV Workshops 2016 (SiamFC).
 - B. Yan, H. Peng, J. Fu, D. Wang, H. Lu. *Learning spatio-temporal transformer for visual tracking.* ICCV 2021 (STARK).
+- Q. Xie, M.-T. Luong, E. Hovy, Q. V. Le. *Self-training with Noisy Student improves ImageNet classification.* CVPR 2020 (Noisy Student).
 - MMPose Contributors. *OpenMMLab pose estimation toolbox and benchmark*, 2020.
