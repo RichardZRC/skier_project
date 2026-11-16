@@ -620,7 +620,7 @@ Provisional target, not a promise: at least 95% of visible ski endpoints kept on
 > - **Val selection:** `s_min` 0.3, `k_refine` 1.3. The E2 mean of body and ski goes from 78.3 to 82.6, so the gate adopts it (`pose_refine: true`). On the 129 partial-overlap labels, ski PCK goes from 76.8 to 88.0.
 > - Evidence: `results/step7/refine_val_summary.json`.
 >
-> **Status, 2026-11-15: 7b, off-the-shelf STARK-ST50, done on val and once on test (D28; plan approved 2026-11-12; branch `stark`).**
+> **Status, 2026-11-15: 7b, off-the-shelf STARK-ST50, done on val and once on test (D28; plan approved 2026-11-12; done on branch `stark`, merged into `main` 2026-11-15).**
 > - A labeled post-freeze extra: SiamFC's D27 test numbers stay the main result. Only the tracker changes; STARK's confidence settings come from the D24 rules on val (`configs/integration/stark.yaml`).
 > - **Code:** `tracking/stark_adapter.py` (STARK unedited under torch 2.1), `tracking/trackers.py` (`--tracker`, `tracker.json`, the guard), `report/compare_trackers.py`, `results/step7b/run_stark.sh`.
 > - **Val, STARK − SiamFC:** SkiTB IoU 0.668 vs. 0.363; E2 ski PCK@0.1 under tracker crops 88.0 vs. 75.4 (+12.6 [7.1, 20.2]). Evidence: `results/step7b/`.

@@ -14,9 +14,9 @@ Last updated: 2026-11-15
 
 Start here in a new session, on any machine. Claude's own notes stay on the machine they were written on, so everything a new session needs is in the repo: this section, `CLAUDE.md`, the decisions log and the plan's status table.
 
-### 2026-11-14: Step 7b, STARK-ST50 as a labeled post-freeze extra (D28), on branch `stark`
-- **Branch:** Ruichao asked to "branch out" for STARK (2026-11-12), so this work lives on `stark` (from `main` @
-  `9cdcafc`), in both clones. Merge into `main` only when Ruichao asks.
+### 2026-11-14: Step 7b, STARK-ST50 as a labeled post-freeze extra (D28), merged into `main` 2026-11-15
+- **Branch:** Ruichao asked to "branch out" for STARK (2026-11-12), so this work was done on `stark` (from `main` @
+  `9cdcafc`), in both clones, and fast-forwarded into `main` on 2026-11-15.
 - **Setup:** STARK at `162e1d3` in `$SKIER_DATA/vendor/Stark`, ST50 `baseline` weights (sha256 in D28 and
   `docs/laptop_setup.md` 3.4). Nothing installed: six torch-2 snags are handled in `tracking/stark_adapter.py`
   (easydict was approved but not installed; a tested stand-in replaces it).
@@ -31,7 +31,10 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
   toolkit F 0.677 vs. 0.406; E2 ski PCK@0.1 under tracker crops 86.5 vs. 67.7 (+18.8 [11.1, 27.8]), refined 92.1 vs.
   77.0; replay containment 0.990 vs. 0.963, ski ends 99.8% vs. 93.7%; replay acceleration higher (1.69 vs. 1.38).
 - **Next:** a labeled extra table in the final report (`tab:stark`, drafted in `final_report/main.tex`; Ruichao
-  writes the prose). SiamFC's D27 numbers stay the main result. Merge `stark` into `main` only when Ruichao asks.
+  writes the prose). SiamFC's D27 numbers stay the main result.
+- **Merged 2026-11-15:** `stark` was fast-forwarded into `main` (Ruichao: keep both trackers, so the report and the
+  graders can see the comparison). Work on `main` again; the `stark` branch stays on GitHub because STARK's
+  `freeze.json` names it. README section "Trackers: SiamFC and STARK" has the commands.
 
 ### 2026-11-12: test run done (D27)
 - `run_final.sh test` ran once at `bf546e3`; every evaluation step finished. Two reporting-only fixes followed

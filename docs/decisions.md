@@ -384,3 +384,4 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
   - Replay: SkiTB containment 0.990 vs. 0.963 (+0.027 [0.016, 0.040]); crop area 43% vs. 48% (−0.056 [−0.075, −0.034]); Ski 2DPose ski ends inside 99.8% (1038/1040) vs. 93.7% (+6.2 [0.6, 13.2]).
   - Not in the val direction, noted: replay acceleration is higher with STARK on test, 1.69 vs. 1.38 (+0.31 [0.14, 0.49]); on val −0.18 [−0.65, 0.22].
   - These numbers are a labeled post-freeze extra; SiamFC's D27 numbers remain the main result.
+- Merged (2026-11-15): Ruichao asked to keep both trackers, so the report can show the comparison. `stark` was fast-forwarded into `main` (no merge commit, so `86dd90c` stays in `main`'s history); SiamFC remains the default (`--tracker siamfc`, `default.yaml`) and `run_final.sh` is unchanged. The `stark` branch stays on GitHub because the test `freeze.json` names it.
