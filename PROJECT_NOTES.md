@@ -81,8 +81,10 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
   check, a second round and the remaining frames. Those items are in Future work. A new student can't be tested
   again (D29: test once). Only the near-duplicate check (no training, no test evaluation) remains a reasonable
   addition, if Ruichao wants it.
-- **Committed and pushed** on `pseudo` after the test run: the test evidence, D29's test result, these notes,
-  CLAUDE.md and the report. Merging `pseudo` into `main` waits until Ruichao asks.
+- **Committed and pushed** on `pseudo` after the test run (`7dd7ce8`): the test evidence, D29's test result, these
+  notes, CLAUDE.md and the report.
+- **Merged 2026-11-15:** `pseudo` was fast-forwarded into `main` (Ruichao asked). Work on `main` again; the `pseudo`
+  branch stays on GitHub because the D29 `freeze.json` files name it.
 - **Laptop caution:** never overwrite `results/step6b/run_pseudo.sh` in the WSL clone while a stage is running it
   (bash reads scripts as it goes).
 

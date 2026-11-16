@@ -26,7 +26,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 ## Environment
 
-- Run the tests with `.venv/bin/python -m pytest -q`. Currently **374 tests** on branch `pseudo` (344 on `main` until `pseudo` is merged); all must pass on the GPU machine (374 passed on the laptop, 2026-11-15). The Mac should skip 17 (not yet run there): 9 `torch`, 4 `stack`, the real-STARK test (it needs CUDA and the vendored STARK), the SkiTB-toolkit cross-check (it needs the vendored toolkit) and two figure tests (they need matplotlib).
+- Run the tests with `.venv/bin/python -m pytest -q`. Currently **374 tests**; all must pass on the GPU machine (374 passed on the laptop, 2026-11-15). The Mac should skip 17 (not yet run there): 9 `torch`, 4 `stack`, the real-STARK test (it needs CUDA and the vendored STARK), the SkiTB-toolkit cross-check (it needs the vendored toolkit) and two figure tests (they need matplotlib).
   - Markers: `torch` needs PyTorch; `stack` needs the pinned torch, mmcv and mmpose; `gpu` needs CUDA.
 - **Paths:** code reads `SKIER_DATA` (default `~/skier_data`) and `SKIER_RESULTS` (default `~/skier_results`) through `skier.paths`. Never hard-code absolute paths.
 - **Data on this Mac:**
@@ -78,7 +78,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 - **Laptop interruptions:** Windows sleep (Modern Standby), Windows Update restarts and closing the last `wsl` connection have each stopped a run. Every epoch is checkpointed; resume with `--resume <run>/last.pt` and the same arguments.
 - **STARK (D28):** its scores are a sigmoid in [0, 1], SiamFC's about 1e-5, so each tracker has its own integration config (`stark.yaml` has `tracker: stark`); the tools refuse a track folder whose `tracker.json` doesn't match. STARK's code needs six torch-2 workarounds, all in `stark_adapter.py`; never edit the clone. Both trackers stay in the code (`--tracker`, SiamFC the default); the STARK work was done on branch `stark` and fast-forwarded into `main` on 2026-11-15 (Ruichao: keep both, for the comparison).
 - **Minimum crop:** replay crops are at least `max(240 px, frame_h / 3)`, so design controller tests around that.
-- **Pseudo-labels (D29, branch `pseudo`):**
+- **Pseudo-labels (D29):** the work was done on branch `pseudo` and fast-forwarded into `main` on 2026-11-15. The branch stays on GitHub because the `freeze.json` files name it.
   - The labels, overlays and student checkpoints are SkiTB-derived and stay in `$SKIER_RESULTS/pseudo/`. Only text evidence goes to `results/step6b/`.
   - The test stage has run its one time (2026-11-15, `624b1a4`) and refuses to run again.
   - Never overwrite a `run_*.sh` in the WSL clone while a stage is running it: bash reads scripts as it goes.
