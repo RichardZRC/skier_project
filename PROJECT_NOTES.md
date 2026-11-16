@@ -48,6 +48,20 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
   STARK better AL0026 cam 4 (0.037 / 0.758), AL0081 cam 7 (0.048 / 0.746; SiamFC locks onto the TV logo).
   `results/step7b/demo_set.json` records them.
 
+### 2026-11-15: single-event data (SINGLE-EVENT) and the cross-event breakdown
+- **Found:** all 4 training videos are from one event (Almaty 2017 Universiade). One test video (`uLW74013Wp0`,
+  Almaty 2017 GS) is from the same event and holds 80% of the test ski labels; val is entirely other events.
+- **Report:** placeholders marked `SINGLE-EVENT` in `final_report/main.tex` (Dataset section, the val → test bullet,
+  Limitations) for Ruichao to elaborate. Part (a), the training data, can go if pseudo-labels on SkiTB training
+  races diversify the training set; part (b), the test composition, stays either way.
+- **Breakdown (post hoc, no new evaluation):** `results/step8/cross_event.py` → `results/step8/cross_event/`, and
+  Table `tab:cross_event` in the appendix. The "all" rows reproduce the D27 tables exactly. E2 ski PCK@0.1: 98.1
+  on the training-event test video, 81.2 on the other-event test videos, 93.1 on val, 78.1 on follow-cam. E2 − E1
+  ski: +1.4 (training event), −2.3 [−6.4, 0.9] (other-event test), +1.2 (val), +4.6 (follow-cam). The SiamFC crop's
+  ski loss is concentrated in the training-event video (+32.7 vs. +3.7 [−2.7, 9.1]).
+- **Open:** Ruichao decides on the pseudo-label experiment (teacher on SkiTB training races; separate branch;
+  ROI and workload were reported 2026-11-15; time box Tue Nov 17).
+
 ### 2026-11-12: test run done (D27)
 - `run_final.sh test` ran once at `bf546e3`; every evaluation step finished. Two reporting-only fixes followed
   (D27): the tracking AUC check tolerance, and follow-cam intervals over its 6 videos. Tables and figures were

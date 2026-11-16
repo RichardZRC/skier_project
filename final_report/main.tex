@@ -115,6 +115,15 @@ All entries below are checked and in \texttt{references.bib}.
   \item Pretrained weights: MMPose COCO HRNet-W32 (COCO keypoints); SiamFC released weights (training script
     defaults to GOT-10k).
   \item Optional (template): example images; Figure~\ref{fig:qualitative} shows val frames with labeled ski points.
+  % SINGLE-EVENT placeholder (2026-11-15). Part (a) can go if pseudo-labels on SkiTB training races diversify the
+  % training data; part (b) is about the test set and stays either way. See also the pointers marked SINGLE-EVENT.
+  \item \tbd{Single-event data, to elaborate.} (a) \emph{Training data:} all 4 training videos come from one
+    event, the Almaty 2017 Universiade (slalom, combined, giant slalom, super-G). Val is from other events
+    (Trentino 2013, Granada 2015). (b) \emph{Test composition:} one test video (Almaty 2017 giant slalom) is from the
+    training event and holds 80\% of the test ski labels (E2 ski 98.1\% there); the other two (Trentino 2013,
+    Snowplanet 2011) reach 62.3\% and 85.0\%. Cross-event breakdown with intervals: Table~\ref{tab:cross_event}
+    (appendix; move it up if you use it in the main text). Follow-cam (another camera setup) is the
+    out-of-distribution check.
 \end{itemize}}
 
 \section{Methods}
@@ -186,8 +195,15 @@ All entries below are checked and in \texttt{references.bib}.
   \item E1 vs E0, shared body landmarks: @0.1 +1.5 [$-1.0$, 3.7] (no clear difference); @0.05 +4.9 [2.6, 7.0].
   \item E2 vs E1: test ski @0.1 +0.7 [$-0.3$, 1.5] (val +1.2 [0.1, 2.3]); ski @0.05 +1.2 [0.2, 2.2] (val +1.5);
     body $-0.5$ [$-1.3$, 0.2]. The rule fixed in advance picked E2 on val.
-  \item Val $\to$ test: no drop (E2 ski 93.1 $\to$ 94.8), but one test video holds 1,764 of the 2,197 ski labels
-    (per seed) at 96.7--98.1\%; the other two reach 62--87\% (per-video rows).
+  \item Val $\to$ test: E2 ski 93.1 $\to$ 94.8, but this comparison is confounded (SINGLE-EVENT, Dataset section):
+    one test video, from the training event, holds 1,764 of the 2,197 ski labels (per seed) at 96.7--98.1\%; the
+    other two, from other events, reach 62--87\% (per-video rows). \tbd{Use the cross-event breakdown here instead
+    of claiming ``no drop''.} Facts from Table~\ref{tab:cross_event} (post hoc): E2 ski 98.1 on the training-event
+    test video, 81.2 on the other-event test videos, 93.1 on val (all other events), 78.1 on follow-cam. E2 $-$ E1
+    ski is positive on the training-event video (+1.4), val (+1.2) and follow-cam (+4.6), but not on the other-event
+    test videos ($-2.3$ [$-6.4$, 0.9]; 2 videos, 76 images). The SiamFC crop's ski loss is concentrated in the
+    training-event video (reference $-$ tracker +32.7) vs +3.7 [$-2.7$, 9.1] on the other events. Check the Analysis
+    bullet ``crop jitter helps most where crops differ from training'' against these numbers.
   \item Follow-cam (different camera setup): ski drops to 73.5 (E1) / 78.1 (E2); E2 $-$ E1 +4.6 [2.9, 6.7]
     (intervals over its 6 videos); body stays at 97.5.
   \item The 50-epoch problem (val): ski tails barely learned, seed-dependent; 150 epochs fixed it for all 8 runs.
@@ -315,7 +331,8 @@ replace Table~\ref{tab:system}. Facts:
     suggesting the two overlap; on test it does not (+1.6 $\to$ +1.9). The milestone's claim should not be repeated.
   \item Crop jitter helps most where crops differ from training: under tracker crops (+1.6) and on follow-cam
     (+4.6), not on clean test crops (+0.7, no clear difference). Your interpretation.
-  \item Limitations: few videos (test 3, one dominant; val 3; 6 SkiTB val sequences); intervals are conditional on
+  \item Limitations: \tbd{SINGLE-EVENT: training from one event, test dominated by a video from that event (Dataset
+    section).} Few videos (test 3, one dominant; val 3; 6 SkiTB val sequences); intervals are conditional on
     these videos; val also chose epochs and every setting; $k_{\mathrm{ref}}=1.3$ is the largest value tried; the
     replay misses its ski-end target on test; broadcast footage only. The STARK experiment was chosen after seeing
     the main test result (SiamFC's drift), so it is reported separately and chose nothing in the main system.
@@ -441,6 +458,29 @@ table needs one sentence of text from you.}
   the best (83.1) is a tie, broken toward $k_{\mathrm{ref}}$ nearest 1.0, then the higher $s_{\min}$, which picks
   0.3 / 1.3. Every row is best at the largest $k_{\mathrm{ref}}$ tried.}
   \label{tab:grids_val}
+\end{table}
+
+% SINGLE-EVENT: cross-event breakdown (results/step8/cross_event/, post hoc)
+\begin{table}[h]
+  \centering
+  \small
+  \setlength{\tabcolsep}{3.5pt}
+  \begin{tabular}{lccc|ccc}
+    \toprule
+    & \multicolumn{3}{c|}{Pose model, reference crops} & \multicolumn{3}{c}{System, E2 ski @0.1 (test)} \\
+    Set (event) & E2 body & E2 ski & E2 $-$ E1 ski & SiamFC crop & refined & STARK crop \\
+    \midrule
+    Test, training event (1 video) & 99.1 & 98.1 & $+1.4$ $[0.8, 2.1]$ & 65.6 & 75.7 & 87.2 \\
+    Test, other events (2 videos) & 82.8 & 81.2 & $-2.3$ $[-6.4, 0.9]$ & 78.4 & 83.4 & 82.8 \\
+    Val, other events (3 videos) & 95.5 & 93.1 & $+1.2$ $[0.1, 2.3]$ & -- & -- & -- \\
+    Follow-cam (6 videos) & 97.5 & 78.1 & $+4.6$ $[2.9, 6.7]$ & -- & -- & -- \\
+    \bottomrule
+  \end{tabular}
+  \caption{Cross-event breakdown of the frozen results (post hoc, no new evaluation). All four training videos are
+  from one event (Almaty 2017); one test video is too, and holds 80\% of the test ski labels. PCK@0.1 (\%), seeds
+  pooled; 95\% CI over segments within videos (follow-cam: videos). Reference crops on the system's test labels:
+  ski 98.3 (training event) and 82.2 (other events).}
+  \label{tab:cross_event}
 \end{table}
 
 \begin{figure}[h]
