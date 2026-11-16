@@ -385,3 +385,48 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
   - Not in the val direction, noted: replay acceleration is higher with STARK on test, 1.69 vs. 1.38 (+0.31 [0.14, 0.49]); on val −0.18 [−0.65, 0.22].
   - These numbers are a labeled post-freeze extra; SiamFC's D27 numbers remain the main result.
 - Merged (2026-11-15): Ruichao asked to keep both trackers, so the report can show the comparison. `stark` was fast-forwarded into `main` (no merge commit, so `86dd90c` stays in `main`'s history); SiamFC remains the default (`--tracker siamfc`, `default.yaml`) and `run_final.sh` is unchanged. The `stark` branch stays on GitHub because the test `freeze.json` names it.
+
+## D29 — Step 6b: pseudo-labels on SkiTB training races ("noisy student lite"), a labeled post-freeze extra (2026-11-15)
+- Why: the cross-event breakdown (`results/step8/cross_event/`) shows the pose model generalizes poorly to new events. All 4 training videos come from one event (Almaty 2017). E2 ski PCK@0.1 is 98.1 on the training-event test video, 81.2 on the other-event test videos, 93.1 on val and 78.1 on follow-cam, while training-image ski PCK is 99.8: little bias, mostly variance (data mismatch). SkiTB's training races add new events, courses, cameras and athletes, but no landmarks. Ruichao chose the lite version and "val + one test run" (2026-11-15). The work lives on branch `pseudo`.
+- Choice, recorded before any calibration, label or student number exists:
+  - **Teacher:** E2-s230 + E2-s231 (`$SKIER_RESULTS/pose/d21/E2-s23x/best.pt`), no flip.
+    - Pass 1 crops the start box × 1.1 (as tracker boxes, D24) with each model; points and scores are averaged.
+    - Pass 2 crops the D26 refined box (`refined_boxes`, s_min 0.3, k 1.3, ≥ 4 points; else pass 1) with each model.
+    - The pseudo point is the mean of the two models' final points (`skier.pose.pseudo`).
+  - **Keep rule:**
+    - A body + ski joint is kept if both models score it ≥ `s_keep` and lie within `d_keep` × the diagonal of the box of the confident points. Poles are never kept.
+    - A frame needs ≥ 8 kept joints and a valid reference box; it trains only on its kept joints (binary masks).
+  - **Filter, chosen on Ski 2DPose val labels:**
+    - The same pipeline is run from each val image's labeled reference box (standing in for the SkiTB GT box).
+    - Grid: s_keep {0.3, 0.5, 0.7} × d_keep {0.02, 0.05, 0.1}.
+    - Rule: among settings whose kept body **and** ski points are each ≥ 95% correct at PCK@0.05, keep the one with the most kept ski points. Ties go to the higher s_keep, then the smaller d_keep. If none reaches 95%, use 90%. If none reaches 90%, **stop**: negative result, no student.
+    - A no-filter sanity row is reported, not used.
+    - The filter sees only teacher precision, never a student result.
+  - **Frames:**
+    - SkiTB `train` split only; visible frames; GT box ≥ 64 px tall; clips ≥ 10 frames.
+    - One frame step for all clips, set for about 7,500 candidates.
+    - Event-overlap check (`AL_data.csv` vs. the Ski 2DPose info JSON): the 53 training races are World Cup / Olympic races at 31 venues, seasons 2014/15–2021/22. None is a Ski 2DPose event (Universiade Almaty 2017, Trentino 2013, Granada 2015; Snowplanet; LSC follow-cam).
+    - AL0010, AL0018 (Madonna di Campiglio) and AL0028 (Val di Fassa) are World Cup races in the Trentino region, where the Ski 2DPose Trentino 2013 videos (2 val, 1 test) were filmed. They are left out as a precaution (possibly the same slopes), so 50 races remain.
+  - **Student `PL`:**
+    - COCO init, `configs/pose/e2.yaml`, seeds 230 and 231, the same 3 + 150 epochs.
+    - Each epoch uses every real training image plus an equal-size random subset of pseudo frames (`pseudo.epoch_order`; real records keep their indices and augmentation draws). That is about 2× E2's steps.
+    - `best.pt` by val ski PCK, as for E2.
+  - **Comparison (PL − E2, paired, seeds pooled, D25 intervals):**
+    - **Primary:** val clean ski PCK@0.1.
+    - **Secondary:** val body@0.1 and ski@0.05; the val moderate crop-error level; val propagation tracker and refined crops on the frozen SiamFC tracks.
+  - **Test:**
+    - After the val result, the chain runs **once** on test and follow-cam, whatever val shows, from a pushed commit of `pseudo`.
+    - Test is split into same event / other events (as in `results/step8/cross_event.py`; pre-registered here; the key number is other-event ski), follow-cam uses video intervals, and test propagation uses the frozen SiamFC tracks.
+    - It is labeled a post-freeze extra everywhere; D27 stays the main result.
+- Caveats, stated in advance:
+  - The experiment was motivated by a breakdown of the test set.
+  - Val picks `best.pt`, calibrates the filter and hosts the primary comparison.
+  - The two teacher seeds share data and recipe, so their agreement is weak evidence.
+  - The student also gets about 2× the optimizer steps (E2's best epochs were 112 and 87 of 153, so more steps on real data alone are unlikely to help).
+  - SkiTB is broadcast footage from the front and side, so little gain is expected on follow-cam's rear views.
+- Calibration (2026-11-15, `bash results/step6b/run_pseudo.sh calibrate`; `results/step6b/calibration.json`; 293 val images):
+  - **Sanity row:** with no filter, kept-point precision is body 88.5% and ski 84.0% at PCK@0.05. That matches E2's frozen val ski@0.05 (84.3), which confirms the teacher pipeline's coordinates and crops.
+  - **Rule's pick: s_keep 0.7, d_keep 0.02, at the 95% bar.**
+    - Body 95.8% (of 2,859 verifiable kept points) and ski 95.2% (of 931).
+    - It keeps 1,004 ski points on 260 of 293 images, covering 53% of the 1,752 ski labels.
+    - The other settings with s_keep 0.7 miss the bar narrowly (95.0 / 94.7 and 94.8 / 94.5); none with s_keep 0.3 or 0.5 reaches it.

@@ -1,0 +1,275 @@
+{
+  "choice": {
+    "bar": 95.0,
+    "d_keep": 0.02,
+    "n_keep": 8,
+    "rule": "among the grid settings whose kept body and ski points each reach the precision bar (PCK@0.05 vs the val labels), the one keeping the most ski points; ties: higher s_keep, then smaller d_keep; bars 95% then 90%; if neither is met, stop (no student)",
+    "s_keep": 0.7,
+    "stop": false
+  },
+  "d_keep_grid": [
+    0.02,
+    0.05,
+    0.1
+  ],
+  "git_commit": "c42959d711293b02c52e96e28c748c79ea4e4e36",
+  "n_images": 293,
+  "n_keep": 8,
+  "partition": "val",
+  "precision_thr": 0.05,
+  "refined_share": 0.9897610921501706,
+  "rule": "among the grid settings whose kept body and ski points each reach the precision bar (PCK@0.05 vs the val labels), the one keeping the most ski points; ties: higher s_keep, then smaller d_keep; bars 95% then 90%; if neither is met, stop (no student)",
+  "s_keep_grid": [
+    0.3,
+    0.5,
+    0.7
+  ],
+  "settings": {
+    "k_pose": 1.1,
+    "k_refine": 1.3,
+    "n_min": 4,
+    "s_min": 0.3
+  },
+  "split_sha256": "46bd127b0e51c1293859c7ab86dab1f0759511fbbdfd9dad270a632443bb2e98",
+  "table": [
+    {
+      "body": {
+        "coverage": 83.42644320297951,
+        "hits": 2952,
+        "kept": 3298,
+        "labels": 3759,
+        "precision": 94.13265306122449,
+        "verifiable": 3136
+      },
+      "d_keep": 0.02,
+      "frames_kept": 280,
+      "n_keep": 8,
+      "s_keep": 0.3,
+      "ski": {
+        "coverage": 73.85844748858447,
+        "hits": 1168,
+        "kept": 1535,
+        "labels": 1752,
+        "precision": 90.26275115919628,
+        "verifiable": 1294
+      }
+    },
+    {
+      "body": {
+        "coverage": 93.9877627028465,
+        "hits": 3269,
+        "kept": 3769,
+        "labels": 3759,
+        "precision": 92.52759694310784,
+        "verifiable": 3533
+      },
+      "d_keep": 0.05,
+      "frames_kept": 284,
+      "n_keep": 8,
+      "s_keep": 0.3,
+      "ski": {
+        "coverage": 90.69634703196347,
+        "hits": 1415,
+        "kept": 1978,
+        "labels": 1752,
+        "precision": 89.04971680302077,
+        "verifiable": 1589
+      }
+    },
+    {
+      "body": {
+        "coverage": 95.84996009577016,
+        "hits": 3308,
+        "kept": 3874,
+        "labels": 3759,
+        "precision": 91.81237857341105,
+        "verifiable": 3603
+      },
+      "d_keep": 0.1,
+      "frames_kept": 287,
+      "n_keep": 8,
+      "s_keep": 0.3,
+      "ski": {
+        "coverage": 94.34931506849315,
+        "hits": 1453,
+        "kept": 2091,
+        "labels": 1752,
+        "precision": 87.90078644888082,
+        "verifiable": 1653
+      }
+    },
+    {
+      "body": {
+        "coverage": 82.2559191274275,
+        "hits": 2924,
+        "kept": 3235,
+        "labels": 3759,
+        "precision": 94.56662354463131,
+        "verifiable": 3092
+      },
+      "d_keep": 0.02,
+      "frames_kept": 275,
+      "n_keep": 8,
+      "s_keep": 0.5,
+      "ski": {
+        "coverage": 69.34931506849315,
+        "hits": 1117,
+        "kept": 1391,
+        "labels": 1752,
+        "precision": 91.93415637860082,
+        "verifiable": 1215
+      }
+    },
+    {
+      "body": {
+        "coverage": 92.60441606810322,
+        "hits": 3240,
+        "kept": 3684,
+        "labels": 3759,
+        "precision": 93.07670209709853,
+        "verifiable": 3481
+      },
+      "d_keep": 0.05,
+      "frames_kept": 281,
+      "n_keep": 8,
+      "s_keep": 0.5,
+      "ski": {
+        "coverage": 84.24657534246575,
+        "hits": 1348,
+        "kept": 1746,
+        "labels": 1752,
+        "precision": 91.32791327913279,
+        "verifiable": 1476
+      }
+    },
+    {
+      "body": {
+        "coverage": 94.17398244213886,
+        "hits": 3277,
+        "kept": 3761,
+        "labels": 3759,
+        "precision": 92.57062146892656,
+        "verifiable": 3540
+      },
+      "d_keep": 0.1,
+      "frames_kept": 284,
+      "n_keep": 8,
+      "s_keep": 0.5,
+      "ski": {
+        "coverage": 86.70091324200914,
+        "hits": 1379,
+        "kept": 1809,
+        "labels": 1752,
+        "precision": 90.78341013824885,
+        "verifiable": 1519
+      }
+    },
+    {
+      "body": {
+        "coverage": 76.05746209098164,
+        "hits": 2740,
+        "kept": 2954,
+        "labels": 3759,
+        "precision": 95.83770549143057,
+        "verifiable": 2859
+      },
+      "d_keep": 0.02,
+      "frames_kept": 260,
+      "n_keep": 8,
+      "s_keep": 0.7,
+      "ski": {
+        "coverage": 53.13926940639269,
+        "hits": 886,
+        "kept": 1004,
+        "labels": 1752,
+        "precision": 95.16648764769066,
+        "verifiable": 931
+      }
+    },
+    {
+      "body": {
+        "coverage": 86.40595903165736,
+        "hits": 3084,
+        "kept": 3392,
+        "labels": 3759,
+        "precision": 94.95073891625616,
+        "verifiable": 3248
+      },
+      "d_keep": 0.05,
+      "frames_kept": 272,
+      "n_keep": 8,
+      "s_keep": 0.7,
+      "ski": {
+        "coverage": 61.47260273972603,
+        "hits": 1020,
+        "kept": 1178,
+        "labels": 1752,
+        "precision": 94.70752089136491,
+        "verifiable": 1077
+      }
+    },
+    {
+      "body": {
+        "coverage": 87.33705772811918,
+        "hits": 3113,
+        "kept": 3436,
+        "labels": 3759,
+        "precision": 94.82180932074323,
+        "verifiable": 3283
+      },
+      "d_keep": 0.1,
+      "frames_kept": 274,
+      "n_keep": 8,
+      "s_keep": 0.7,
+      "ski": {
+        "coverage": 62.385844748858446,
+        "hits": 1033,
+        "kept": 1198,
+        "labels": 1752,
+        "precision": 94.51052150045746,
+        "verifiable": 1093
+      }
+    },
+    {
+      "body": {
+        "coverage": 100.0,
+        "hits": 3327,
+        "kept": 4102,
+        "labels": 3759,
+        "precision": 88.50758180367119,
+        "verifiable": 3759
+      },
+      "d_keep": null,
+      "frames_kept": 293,
+      "n_keep": 0,
+      "s_keep": null,
+      "sanity": true,
+      "ski": {
+        "coverage": 100.0,
+        "hits": 1471,
+        "kept": 2344,
+        "labels": 1752,
+        "precision": 83.96118721461187,
+        "verifiable": 1752
+      }
+    }
+  ],
+  "teachers": [
+    {
+      "epoch": 112,
+      "expand": 1.25,
+      "name": "E2-s230",
+      "path": "/home/ruichaoz/skier_results/pose/d21/E2-s230/best.pt",
+      "sha256": "1385fe1615ca965f89e13891732964ef222c87df0aef82643111664cf77b1b71",
+      "split_sha256": "46bd127b0e51c1293859c7ab86dab1f0759511fbbdfd9dad270a632443bb2e98"
+    },
+    {
+      "epoch": 87,
+      "expand": 1.25,
+      "name": "E2-s231",
+      "path": "/home/ruichaoz/skier_results/pose/d21/E2-s231/best.pt",
+      "sha256": "abc888a45da5b899c15ef632ffe8c0931a8f1d4140df20c3d972326bd7053423",
+      "split_sha256": "46bd127b0e51c1293859c7ab86dab1f0759511fbbdfd9dad270a632443bb2e98"
+    }
+  ]
+}

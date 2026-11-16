@@ -256,6 +256,42 @@ def test_same_seed_same_first_loss(tmp_path, train_records, schema):
 
 
 @pytest.mark.torch
+def test_pseudo_records_add_steps_and_provenance(tmp_path, train_records, schema):
+    """Step 6b (D29): each epoch = every real record + an equal-size subset of pseudo records."""
+    import dataclasses
+
+    torch = pytest.importorskip("torch")
+    from skier.pose.train import load_checkpoint, train
+
+    pseudo = [dataclasses.replace(r, sample_id=f"P/{i}/x", dataset="skitb_pseudo") for i, r in
+              enumerate(train_records * 2)]  # 8 pseudo, 4 real -> 4 drawn per epoch
+    cfg = TrainConfig(batch_size=2, warm_epochs=0, finetune_epochs=1, num_workers=0)
+    train(_tiny_net(), train_records, [], cfg, tmp_path / "run", schema, "cpu", pseudo_records=pseudo,
+          pseudo_meta={"pseudo_labels": "p.json", "pseudo_labels_sha256": "feed"})
+    row = next(csv.DictReader((tmp_path / "run" / "log.csv").open()))
+    assert int(row["n_steps"]) == math.ceil((4 + 4) / 2)
+    ck = load_checkpoint(tmp_path / "run" / "last.pt", _tiny_net(), schema=schema)
+    assert (ck["n_train"], ck["n_pseudo"], ck["n_pseudo_per_epoch"], ck["pseudo_labels_sha256"]) == (4, 8, 4, "feed")
+    with pytest.raises(ValueError, match="different pseudo-labels"):
+        train(_tiny_net(), train_records, [], cfg, tmp_path / "run2", schema, "cpu", resume=tmp_path / "run" / "last.pt")
+
+
+@pytest.mark.torch
+def test_no_pseudo_records_trains_exactly_as_before(tmp_path, train_records, schema):
+    torch = pytest.importorskip("torch")
+    from skier.pose.train import train
+
+    cfg = TrainConfig(batch_size=2, warm_epochs=0, finetune_epochs=1, num_workers=0)
+    states = []
+    for run, kw in enumerate(({}, {"pseudo_records": ()})):
+        torch.manual_seed(0)
+        model = _tiny_net()
+        train(model, train_records, [], cfg, tmp_path / f"r{run}", schema, "cpu", max_steps=2, **kw)
+        states.append(model.state_dict())
+    assert all(torch.equal(states[0][k], states[1][k]) for k in states[0])
+
+
+@pytest.mark.torch
 def test_tiny_overfit_learns_the_labels(tmp_path, train_records, schema):
     """The loop really learns: one image, no augmentation, decoded points end up on the labels.
 

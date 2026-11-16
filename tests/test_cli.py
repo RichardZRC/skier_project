@@ -9,6 +9,7 @@ from skier.integration import confidence, process, propagation
 from skier.paths import repo_root
 from skier.report import compare_trackers, figures, tables
 from skier.pose import aug_preview, compare, crop_error, crosscheck, eval_generic, evaluate, train as pose_train
+from skier.pose import pseudo
 from skier.pose import smoke as pose_smoke
 from skier.replay import run as replay_run
 from skier.tracking import run as tracking_run
@@ -37,6 +38,7 @@ TOOLS = {
     "make_tables": tables,
     "make_figures": figures,
     "compare_trackers": compare_trackers,
+    "make_pseudo_labels": pseudo,
 }
 
 

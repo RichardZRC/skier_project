@@ -193,7 +193,11 @@ def load_checkpoint(path: Path, model, optimizer=None, schema: Schema | None = N
 def train(model, train_records: Sequence[PoseRecord], val_records: Sequence[PoseRecord], cfg: TrainConfig,
           out_dir: str | Path, schema: Schema, device: str = "cpu", *, max_steps: int | None = None,
           profile_steps: int | None = None, split_sha256: str | None = None, cache=None,
-          resume: str | Path | None = None, log=print) -> dict:
+          resume: str | Path | None = None, log=print, pseudo_records: Sequence[PoseRecord] = (),
+          pseudo_meta: dict | None = None) -> dict:
+    """``pseudo_records`` (Step 6b, D29) are appended after the real records, so a real record keeps its index
+    and its augmentation draws; each epoch then uses every real record plus an equal-size random subset of
+    them (``pseudo.epoch_order``). Without them, training is exactly as before."""
     import torch
     from torch.utils.data import DataLoader
 
@@ -204,15 +208,23 @@ def train(model, train_records: Sequence[PoseRecord], val_records: Sequence[Pose
     out = ensure_dir(out_dir)
     seed_everything(cfg.seed)
     model.to(device)
-    dataset = PoseDataset(train_records, schema, train=True, aug_cfg=cfg.aug, seed=cfg.seed, cache=cache,
-                          expand=cfg.expand, sigma=cfg.sigma)
+    dataset = PoseDataset(list(train_records) + list(pseudo_records), schema, train=True, aug_cfg=cfg.aug,
+                          seed=cfg.seed, cache=cache, expand=cfg.expand, sigma=cfg.sigma)
     optimizer = torch.optim.Adam(param_groups(model), lr=0.0)
     meta = {"seed": cfg.seed, "git_commit": _git_commit(), "split_sha256": split_sha256,
             "schema_fingerprint": schema_fingerprint(schema), "num_keypoints": schema.num_keypoints,
             "n_train": len(train_records), "n_val": len(val_records)}
+    n_pe = 0
+    if pseudo_records:
+        from skier.pose.pseudo import epoch_order, pseudo_per_epoch
+
+        n_pe = pseudo_per_epoch(len(train_records), len(pseudo_records))
+        meta.update(n_pseudo=len(pseudo_records), n_pseudo_per_epoch=n_pe, **(pseudo_meta or {}))
     best, start = BestTracker(), 0
     if resume is not None:
         ck = load_checkpoint(Path(resume), model, optimizer, schema)
+        if ck.get("pseudo_labels_sha256") != meta.get("pseudo_labels_sha256"):
+            raise ValueError("--resume: the checkpoint was trained with different pseudo-labels")
         start, best = ck["epoch"] + 1, BestTracker(ck.get("best_value"), ck.get("best_epoch"))
     use_cuda = str(device).startswith("cuda") and torch.cuda.is_available()
     history, steps_total = [], 0
@@ -225,8 +237,13 @@ def train(model, train_records: Sequence[PoseRecord], val_records: Sequence[Pose
         dataset.set_epoch(epoch)
         gen = torch.Generator()
         gen.manual_seed(cfg.seed * 1000 + epoch)
-        loader = DataLoader(dataset, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers,
-                            collate_fn=collate, generator=gen)
+        if pseudo_records:
+            order = epoch_order(len(train_records), len(pseudo_records), n_pe, cfg.seed, epoch)
+            loader = DataLoader(dataset, batch_size=cfg.batch_size, sampler=order.tolist(),
+                                num_workers=cfg.num_workers, collate_fn=collate, generator=gen)
+        else:
+            loader = DataLoader(dataset, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers,
+                                collate_fn=collate, generator=gen)
         if use_cuda:
             torch.cuda.reset_peak_memory_stats()
         losses, n_steps, n_dropped, data_wait = [], 0, 0, 0.0
@@ -260,7 +277,7 @@ def train(model, train_records: Sequence[PoseRecord], val_records: Sequence[Pose
             if val_records:
                 validate(model, val_records, schema, device, cfg.val_batch_size, cfg.expand)
             val_s = time.perf_counter() - t_val
-            steps_per_epoch = math.ceil(len(train_records) / cfg.batch_size)
+            steps_per_epoch = math.ceil((len(train_records) + n_pe) / cfg.batch_size)
             s_step = epoch_s / max(1, n_steps)
             report = {**row, "profile_steps": steps_total, "data_wait_share": round(data_wait / epoch_s, 3),
                       "val_s": round(val_s, 2), "steps_per_epoch": steps_per_epoch,
@@ -337,12 +354,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--profile-steps", type=int, metavar="N", help="time N steps, estimate the full run, exit")
     p.add_argument("--resume", type=Path)
     p.add_argument("--cache-dir", type=Path, help="use (and build if missing) the crop cache")
+    p.add_argument("--pseudo-labels", type=Path, help="pseudo_labels.json from make_pseudo_labels.py (Step 6b, D29)")
     p.add_argument("--out", type=Path, help="default: $SKIER_RESULTS/pose/<experiment>")
     return p
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if args.pseudo_labels is not None and (args.overfit or args.cache_dir is not None):
+        parser.error("--pseudo-labels can't be combined with --overfit or --cache-dir")
     cfg = TrainConfig.from_yaml(args.config or configs_dir() / "pose" / "e1.yaml")
     if args.epochs is not None:
         cfg = dataclasses.replace(cfg, finetune_epochs=args.epochs)
@@ -364,6 +385,17 @@ def main(argv: list[str] | None = None) -> int:
         train_recs = val_recs = select_overfit_records(train_recs, args.overfit, cfg.seed)
         cfg = dataclasses.replace(cfg, aug=AugConfig.none())
     out = Path(args.out or results_root() / "pose" / name)
+    pseudo, pseudo_meta = [], None
+    if args.pseudo_labels is not None:
+        from skier.io_utils import sha256_file
+        from skier.pose.pseudo import load_pseudo_records
+
+        pseudo = load_pseudo_records(args.pseudo_labels, data_root(), schema, manifest["content_sha256"])
+        clash = {r.sample_id for r in pseudo} & {r.sample_id for r in records}
+        if clash:
+            parser.error(f"{len(clash)} pseudo-label sample IDs clash with Ski 2DPose IDs (e.g. {sorted(clash)[0]})")
+        pseudo_meta = {"pseudo_labels": str(args.pseudo_labels),
+                       "pseudo_labels_sha256": sha256_file(args.pseudo_labels)}
 
     cache = None
     if args.cache_dir is not None:
@@ -375,10 +407,12 @@ def main(argv: list[str] | None = None) -> int:
     from skier.pose.model import build_hrnet
 
     model, load_info = build_hrnet(schema.num_keypoints, args.hrnet_config, args.checkpoint, device=args.device)
-    print(f"train {len(train_recs)} images ({len(train_excl)} excluded), val {len(val_recs)}; "
+    print(f"train {len(train_recs)} images ({len(train_excl)} excluded)"
+          f"{f' + {len(pseudo)} pseudo-labeled frames' if pseudo else ''}, val {len(val_recs)}; "
           f"loaded {load_info['loaded_tensors']} tensors, new head: {load_info['replaced_head']}")
     summary = train(model, train_recs, val_recs, cfg, out, schema, args.device, profile_steps=args.profile_steps,
-                    split_sha256=manifest["content_sha256"], cache=cache, resume=args.resume)
+                    split_sha256=manifest["content_sha256"], cache=cache, resume=args.resume,
+                    pseudo_records=pseudo, pseudo_meta=pseudo_meta)
     if args.profile_steps:
         return 0
     if (out / "best.pt").exists():
