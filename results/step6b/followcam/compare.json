@@ -1,0 +1,137 @@
+{
+  "e2": [
+    "/home/ruichaoz/skier_results/final/followcam/pose/E2-s230",
+    "/home/ruichaoz/skier_results/final/followcam/pose/E2-s231"
+  ],
+  "note": "D29 post-freeze extra; D27 stays the main result",
+  "partition": "followcam",
+  "pl": [
+    "/home/ruichaoz/skier_results/pseudo/eval/followcam/pose/PL-s230",
+    "/home/ruichaoz/skier_results/pseudo/eval/followcam/pose/PL-s231"
+  ],
+  "prop_e2": null,
+  "prop_pl": null,
+  "sections": {
+    "Pose model, reference crops (clean)": {
+      "follow-cam (other camera setup)": {
+        "deltas": [
+          {
+            "a": "PL",
+            "b": "E2",
+            "ci95": [
+              -0.061538461538468425,
+              1.7627308337996639
+            ],
+            "delta": 0.6376811594202891,
+            "group": "body@0.1",
+            "n_boot": 10000,
+            "n_clusters": 6
+          },
+          {
+            "a": "PL",
+            "b": "E2",
+            "ci95": [
+              -3.760445682451252,
+              1.1120996441281061
+            ],
+            "delta": -0.8547008547008517,
+            "group": "ski@0.1",
+            "n_boot": 10000,
+            "n_clusters": 6
+          },
+          {
+            "a": "PL",
+            "b": "E2",
+            "ci95": [
+              -2.8484848484848557,
+              0.6560449859418949
+            ],
+            "delta": -0.8012820512820595,
+            "group": "ski@0.05",
+            "n_boot": 10000,
+            "n_clusters": 6
+          }
+        ],
+        "n_samples": 134,
+        "runs": {
+          "E2": {
+            "body@0.1": {
+              "ci95": [
+                95.41101356743815,
+                98.76818365820691
+              ],
+              "hits": 3364,
+              "n_clusters": 6,
+              "pct": 97.5072463768116,
+              "total": 3450
+            },
+            "ski@0.05": {
+              "ci95": [
+                57.85179390190299,
+                64.41658630665381
+              ],
+              "hits": 1142,
+              "n_clusters": 6,
+              "pct": 61.004273504273506,
+              "total": 1872
+            },
+            "ski@0.1": {
+              "ci95": [
+                73.6413043478261,
+                81.39183055975795
+              ],
+              "hits": 1462,
+              "n_clusters": 6,
+              "pct": 78.0982905982906,
+              "total": 1872
+            }
+          },
+          "PL": {
+            "body@0.1": {
+              "ci95": [
+                96.95989650711513,
+                98.79414298018949
+              ],
+              "hits": 3386,
+              "n_clusters": 6,
+              "pct": 98.14492753623189,
+              "total": 3450
+            },
+            "ski@0.05": {
+              "ci95": [
+                58.15217391304348,
+                61.78247734138973
+              ],
+              "hits": 1127,
+              "n_clusters": 6,
+              "pct": 60.202991452991455,
+              "total": 1872
+            },
+            "ski@0.1": {
+              "ci95": [
+                74.48680351906158,
+                79.45285215366705
+              ],
+              "hits": 1446,
+              "n_clusters": 6,
+              "pct": 77.24358974358974,
+              "total": 1872
+            }
+          }
+        },
+        "videos": [
+          "37HtpPpdvp0",
+          "3wkVqupcMAk",
+          "FW1S3VAKui8",
+          "LjXeTB3Wl10",
+          "OeDt6D_9Rh4",
+          "nq2qj0fhYjc"
+        ]
+      }
+    }
+  },
+  "split_sha256": "46bd127b0e51c1293859c7ab86dab1f0759511fbbdfd9dad270a632443bb2e98",
+  "training_locations": [
+    "Almaty, Kazakhstan"
+  ]
+}

@@ -445,3 +445,22 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
     - SiamFC tracks: tracker crop ski +1.9 [+0.1, +4.0], refined crop ski +1.5 [−0.3, +4.2].
   - **Per joint** (descriptive, not pre-registered; seeds pooled): ski tips, toes and heels each gain about 24 hits. The left ski tail falls from 84.8% to 78.3% (−18 hits), the joint the keep rule kept least.
   - **Reading:** a small gain whose interval only just clears zero. Val also picked `best.pt` for both models, so both numbers are equally optimistic. The single test run (other-event ski is the key number) decides whether it carries over.
+- Test result (2026-11-15, `run_pseudo.sh test`, **the single run**; evidence `results/step6b/test/` and `results/step6b/followcam/`):
+  - Run at `624b1a4` (checkpoint C2, pushed, clean tree). The E2 cells equal the frozen D27 tables and the cross-event breakdown, and `final/test` and `final/followcam` were unchanged.
+  - **Key number:** other-event test ski PCK@0.1, PL 89.3 vs. E2 81.2, **Δ +8.1 [+3.2, +13.9]** (2 videos, 76 images). Body@0.1 +6.0 [+2.0, +11.1], ski@0.05 +11.0 [+6.7, +15.8].
+  - **Training event** (`uLW74013Wp0`, 284 images): ski@0.1 −0.9 [−1.4, −0.5], body −0.0 [−0.2, +0.2].
+  - **All test:** ski@0.1 +0.8 [−0.2, +2.0], body@0.1 +1.2 [+0.4, +2.1].
+  - **Propagation (frozen SiamFC tracks):**
+    - other events: reference crop ski +6.1 [+1.2, +11.2], tracker crop +3.6 [−0.1, +8.2], refined crop +5.5 [+0.5, +10.6];
+    - all test: tracker crop ski +0.9 [+0.1, +1.8], refined crop +0.6 [−0.4, +1.6].
+  - **Follow-cam:** ski@0.1 −0.9 [−3.8, +1.1], body +0.6 [−0.1, +1.8]. No gain, as stated in advance (rear views).
+  - **Per joint** (descriptive; seeds pooled):
+    - On all test videos, ski tips, toes and heels gain (+6 to +14 hits each). The ski tails lose: left 91.8% → 91.2%, right 92.6% → 86.9%.
+    - Follow-cam right tail: 71.5% → 63.2%.
+    - Same pattern as on val: the ski tails, the joints the keep rule kept least, are where PL is weaker.
+  - **Reading:**
+    - The gain sits where the pseudo-labels add data: new events (+8.1 ski).
+    - A small cost on the training event (−0.9), none on follow-cam's rear views.
+    - The all-test number barely moves because 80% of test ski labels come from the training-event video.
+    - The other-event intervals rest on 2 videos (segments within videos, D25).
+  - It stays a labeled post-freeze extra; D27 (E2) remains the main result.

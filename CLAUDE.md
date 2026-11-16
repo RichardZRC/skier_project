@@ -26,7 +26,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 ## Environment
 
-- Run the tests with `.venv/bin/python -m pytest -q`. Currently **344 tests**; all must pass on the GPU machine. The Mac skips 15: 7 `torch`, 4 `stack`, the real-STARK test (it needs CUDA and the vendored STARK), the SkiTB-toolkit cross-check (it needs the vendored toolkit) and two figure tests (they need matplotlib).
+- Run the tests with `.venv/bin/python -m pytest -q`. Currently **374 tests** on branch `pseudo` (344 on `main` until `pseudo` is merged); all must pass on the GPU machine (374 passed on the laptop, 2026-11-15). The Mac should skip 17 (not yet run there): 9 `torch`, 4 `stack`, the real-STARK test (it needs CUDA and the vendored STARK), the SkiTB-toolkit cross-check (it needs the vendored toolkit) and two figure tests (they need matplotlib).
   - Markers: `torch` needs PyTorch; `stack` needs the pinned torch, mmcv and mmpose; `gpu` needs CUDA.
 - **Paths:** code reads `SKIER_DATA` (default `~/skier_data`) and `SKIER_RESULTS` (default `~/skier_results`) through `skier.paths`. Never hard-code absolute paths.
 - **Data on this Mac:**
@@ -34,7 +34,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
   - SkiTB (audited 2026-10-18, 0 format problems): `~/skier_data/skitb/{AL,FS,JP}`; only `AL/` is used. Digests and findings: `docs/data_audit_skitb.md`.
 - **Which machine is this session on?**
   - **Mac** (macOS, repo in `~/Desktop/skier_project`): coding, the light tests, reviews, the split freeze. No installs (D13); the sandbox rules above apply.
-  - **Laptop** (WSL2 Ubuntu, repo in `~/skier_project`): GPU runs. The pinned stack is installed there as in `docs/laptop_setup.md`; ask before installing anything else. Data lives only in `~/skier_data` inside WSL (SkiTB: just the val/test subset; vendor code in `~/skier_data/vendor`). Never commit images, labels, checkpoints or `.npz` files.
+  - **Laptop** (WSL2 Ubuntu, repo in `~/skier_project`): GPU runs. The pinned stack is installed there as in `docs/laptop_setup.md`; ask before installing anything else. Data lives only in `~/skier_data` inside WSL (SkiTB: the val/test subset plus the training races used for the D29 pseudo-labels; vendor code in `~/skier_data/vendor`). Never commit images, labels, checkpoints or `.npz` files.
   - **Laptop, Windows side** (PowerShell, repo in `OneDrive\Desktop\skier_project`): the usual setup since 2026-10-24.
     - **Running commands:** Claude edits here, and runs commands in Ubuntu itself via `wsl -d Ubuntu-22.04 -- bash <script>`. Ruichao asked for this, so there are no walkthroughs here. Put multi-line commands in a script file in the scratchpad, because PowerShell mangles `$` and quotes.
     - **Committing:** commits happen in this clone. Copy edited files into the WSL clone with `sed -i 's/\r$//'`, and `git checkout -- <files>` there before `git pull`.
@@ -78,6 +78,10 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 - **Laptop interruptions:** Windows sleep (Modern Standby), Windows Update restarts and closing the last `wsl` connection have each stopped a run. Every epoch is checkpointed; resume with `--resume <run>/last.pt` and the same arguments.
 - **STARK (D28):** its scores are a sigmoid in [0, 1], SiamFC's about 1e-5, so each tracker has its own integration config (`stark.yaml` has `tracker: stark`); the tools refuse a track folder whose `tracker.json` doesn't match. STARK's code needs six torch-2 workarounds, all in `stark_adapter.py`; never edit the clone. Both trackers stay in the code (`--tracker`, SiamFC the default); the STARK work was done on branch `stark` and fast-forwarded into `main` on 2026-11-15 (Ruichao: keep both, for the comparison).
 - **Minimum crop:** replay crops are at least `max(240 px, frame_h / 3)`, so design controller tests around that.
+- **Pseudo-labels (D29, branch `pseudo`):**
+  - The labels, overlays and student checkpoints are SkiTB-derived and stay in `$SKIER_RESULTS/pseudo/`. Only text evidence goes to `results/step6b/`.
+  - The test stage has run its one time (2026-11-15, `624b1a4`) and refuses to run again.
+  - Never overwrite a `run_*.sh` in the WSL clone while a stage is running it: bash reads scripts as it goes.
 - **SkiTB:**
   - `frames.txt` holds bare frame indices, and `frame_file` maps them (`197` → `00197.jpg`).
   - The frame rate isn't in the files or the toolkit, and differs by sequence. Use the frozen per-sequence table `data/manifests/skitb_fps_v1.csv` (D22: 25 or 30 fps), which `run_tracker.py` and `make_replay.py` load by default.
@@ -91,9 +95,9 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 | --- | --- |
 | Data | `data/ski2dpose_raw.py` (raw labels, path template, info), `data/ski2dpose.py` + `data/records.py` (`PoseRecord`), `data/audit.py`, `data/overlays.py`, `data/alignment.py`, `data/skitb.py` (layout confirmed 2026-10-18), `splits.py` |
 | Geometry and drawing | `geometry.py`, `viz.py`, `schema.py` (+ `configs/ski24_schema.json`) |
-| Pose | `pose/preprocess.py`, `pose/heatmap.py`, `pose/infer.py`, `pose/model.py`, `pose/coco_map.py`, `pose/eval_generic.py` (E0), `pose/crosscheck.py`, `pose/augment.py`, `pose/dataset.py`, `pose/loss.py`, `pose/train.py`, `pose/crop_error.py`, `pose/evaluate.py`, `pose/compare.py`, `pose/aug_preview.py` |
+| Pose | `pose/preprocess.py`, `pose/heatmap.py`, `pose/infer.py`, `pose/model.py`, `pose/coco_map.py`, `pose/eval_generic.py` (E0), `pose/crosscheck.py`, `pose/augment.py`, `pose/dataset.py`, `pose/loss.py`, `pose/train.py`, `pose/crop_error.py`, `pose/evaluate.py`, `pose/compare.py`, `pose/aug_preview.py`, `pose/pseudo.py` (D29 pseudo-labels: teacher, keep rule, filter rule, loader, epoch mixing; `make_pseudo_labels.py`, `train_pose.py --pseudo-labels`) |
 | Tracking and replay | `tracking/siamfc_adapter.py`, `tracking/stark_adapter.py` (D28), `tracking/trackers.py` (tracker choice, `tracker.json`, the guard), `tracking/frames.py`, `tracking/run.py`, `replay/controller.py`, `replay/render.py`, `replay/run.py` |
 | Integration (Step 7) | `integration/config.py` (+ `configs/integration/default.yaml`), `integration/confidence.py`, `integration/propagation.py`, `integration/refine.py` (D26 crop refinement), `integration/process.py` |
 | Metrics | `eval/pose_metrics.py`, `eval/track_metrics.py`, `eval/replay_metrics.py`, `eval/bootstrap.py` (D25), `eval/skitb_official.py` (the toolkit's F/Pr/Re/GSR, ported) |
-| Report (Step 8) | `report/tables.py` (`make_tables.py`), `report/figures.py` (`make_figures.py`), `report/compare_trackers.py` (`compare_trackers.py`, D28); the frozen run is `results/step8/run_final.sh`, the STARK extra `results/step7b/run_stark.sh` |
+| Report (Step 8) | `report/tables.py` (`make_tables.py`), `report/figures.py` (`make_figures.py`), `report/compare_trackers.py` (`compare_trackers.py`, D28), `report/events.py` (same-event / other-event grouping), `report/compare_pseudo.py` (`compare_pseudo.py`, D29); the frozen run is `results/step8/run_final.sh`, the STARK extra `results/step7b/run_stark.sh`, the pseudo-label extra `results/step6b/run_pseudo.sh` |
 | Tools | `envcheck.py`, `io_utils.py`, `paths.py` |

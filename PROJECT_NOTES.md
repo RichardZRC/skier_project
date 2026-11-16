@@ -66,7 +66,23 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
   body@0.1 +2.4 [+1.2, +4.3], ski@0.05 +2.5 [+0.8, +4.7], moderate crops ski +1.3 [+0.0, +3.1], SiamFC tracker
   crop ski +1.9 [+0.1, +4.0], refined +1.5 [−0.3, +4.2]. Tips, toes and heels gain; the left ski tail loses (84.8 →
   78.3), the joint the keep rule kept least.
-- **Next:** C2 (commit + push) → `test` once → D29 test result → the report table `tab:pseudo` (extra).
+- **C2** = `624b1a4` (pushed); both clones were on it for the test run.
+- **Test (2026-11-15, the single run, at `624b1a4`; evidence `results/step6b/{test,followcam}/`):** exit 0; the E2
+  cells equal the frozen D27 tables; `final/test` and `final/followcam` unchanged. PL − E2: **other-event test ski
+  +8.1 [+3.2, +13.9]** (81.2 → 89.3; 2 videos, 76 images), body +6.0 [+2.0, +11.1]; training-event video ski −0.9
+  [−1.4, −0.5]; all test ski +0.8 [−0.2, +2.0]; follow-cam ski −0.9 [−3.8, +1.1]. System (SiamFC tracks), other
+  events: refined crop ski +5.5 [+0.5, +10.6]. Per joint: tips, toes and heels gain, ski tails lose (test right tail
+  92.6 → 86.9).
+- **Report:** `final_report/main.tex` has Section `sec:extra_pl` (outline) and Table `tab:pseudo`, labeled an extra.
+  It also has pointers in Setup, Analysis, Limitations, Future work, the AI disclosure, a `\tbd` on the branch name
+  in the code sentence, and the Noisy Student citation (`xie2020self`). The SINGLE-EVENT comment says part (a) can
+  be shortened but not removed: E2, the main result, still trains on one event.
+- **Lite, not full:** the report says what lite leaves out: a flip-averaged teacher, an image-level near-duplicate
+  check, a second round and the remaining frames. Those items are in Future work. A new student can't be tested
+  again (D29: test once). Only the near-duplicate check (no training, no test evaluation) remains a reasonable
+  addition, if Ruichao wants it.
+- **Committed and pushed** on `pseudo` after the test run: the test evidence, D29's test result, these notes,
+  CLAUDE.md and the report. Merging `pseudo` into `main` waits until Ruichao asks.
 - **Laptop caution:** never overwrite `results/step6b/run_pseudo.sh` in the WSL clone while a stage is running it
   (bash reads scripts as it goes).
 
