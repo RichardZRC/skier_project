@@ -182,39 +182,25 @@ refined crops (Table~\ref{tab:system}; Figure~\ref{fig:strata}).
 
 \subsection{Pose model alone: the augmentation study}
 \label{sec:pose_alone}
-\outline{Budget $\approx$220 words. Table~\ref{tab:pose}: val chose the recipe, test and follow-cam evaluated E1 and E2
-once. Facts to discuss (priority first):
-\begin{itemize}
-  \item The selection (val): E2 has the highest ski @0.1 (93.1) and no recipe lost body accuracy (val body 95.2 /
-    95.5 / 96.9 / 97.1 for E1--E4), so the rule fixed in advance picked E2. Under moderate crop error E2's lead
-    grows (+2.5 [1.5, 3.6]). E3/E4 (blur, occlusion) help body, not skis.
-  \item E1 vs E0, shared body landmarks: @0.1 +1.5 [$-1.0$, 3.7] (no clear difference); @0.05 +4.9 [2.6, 7.0].
-  \item E2 vs E1: test ski @0.1 +0.7 [$-0.3$, 1.5] (val +1.2 [0.1, 2.3]); ski @0.05 +1.2 [0.2, 2.2] (val +1.5);
-    body $-0.5$ [$-1.3$, 0.2]. The rule fixed in advance picked E2 on val.
-  \item Moved here from Dataset (your choice, 2026-11-16): E2 ski 98.1\% on the training-event test video vs 81.2\%
-    on the other two (62.3\% Trentino 2013, 85.0\% Snowplanet 2011; Table~\ref{tab:extras}(b)). Why it matters:
-    80\% of the test ski labels come from the training-event video, so the overall 94.8 is about $0.8\times98.1 +
-    0.2\times81.2$ and mostly reflects the familiar event (your interpretation, if you use it).
-  \item Val $\to$ test: E2 ski 93.1 $\to$ 94.8, but this comparison is confounded (SINGLE-EVENT, Dataset section):
-    one test video, from the training event, holds 1,764 of the 2,197 ski labels (per seed) at 96.7--98.1\%; the
-    other two, from other events, reach 62--87\% (per-video rows). \tbd{Use the cross-event breakdown here instead
-    of claiming ``no drop''.} Facts (post hoc; E2 column of Table~\ref{tab:extras}(b), full breakdown in appendix
-    Table~\ref{tab:cross_event}): E2 ski 98.1 on the training-event
-    test video, 81.2 on the other-event test videos, 93.1 on val (all other events), 78.1 on follow-cam. E2 $-$ E1
-    ski is positive on the training-event video (+1.4), val (+1.2) and follow-cam (+4.6), but not on the other-event
-    test videos ($-2.3$ [$-6.4$, 0.9]; 2 videos, 76 images). The SiamFC crop's ski loss is concentrated in the
-    training-event video (reference $-$ tracker +32.7) vs +3.7 [$-2.7$, 9.1] on the other events. Check the Analysis
-    bullet ``crop jitter helps most where crops differ from training'' against these numbers.
-  \item Follow-cam (different camera setup): ski drops to 73.5 (E1) / 78.1 (E2); E2 $-$ E1 +4.6 [2.9, 6.7]
-    (intervals over its 6 videos); body stays at 97.5.
-  \item Why follow-cam is weak on skis: a viewpoint the model never saw (\texttt{results/step8/followcam\_views.txt},
-    from the dataset's view flags). Every follow-cam image includes a back view and 46\% are back-only, vs 14\% with
-    any back view and 1\% back-only in training. The loss sits at the ski \emph{ends}: E2 tips 57--60, tails 66--72,
-    while boots (toes, heels) stay at 90--95 and body at 97.5; on val the same ski points reach 85--97. From behind,
-    the skis point away from the camera (foreshortened, tips hidden by the legs). Crop jitter lifts the tails by
-    14--16 points (E1 52--56 $\to$ E2 66--72), most of E2's +4.6.
-  \item The 50-epoch problem (val): ski tails barely learned, seed-dependent; 150 epochs fixed it for all 8 runs.
-\end{itemize}}
+% Ruichao's text (2026-11-16), proofread. The follow-cam viewpoint facts moved to the Analysis outline.
+Table~\ref{tab:pose}'s validation results select E2 under the rule fixed in advance: ski PCK@0.1 is 93.1\%, versus
+91.9/92.0/91.0\% for E1/E3/E4, with no recipe losing body accuracy. E2 $-$ E1 is $+1.2$ points [0.1, 2.3], rising to
+$+2.5$ [1.5, 3.6] under moderate crop error. E3/E4 improve body accuracy ($+1.7$/$+1.9$) but not ski accuracy.
+
+Against E0, which predicts no skis, E1 shows no clear difference on the 10 shared body landmarks at PCK@0.1 ($+1.5$
+[$-1.0$, 3.7]) but improves at the stricter PCK@0.05 ($+4.9$ [2.6, 7.0]). On the test set, evaluated once, E2 $-$ E1
+shows no clear difference for ski PCK@0.1 ($+0.7$ [$-0.3$, 1.5]) or body PCK@0.1 ($-0.5$ [$-1.3$, 0.2]), but gains
+$+1.2$ [0.2, 2.2] at ski PCK@0.05.
+
+However, 80\% of the test ski labels come from the training-event video: E2 scores 98.1\% there versus 81.2\% on the
+other two videos (Table~\ref{tab:extras}(b), E2 column; Trentino 2013: 62.3\%, Snowplanet 2011: 85.0\%). Thus the
+overall 94.8\% $\approx 0.8\times98.1 + 0.2\times81.2$, and the validation-to-test rise is confounded by event
+composition. Post hoc, E2 $-$ E1 is $+1.4$ [0.8, 2.1] on the training event but $-2.3$ [$-6.4$, 0.9] on the
+other-event test videos (two videos, 76 images).
+
+Under follow-cam's different camera setup, ski accuracy falls to 73.5\%/78.1\% for E1/E2 (E2 $-$ E1: $+4.6$ [2.9,
+6.7], intervals over its six videos); body stays at 97.4/97.5\%. Crop jitter helps on follow-cam; gains across events
+remain uncertain.
 
 \begin{table}[h]
   \centering
@@ -390,6 +376,12 @@ on test, and neither replaces Tables~\ref{tab:pose}--\ref{tab:system}. Facts, (a
     suggesting the two overlap; on test it does not (+1.6 $\to$ +1.9). The milestone's claim should not be repeated.
   \item Crop jitter helps most where crops differ from training: under tracker crops (+1.6) and on follow-cam
     (+4.6), not on clean test crops (+0.7, no clear difference). Your interpretation.
+  \item Why follow-cam is weak on skis (moved from 5.2): a viewpoint the model never saw
+    (\texttt{results/step8/followcam\_views.txt}, from the dataset's view flags). Every follow-cam image includes a back
+    view and 46\% are back-only, vs 14\% with any back view and 1\% back-only in training. The loss sits at the ski
+    \emph{ends}: E2 tips 57--60, tails 66--72, while boots (toes, heels) stay at 90--95 and body at 97.5; on val the
+    same ski points reach 85--97. From behind, the skis point away from the camera (foreshortened, tips hidden by the
+    legs). Crop jitter lifts the tails by 14--16 points (E1 52--56 $\to$ E2 66--72), most of E2's +4.6.
   \item Two kinds of generalization gap: new \emph{events} (other-event test 81.2, val 93.1 vs 98.1 on the training
     event; Table~\ref{tab:extras}(b), E2 column) and a new \emph{viewpoint} (follow-cam: rear views, ski tips/tails
     57--72). More broadcast data from other events addresses the first; only rear-view training data addresses the
