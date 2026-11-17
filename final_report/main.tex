@@ -109,84 +109,79 @@ All entries below are checked and in \texttt{references.bib}.
 \end{itemize}}
 
 \section{Dataset}
-\outline{Budget $\approx$180 words, including the single-event point. \begin{itemize}
-  \item Ski 2DPose~\cite{bachmann2019motion}: 1,982 images, 16 alpine videos (Creative Commons YouTube sources),
-    sparse labels in 158 single-camera segments, 24 landmarks with visibility flags.
-  \item Our split by source video: train 4 videos / 1,194 images, val 3 / 293, test 3 / 360; the 6 follow-cam videos
-    (134 images) are a separate set, evaluated once; 1 record excluded. Only visible labels are supervised and scored
-    (val 3,759 body / 1,752 ski labels; test 4,664 / 2,197 per seed). Val labels verified against their video frames.
-  \item SkiTB~\cite{dunnhofer2024tracking} (CC BY-NC 4.0): skier boxes, no landmarks, 100 alpine sequences; official
-    athlete split (53/6/41 sequences); single-camera clips: 75 val (12,925 scored frames), 471 test. Frame rates
-    (25/30 fps) estimated per sequence from frame span and race time.
-  \item Preprocessing: reference box tight around reliable body + ski labels, $\times1.25$, fitted to 3:4, warped
-    to $256\times192$; targets $64\times48$ Gaussian heatmaps ($\sigma=2$ px). Standard augmentation: flip
-    ($p=0.5$, left/right swapped), rotation $\pm15^\circ$, scale 0.8--1.2.
-  \item Pretrained weights: MMPose COCO HRNet-W32 (COCO keypoints); SiamFC released weights (training script
-    defaults to GOT-10k).
-  \item Optional (template): example images; Figure~\ref{fig:qualitative} shows val frames with labeled ski points.
-  % SINGLE-EVENT placeholder (2026-11-15). Part (a) can go if pseudo-labels on SkiTB training races diversify the
-  % training data; part (b) is about the test set and stays either way. See also the pointers marked SINGLE-EVENT.
-  % Update 2026-11-15 (D29 test run): pseudo-labels did help on other events (other-event test ski +8.1 [3.2, 13.9],
-  % Table tab:extras (b)), so part (a) can be shortened to "the main model trains on one event; Section sec:extra adds
-  % 50 other races as pseudo-labels". It cannot go entirely: E2, the main result, still trains on one event.
-  \item \tbd{Single-event data, to elaborate.} (a) \emph{Training data:} all 4 training videos come from one
-    event, the Almaty 2017 Universiade (slalom, combined, giant slalom, super-G). Val is from other events
-    (Trentino 2013, Granada 2015). (b) \emph{Test composition:} one test video (Almaty 2017 giant slalom) is from the
-    training event and holds 80\% of the test ski labels (E2 ski 98.1\% there); the other two (Trentino 2013,
-    Snowplanet 2011) reach 62.3\% and 85.0\%. Cross-event breakdown in the main text: the E2 column of
-    Table~\ref{tab:extras}(b); with intervals: appendix Table~\ref{tab:cross_event}. Follow-cam (another camera
-    setup) is the out-of-distribution check.
-\end{itemize}}
+% Ruichao's text (2026-11-16), proofread; the per-video accuracies moved to Section 5.2.
+Ski 2DPose~\cite{bachmann2019motion} contains 1,982 images from 16 alpine YouTube videos (Creative Commons),
+sparsely annotated across 158 single-camera segments with 24 visibility-flagged landmarks (14 body, 8 ski, 2 pole).
+To prevent near-duplicate leakage, we split by video: train/val/test contain 4/3/3 videos and 1,194/293/360 images.
+Six follow-cam videos (134 images) provide a separate out-of-distribution evaluation, performed once. One record (one
+body point, no ski points) lacks a reference box and is excluded. Only visible labels are supervised and scored. All
+four training videos come from the Almaty 2017 Universiade; validation uses Trentino 2013 and Granada 2015. The Almaty
+giant-slalom test video contributes 80\% of the test ski labels (accuracy by event: Table~\ref{tab:extras}(b),
+Section~\ref{sec:pose_alone}).
+
+SkiTB~\cite{dunnhofer2024tracking} (CC BY-NC 4.0) provides boxes without landmarks for 100 alpine sequences, with an
+official athlete train/val/test split of 53/6/41; 50 of the 53 training races later supply pseudo-labels
+(Section~\ref{sec:extra}). Tracking uses single-camera clips: 75 validation clips (12,925 scored frames) and 471 test
+clips. Sequence frame rates (25 or 30 fps) are estimated from frame span and race time. For pose crops, reference
+boxes tightly enclose the visible body and ski labels, are expanded $1.25\times$ and fitted to 3:4; crops are warped
+to $256\times192$. Targets are $64\times48$ Gaussian heatmaps ($\sigma=2$\,px). Standard augmentation uses horizontal
+flips ($p=0.5$; left/right labels swapped), $\pm15^\circ$ rotation, and 0.8--1.2 scaling.
 
 \section{Methods}
-\outline{Budget $\approx$300 words; the loss and refinement formulas count as text. \begin{itemize}
-  \item \emph{Pose model} (Figure~\ref{fig:pipeline}, bottom). HRNet-W32: high-resolution branch kept throughout,
-    parallel lower-resolution branches, repeated fusion; top-down (one person per crop). COCO-pretrained backbone
-    (28.5\,M parameters); the last $1\times1$ layer (32 $\to$ 17 channels for COCO) is replaced by a new, randomly
-    initialized one with $K=24$ outputs (792 parameters).
-  \item \emph{Loss.} Masked MSE over heatmaps:
-    $\mathcal{L} = \sum_{i,j} v_{ij} \operatorname{mean}_{u,v}(\hat H_{ij} - H_{ij})^2 / \max(1, \sum_{i,j} v_{ij})$,
-    $v_{ij}=1$ for a visible label inside the crop. Decoding: heatmap peak with MMPose's sub-pixel step; matches
-    MMPose's own inference to 0.014 px on average.
-  \item \emph{Optimization.} Adam~\cite{kingma2015adam}, batch 16; 3 warm-up epochs with the backbone frozen,
-    BatchNorm statistics included (only the new layer trains, lr $10^{-3}$), so the random layer does not disturb the
-    COCO features; then the whole network for 150 epochs at $10^{-4}$ (backbone) / $5\times10^{-4}$ (head),
-    $\times0.1$ at epochs 90 and 127;
-    best val ski PCK checkpoint; 2 seeds; identical data order within a seed.
-  \item \emph{Tracker-aware augmentation.} E1 standard; E2 crop jitter (center $\pm10\%$ per axis, size
-    $\times$0.9--1.1); E3 motion blur ($p=0.5$, 3--9 px) + occluding patch ($p=0.5$, 5--15\%); E4 all three.
-  \item \emph{Tracking and confidence.} SiamFC initialized once per clip; confidence = peak of its sum-normalized
-    response map; threshold by Youden's $J$~\cite{youden1950index} on val (ROC AUC 0.83 for failure, IoU $<0.1$).
-    The tracker is a swappable module: the same pipeline also runs with off-the-shelf STARK-ST50, compared in
-    Section~\ref{sec:extra} (its own threshold, same rule).
-  \item \emph{Pose crop from the tracker box:} expand the box $\times1.1$, then the usual 1.25 padding.
-  \item \emph{Pose-guided crop refinement (ours).} Pass 1 on the tracker crop; box $B = k_{\mathrm{ref}} \cdot
-    \mathrm{tight}\{\hat x_j : j \in \text{body} \cup \text{ski},\ s_j \ge s_{\min}\}$; crop like a training crop;
-    pass 2 is the output; fewer than 4 such points $\Rightarrow$ keep pass 1. No labels, no retraining.
-  \item \emph{Replay.} Tracker box $\times2.5$, fitted to 16:9, exponential smoothing ($\tau = 0.2$ s); on flagged frames
-    hold the center and zoom out; minimum size $\max(240\,\text{px}, H/3)$.
-\end{itemize}}
+% Ruichao's text (2026-11-16), proofread; trims (i)-(v) applied; 3 paragraphs and an inline refinement formula to save
+% space. The loss matches skier.pose.loss.masked_mse.
+The top-down HRNet-W32 (Figure~\ref{fig:pipeline}, bottom) processes one person per crop, repeatedly fusing a
+persistent high-resolution branch with parallel lower-resolution branches. We initialize its 28.5M-parameter backbone
+from MMPose's COCO checkpoint~\cite{mmpose2020,sun2019deep}, replacing the $1\times1$, 32$\to$17 output layer with a
+randomly initialized 32$\to$24 head (792 parameters). We minimize the masked heatmap MSE
+\[
+  \mathcal{L} = \frac{\sum_{i,j} v_{ij}\,\operatorname{mean}_{u,v}\big(\hat H_{ij}(u,v) - H_{ij}(u,v)\big)^2}
+                     {\max\big(1, \sum_{i,j} v_{ij}\big)},
+\]
+where $\hat H_{ij}$ and $H_{ij}$ are the predicted and target heatmaps of joint $j$ in sample $i$, and $v_{ij}=1$ for
+visible labels inside the crop, otherwise zero; masked joints contribute no gradient.
+
+We train with Adam~\cite{kingma2015adam} and batches of 16. Three warm-up epochs train only the head (learning rate
+$10^{-3}$), freezing backbone weights and BatchNorm statistics. Whole-network training then runs for 150 epochs
+(backbone $10^{-4}$, head $5\times10^{-4}$), reducing the rates tenfold at epochs 90 and 127. We retain the checkpoint
+with the best validation ski PCK (Section~\ref{sec:setup}); each of the two seeds uses the same data order for every
+recipe. E1 uses standard augmentation. Relative to E1, E2 adds tracker-like crop jitter (center $\pm10\%$ per axis;
+size $\times$0.9--1.1); E3 adds motion blur ($p=0.5$, 3--9\,px) and an occluding patch ($p=0.5$, 5--15\% of the
+crop); E4 adds all three. A predefined validation rule selects the recipe (Section~\ref{sec:pose_alone}).
+
+SiamFC uses the released siamfc-pytorch weights~\cite{bertinetto2016fully,huang2019siamfcpytorch} and is initialized
+once per clip from the clip's first-frame box. Confidence is the peak of its sum-normalized response map; Youden's $J$
+on the SkiTB validation clips~\cite{youden1950index} sets the threshold (failure: IoU $<0.1$; ROC AUC 0.83).
+Off-the-shelf STARK-ST50 can replace SiamFC (Section~\ref{sec:extra}). The tracker box is expanded before standard
+padding. Our geometric refinement constructs $B = k_{\mathrm{ref}}\cdot\operatorname{tight}\{\hat x_j : j \in
+\text{body}\cup\text{ski},\ s_j \ge s_{\min}\}$ from pass-1 predictions $\hat x_j$ and scores $s_j$ (their tight box,
+scaled by $k_{\mathrm{ref}}$), applies training preprocessing, and reruns the same model. With fewer than four
+qualifying points, pass 1 is kept. Refinement uses no labels or retraining. Replay exponentially smooths an enlarged
+16:9 tracker window with a minimum size; low-confidence frames hold its center and zoom out. Crop, refinement, and
+replay parameters appear in Setup.
 
 \section{Experiments and Results}
 \subsection{Setup}
-\outline{Budget $\approx$100 words. \begin{itemize}
-  \item Every choice made on val by a rule written before the run; test evaluated once (2026-11-12, commit
-    \texttt{bf546e3}; hashes of data splits, configs and checkpoints recorded first). Picks (grid in appendix
-    Table~\ref{tab:choices}): 150 fine-tune epochs (ski tails unlearned at 50), recipe E2, pose crop factor 1.1,
-    raw tracker score as confidence (AUC 0.83 vs 0.63), replay $\tau=0.2$ s and width 2.5, refinement $s_{\min}=0.3$,
-    $k_{\mathrm{ref}}=1.3$. Two extra runs on test came afterwards and are reported separately
-    (Section~\ref{sec:extra}); they changed nothing in the main result.
-  \item Baselines: E0 (COCO model, 10 shared body landmarks), E1 (plain fine-tuning); for the integrated system the
-    tracker crop is the baseline and the reference crop (needs labels) the upper bound.
-  \item Metrics: PCK@$t$ ($t$ times the reference-box diagonal; 0.1 and 0.05), body and ski separately, poles
-    supplementary; tracking: IoU, success AUC, the SkiTB toolkit's F-score; replay: box containment, ski ends inside,
-    acceleration. 95\% intervals: cluster bootstrap~\cite{efron1994introduction} over segments within videos (pose)
-    or SkiTB sequences (tracking), 10,000 resamples.
-  \item Integration experiment: tracker starts at each segment's first labeled frame; every later labeled frame is
-    scored on reference, tracker and refined crops against the same labels.
-\end{itemize}}
+\label{sec:setup}
+% Ruichao's text (2026-11-16), proofread.
+All settings were chosen on validation by rules fixed before each run (appendix Table~\ref{tab:choices}). After
+recording split, configuration and checkpoint hashes, the main test evaluation ran once (2026-11-12, commit
+\texttt{bf546e3}); two later runs changed none of the main results (Section~\ref{sec:extra}). The choices were 150
+fine-tune epochs (ski tails unlearned at 50), recipe E2 (Section~\ref{sec:pose_alone}), crop expansion $\times1.1$
+before the $\times1.25$ padding, raw SiamFC confidence (AUC 0.83 versus 0.63 for the relative score), replay
+$\tau=0.2$\,s and width $2.5\times$ the tracker box, and refinement $s_{\min}=0.3$, $k_{\mathrm{ref}}=1.3$.
+
+PCK@$t$ is the share of visible landmarks predicted within $t$ times the diagonal of the tight box around the labeled
+body and ski points ($t=0.1$, $0.05$); body and ski are reported separately, poles as a supplement. Tracking uses IoU,
+success AUC, and the SkiTB toolkit's F-score; replay uses box and ski-end containment and acceleration. The 95\%
+cluster-bootstrap intervals~\cite{efron1994introduction} use 10,000 resamples: segments within videos for pose, SkiTB
+sequences for tracking. Pose baselines are E0 (the COCO model, on 10 shared body landmarks) and E1 (plain
+fine-tuning). For the integrated system, tracking starts at each segment's first labeled frame; subsequent labeled
+frames are scored against the same labels using reference (label-dependent upper bound), tracker (baseline), and
+refined crops (Table~\ref{tab:system}; Figure~\ref{fig:strata}).
 
 \subsection{Pose model alone: the augmentation study}
+\label{sec:pose_alone}
 \outline{Budget $\approx$220 words. Table~\ref{tab:pose}: val chose the recipe, test and follow-cam evaluated E1 and E2
 once. Facts to discuss (priority first):
 \begin{itemize}
@@ -196,6 +191,10 @@ once. Facts to discuss (priority first):
   \item E1 vs E0, shared body landmarks: @0.1 +1.5 [$-1.0$, 3.7] (no clear difference); @0.05 +4.9 [2.6, 7.0].
   \item E2 vs E1: test ski @0.1 +0.7 [$-0.3$, 1.5] (val +1.2 [0.1, 2.3]); ski @0.05 +1.2 [0.2, 2.2] (val +1.5);
     body $-0.5$ [$-1.3$, 0.2]. The rule fixed in advance picked E2 on val.
+  \item Moved here from Dataset (your choice, 2026-11-16): E2 ski 98.1\% on the training-event test video vs 81.2\%
+    on the other two (62.3\% Trentino 2013, 85.0\% Snowplanet 2011; Table~\ref{tab:extras}(b)). Why it matters:
+    80\% of the test ski labels come from the training-event video, so the overall 94.8 is about $0.8\times98.1 +
+    0.2\times81.2$ and mostly reflects the familiar event (your interpretation, if you use it).
   \item Val $\to$ test: E2 ski 93.1 $\to$ 94.8, but this comparison is confounded (SINGLE-EVENT, Dataset section):
     one test video, from the training event, holds 1,764 of the 2,197 ski labels (per seed) at 96.7--98.1\%; the
     other two, from other events, reach 62--87\% (per-video rows). \tbd{Use the cross-event breakdown here instead
