@@ -16,6 +16,8 @@ CLAUDE.local.md
 # Overlays, contact sheets, clips and predictions stay under $SKIER_RESULTS.
 # The report's qualitative figure shows dataset frames: it goes to Overleaf only.
 final_report/figures/qualitative_*.png
+# The local preview of the final report (rebuilt after every report change) contains dataset frames.
+final_report_preview.pdf
 # The pseudo-label figure (pseudo_fig.py) shows SkiTB training frames (CC BY-NC 4.0).
 final_report/figures/pseudo_*.png
 # Stills from the STARK demo (stark_demo_stills.sh) are dataset frames too.

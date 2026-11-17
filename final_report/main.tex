@@ -76,8 +76,12 @@
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=\linewidth]{figures/pipeline.pdf}
-  \caption{The system, per video frame. Only the pose model is trained; refinement runs it twice.}
+  \includegraphics[width=\linewidth]{figures/pipeline.pdf}\\[6pt]
+  \includegraphics[width=\linewidth]{figures/hrnet.pdf}
+  \caption{Top: the system, per video frame. Only the pose model is trained; refinement runs it twice. Bottom: the
+  pose model. HRNet-W32~\cite{sun2019deep} keeps a 1/4-resolution branch throughout and adds lower-resolution
+  branches that exchange information after every module (vertical lines). Its COCO weights (blue) stay frozen for 3
+  warm-up epochs while the new 24-landmark output layer (yellow) learns; then the whole network is fine-tuned.}
   \label{fig:pipeline}
 \end{figure}
 
@@ -136,14 +140,18 @@ All entries below are checked and in \texttt{references.bib}.
 
 \section{Methods}
 \outline{Budget $\approx$300 words; the loss and refinement formulas count as text. \begin{itemize}
-  \item \emph{Pose model.} HRNet-W32: high-resolution branch kept throughout, parallel lower-resolution branches,
-    repeated fusion; top-down (one person per crop). Replace the last $1\times1$ layer to output $K=24$ heatmaps.
+  \item \emph{Pose model} (Figure~\ref{fig:pipeline}, bottom). HRNet-W32: high-resolution branch kept throughout,
+    parallel lower-resolution branches, repeated fusion; top-down (one person per crop). COCO-pretrained backbone
+    (28.5\,M parameters); the last $1\times1$ layer (32 $\to$ 17 channels for COCO) is replaced by a new, randomly
+    initialized one with $K=24$ outputs (792 parameters).
   \item \emph{Loss.} Masked MSE over heatmaps:
     $\mathcal{L} = \sum_{i,j} v_{ij} \operatorname{mean}_{u,v}(\hat H_{ij} - H_{ij})^2 / \max(1, \sum_{i,j} v_{ij})$,
     $v_{ij}=1$ for a visible label inside the crop. Decoding: heatmap peak with MMPose's sub-pixel step; matches
     MMPose's own inference to 0.014 px on average.
-  \item \emph{Optimization.} Adam~\cite{kingma2015adam}, batch 16; 3 warm-up epochs with the backbone frozen (head
-    $10^{-3}$), then 150 epochs at $10^{-4}$ (backbone) / $5\times10^{-4}$ (head), $\times0.1$ at epochs 90 and 127;
+  \item \emph{Optimization.} Adam~\cite{kingma2015adam}, batch 16; 3 warm-up epochs with the backbone frozen,
+    BatchNorm statistics included (only the new layer trains, lr $10^{-3}$), so the random layer does not disturb the
+    COCO features; then the whole network for 150 epochs at $10^{-4}$ (backbone) / $5\times10^{-4}$ (head),
+    $\times0.1$ at epochs 90 and 127;
     best val ski PCK checkpoint; 2 seeds; identical data order within a seed.
   \item \emph{Tracker-aware augmentation.} E1 standard; E2 crop jitter (center $\pm10\%$ per axis, size
     $\times$0.9--1.1); E3 motion blur ($p=0.5$, 3--9 px) + occluding patch ($p=0.5$, 5--15\%); E4 all three.
