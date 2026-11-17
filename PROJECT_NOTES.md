@@ -16,6 +16,15 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
 
 **Final report limit (course rule, Ruichao 2026-11-16):** at most 5 pages, excluding references, contributions and
 the appendix. TAs may not look at the appendix, so every important result must be in the main text.
+- **Layout for 5 pages (2026-11-16):**
+  - Main-text floats: 3 figures (pipeline, strata, qualitative) and 3 tables:
+    - `tab:pose`: E0–E4 with the val selection, test and follow-cam;
+    - `tab:system`;
+    - `tab:extras`: (a) STARK, (b) PL, whose E2 column is the cross-event breakdown.
+  - The choices table and the val tables are appendix backup; their picks are stated in Setup.
+  - Each section's outline has a word budget; they total about 2,140 words.
+  - Test with every outline replaced by dummy text of its budget: the main text ends on page 5 up to +20%
+    (2,568 words) and spills at +30%.
 
 ### 2026-11-14: Step 7b, STARK-ST50 as a labeled post-freeze extra (D28), merged into `main` 2026-11-15
 - **Branch:** Ruichao asked to "branch out" for STARK (2026-11-12), so this work was done on `stark` (from `main` @
