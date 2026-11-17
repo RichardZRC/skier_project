@@ -4,7 +4,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 **Deadline: Fri 2026-11-20** (D14; plan §4). If the schedule slips, cut stretch goals first, then extra seeds, then E2/E3.
 
-**Read first:** `PROJECT_NOTES.md` (start with its **Handoff** section: machine state, what's waiting, AWS lessons; then status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D28; append only).
+**Read first:** `PROJECT_NOTES.md` (start with its **Handoff** section: machine state, what's waiting, AWS lessons; then status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D30; append only).
 
 ## Working rules (Ruichao's instructions; follow them exactly)
 
@@ -26,7 +26,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 ## Environment
 
-- Run the tests with `.venv/bin/python -m pytest -q`. Currently **374 tests**; all must pass on the GPU machine (374 passed on the laptop, 2026-11-15). The Mac should skip 17 (not yet run there): 9 `torch`, 4 `stack`, the real-STARK test (it needs CUDA and the vendored STARK), the SkiTB-toolkit cross-check (it needs the vendored toolkit) and two figure tests (they need matplotlib).
+- Run the tests with `.venv/bin/python -m pytest -q`. Currently **381 tests**; all must pass on the GPU machine (381 passed on the laptop, 2026-11-16). The Mac should skip 17 (not yet run there): 9 `torch`, 4 `stack`, the real-STARK test (it needs CUDA and the vendored STARK), the SkiTB-toolkit cross-check (it needs the vendored toolkit) and two figure tests (they need matplotlib).
   - Markers: `torch` needs PyTorch; `stack` needs the pinned torch, mmcv and mmpose; `gpu` needs CUDA.
 - **Paths:** code reads `SKIER_DATA` (default `~/skier_data`) and `SKIER_RESULTS` (default `~/skier_results`) through `skier.paths`. Never hard-code absolute paths.
 - **Data on this Mac:**
@@ -93,7 +93,7 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 
 | Area | Modules (`src/skier/…`) |
 | --- | --- |
-| Data | `data/ski2dpose_raw.py` (raw labels, path template, info), `data/ski2dpose.py` + `data/records.py` (`PoseRecord`), `data/audit.py`, `data/overlays.py`, `data/alignment.py`, `data/skitb.py` (layout confirmed 2026-10-18), `splits.py` |
+| Data | `data/ski2dpose_raw.py` (raw labels, path template, info), `data/ski2dpose.py` + `data/records.py` (`PoseRecord`), `data/audit.py`, `data/overlays.py`, `data/alignment.py`, `data/skitb.py` (layout confirmed 2026-10-18), `data/dedup.py` (perceptual hash, near-duplicate search; D30), `splits.py` |
 | Geometry and drawing | `geometry.py`, `viz.py`, `schema.py` (+ `configs/ski24_schema.json`) |
 | Pose | `pose/preprocess.py`, `pose/heatmap.py`, `pose/infer.py`, `pose/model.py`, `pose/coco_map.py`, `pose/eval_generic.py` (E0), `pose/crosscheck.py`, `pose/augment.py`, `pose/dataset.py`, `pose/loss.py`, `pose/train.py`, `pose/crop_error.py`, `pose/evaluate.py`, `pose/compare.py`, `pose/aug_preview.py`, `pose/pseudo.py` (D29 pseudo-labels: teacher, keep rule, filter rule, loader, epoch mixing; `make_pseudo_labels.py`, `train_pose.py --pseudo-labels`) |
 | Tracking and replay | `tracking/siamfc_adapter.py`, `tracking/stark_adapter.py` (D28), `tracking/trackers.py` (tracker choice, `tracker.json`, the guard), `tracking/frames.py`, `tracking/run.py`, `replay/controller.py`, `replay/render.py`, `replay/run.py` |

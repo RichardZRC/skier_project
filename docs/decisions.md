@@ -464,3 +464,36 @@ Seeded from the [six-week plan](../skier_implementation_plan.md) §2.
     - The all-test number barely moves because 80% of test ski labels come from the training-event video.
     - The other-event intervals rest on 2 videos (segments within videos, D25).
   - It stays a labeled post-freeze extra; D27 (E2) remains the main result.
+
+## D30 — Post-hoc checks of the D29 result: per-joint evidence, a near-duplicate check, a pseudo-label figure (2026-11-16)
+- Why: the report states per-joint findings and relies on event metadata as the only leakage guard. Ruichao asked for the cheap checks (2026-11-16). None of them evaluates a model again or changes D29's result.
+- **Per-joint evidence** (descriptive): `results/step6b/per_joint.py` rebuilds per-joint PCK@0.1 from the predictions of exactly the runs each `results/step6b/<part>/compare.json` compared, with D25 paired intervals per event group. Every joint is checked against each run's stored per-joint count, and the joints must add up to the compare.json group cells.
+- **Near-duplicate check**, rule written before any distance was computed:
+  - **Hash:** a 64-bit DCT perceptual hash of the full frame (`skier.data.dedup`): image read in grayscale at 1/4 scale, resized to 32 × 32, top-left 8 × 8 DCT coefficients compared with their median. Distance = Hamming distance.
+  - **Reference set:** every frame of every clip of the 50 SkiTB training races used in D29, not only the 6,307 kept frames, so shared footage would match within one frame. Each reference is marked as a kept pseudo-label frame or not.
+  - **Queries:** all Ski 2DPose val (293), test (360) and follow-cam (134) images. They are hashed, never displayed.
+  - **Controls, computed in the same run before the query distances:**
+    - **re-encode:** each query vs. a copy of itself resized to 1280 × 720 and JPEG-encoded at quality 75;
+    - **adjacent frames:** 2,000 random same-clip pairs of SkiTB frames 1 frame apart (seed 230);
+    - **null:** 2,000 random reference frames vs. their nearest frame from another race (seed 230).
+  - **Threshold:** T = max(99th percentile of the re-encode distances, 95th percentile of the adjacent-frame distances).
+  - **Flag:** a query whose nearest reference frame is ≤ T.
+  - **Reading:**
+    - No flags and a null rate ≤ 5% (null frames whose nearest other-race frame is ≤ T) means no near-duplicates were found.
+    - A null rate > 5% means the hash can't separate footage at T, so the result is weak evidence either way.
+    - Flagged val images may be viewed next to their match. Flagged test or follow-cam images are listed with their metadata only, and Ruichao decides.
+- **Pseudo-label figure:** 6 kept frames, one from each of 6 races, both picked at random with seed 230. Each panel crops around the SkiTB box and draws kept points filled and dropped teacher points hollow. It shows SkiTB training frames (CC BY-NC 4.0, credited in the caption), so it goes to Overleaf, not git.
+- Results (2026-11-16):
+  - **Per joint** (`results/step6b/per_joint/`): every joint matched the stored counts. This refines D29's per-joint note:
+    - On the other-event test videos every body and ski joint gains or stays level, the ski tails included (right +3.2 [−5.8, +10.7], left +8.5 [−2.5, +20.3]).
+    - The ski-tail losses are on the training-event video (right 95.6 → 88.4, −7.3 [−10.3, −3.8]; left −2.7 [−5.6, −0.3]), on val (left −6.5 [−12.9, −0.4]) and on follow-cam (right −8.3 [−14.5, −3.3]).
+    - D29's all-test tail loss (right −5.7) comes from the training-event video.
+  - **Near-duplicate check** (`results/step6b/near_duplicates/`): **weak evidence by the rule.**
+    - Setup: 106,298 reference frames (50 races; 6,307 kept frames) and 787 queries.
+    - Threshold: re-encode p99 2, adjacent-frame p95 14, so T = 14. The null rate at T is 90.6%: different SkiTB races are typically 12 bits apart (null median), so the hash doesn't separate footage at T.
+    - Nearest distances: val median 14 (min 4), test 14 (min 6), follow-cam 12 (min 4). The evaluation images are no closer to SkiTB than SkiTB races are to each other.
+    - Follow-cam, a camera setup SkiTB doesn't contain, reaches distances as small as val and test, so small distances here mean only "snow and a skier".
+    - The 4 closest val pairs (distances 4–8), viewed as the rule allows, are different footage in every case: Universiade broadcasts vs. World Cup and Olympic broadcasts from other broadcasters. Test and follow-cam pairs were not viewed.
+    - The leakage guard therefore stays the event metadata (D29).
+  - **Figure:** `final_report/figures/pseudo_fig.py` → `pseudo_examples.png` (gitignored). The picks are AL0001, AL0012, AL0053, AL0056, AL0085 and AL0092.
+  - **Code:** `skier.data.dedup` with 7 tests. The mutation check caught 10/10; its one survivor was fixed by a new test case (a single reference group broadcasting silently). Full suite 381 passed on the laptop.

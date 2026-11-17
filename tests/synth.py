@@ -54,6 +54,15 @@ def make_blank_images(
                 cv2.imwrite(str(path), img)
 
 
+def textured_image(seed: int, size: tuple[int, int] = (640, 360), blur: int = 31) -> np.ndarray:
+    """A smooth random BGR texture (blurred noise stretched to 0-255): distinct seeds give unrelated images."""
+    w, h = size
+    noise = np.random.default_rng(seed).uniform(0, 255, size=(h, w, 3)).astype(np.float32)
+    img = cv2.GaussianBlur(noise, (blur, blur), 0)
+    img = (img - img.min()) / max(float(img.max() - img.min()), 1e-6) * 255
+    return img.astype(np.uint8)
+
+
 def square_frame(k: int, size=(640, 360), step: int = 8, square: int = 40, x0: int = 20) -> np.ndarray:
     w, h = size
     frame = np.full((h, w, 3), 128, dtype=np.uint8)

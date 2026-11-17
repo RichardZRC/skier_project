@@ -6,13 +6,16 @@ Companion docs: `README.md` (setup and commands), `CLAUDE.md` (rules for Claude 
 `skier_proposal.pdf`, `skier_implementation_plan.md` (status table at the top), `skier_step_1_guide.md`,
 `skier_step_1_code_spec.md`, `docs/decisions.md`.
 
-Last updated: 2026-11-15
+Last updated: 2026-11-16
 
 ---
 
 ## Handoff: where things stand (2026-10-26)
 
 Start here in a new session, on any machine. Claude's own notes stay on the machine they were written on, so everything a new session needs is in the repo: this section, `CLAUDE.md`, the decisions log and the plan's status table.
+
+**Final report limit (course rule, Ruichao 2026-11-16):** at most 5 pages, excluding references, contributions and
+the appendix. TAs may not look at the appendix, so every important result must be in the main text.
 
 ### 2026-11-14: Step 7b, STARK-ST50 as a labeled post-freeze extra (D28), merged into `main` 2026-11-15
 - **Branch:** Ruichao asked to "branch out" for STARK (2026-11-12), so this work was done on `stark` (from `main` @
@@ -47,6 +50,20 @@ Start here in a new session, on any machine. Claude's own notes stay on the mach
   both good AL0027 cam 3 (0.697 / 0.850), AL0044 cam 3 (0.641 / 0.770); both bad AL0073 cam 10 (0.007 / 0.285);
   STARK better AL0026 cam 4 (0.037 / 0.758), AL0081 cam 7 (0.048 / 0.746; SiamFC locks onto the TV logo).
   `results/step7b/demo_set.json` records them.
+
+### 2026-11-16: post-hoc checks of the pseudo-label result (D30)
+- **Per joint** (`results/step6b/per_joint.py` → `per_joint/`): on the other-event test videos every joint gains or
+  stays level, ski tails included. The ski-tail losses are on the training-event video (right −7.3 [−10.3, −3.8]),
+  val (left −6.5) and follow-cam (right −8.3). The report, D30 and the README say this now.
+- **Near-duplicate check** (`results/step6b/near_duplicates.py`, rule in D30 first; `skier.data.dedup`, 7 tests,
+  mutation 10/10): inconclusive by the rule.
+  - The perceptual hash doesn't separate different SkiTB races (null rate 90.6% at T = 14).
+  - The evaluation images are no closer to SkiTB than SkiTB races are to each other.
+  - The 4 closest val matches, viewed, are different broadcasts.
+- **Figure:** `final_report/figures/pseudo_fig.py` → `pseudo_examples.png` (gitignored; upload to Overleaf). It is
+  Figure `fig:pseudo` in the appendix.
+- Full suite 381 passed on the laptop. Not committed yet (Ruichao asks). The Mac check (17 skips expected) waits for a
+  Mac session.
 
 ### 2026-11-15: Step 6b, pseudo-labels on SkiTB training races (D29), on branch `pseudo`
 - **Why:** the cross-event gap (below). A teacher (the two E2 models) labels SkiTB training frames; a student `PL`

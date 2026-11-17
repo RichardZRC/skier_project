@@ -30,8 +30,8 @@ flowchart LR
   - SiamFC on 471 SkiTB test clips: mean IoU 0.404, toolkit F-score 0.406.
 - **Extra experiment, STARK-ST50 in place of SiamFC (D28):** `results/step7b/test/compare.md`. SkiTB mean IoU 0.679 vs. 0.404; E2 ski PCK@0.1 under tracker crops 86.5% vs. 67.7%. SiamFC stays the main result.
 - **Extra experiment, pseudo-labels from SkiTB training races (D29):** `results/step6b/test/compare.md`. On the other-event test videos, E2 ski PCK@0.1 81.2% → 89.3% (+8.1 [3.2, 13.9]); no gain on follow-cam. E2 stays the main result. See [Pseudo-labels](#pseudo-labels-from-unlabeled-races-extra-experiment-d29).
-- **Decisions:** D1–D29 in `docs/decisions.md`; running notes in `PROJECT_NOTES.md`.
-- **Tests:** 374 pass on the GPU machine (a Windows laptop with WSL2, D17; `docs/laptop_setup.md`). In the light environment the tests that need torch, mmpose, CUDA, the vendored STARK or SkiTB toolkit, or matplotlib skip.
+- **Decisions:** D1–D30 in `docs/decisions.md`; running notes in `PROJECT_NOTES.md`.
+- **Tests:** 381 pass on the GPU machine (a Windows laptop with WSL2, D17; `docs/laptop_setup.md`). In the light environment the tests that need torch, mmpose, CUDA, the vendored STARK or SkiTB toolkit, or matplotlib skip.
 
 ## Setup
 
@@ -199,7 +199,10 @@ All four training videos come from one event (Almaty 2017), and the cross-event 
 - **Student `PL`:**
   - E2's recipe: COCO init, `configs/pose/e2.yaml`, seeds 230 and 231, 3 + 150 epochs.
   - Each epoch uses every real training image plus as many pseudo-labeled frames (`train_pose.py --pseudo-labels`).
-- **Lite, not full:** no flip-averaged teacher; no image-level near-duplicate check (the leakage guard is event metadata); one round; about 1 in 10 eligible frames.
+- **Lite, not full:** no flip-averaged teacher; one round; about 1 in 10 eligible frames. The leakage guard is event metadata.
+- **Leakage check afterwards (D30, `results/step6b/near_duplicates/`):** a perceptual hash of every frame of the 50 races (106k) against all val, test and follow-cam images was inconclusive.
+  - Different SkiTB races are as close to each other as any match.
+  - The four closest val matches, inspected, are different broadcasts.
 - **Order of runs:**
   - The experiment was decided after the main test result, prompted by the cross-event breakdown.
   - The rules were committed before any label (`23eb8a7`). Val ran first (`624b1a4`), then test once (2026-11-15), whatever the val result.
@@ -236,7 +239,8 @@ Results (`results/step6b/{val,test,followcam}/compare.md`; seeds pooled, referen
 
 - **Where it gains:** on the events the pseudo-labels add.
 - **No gain on follow-cam:** follow-cam needs rear views, and SkiTB is front and side broadcast footage.
-- **Weak spot:** the ski tails get worse; they are the joints the filter kept least.
+- **Weak spot:** the ski tails, the joints the filter kept least, get worse on the training-event video, val and follow-cam, though not on the other-event test videos (per joint: `results/step6b/per_joint/per_joint.md`).
+- **Examples:** `final_report/figures/pseudo_fig.py` draws kept and dropped pseudo-label points on six SkiTB training frames. It shows dataset frames, so the image isn't committed.
 
 ## Evaluation protocol (summary)
 

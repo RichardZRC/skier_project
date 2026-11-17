@@ -348,18 +348,25 @@ Table~\ref{tab:pose}. Facts:
   \item Data: 6,307 of 7,997 sampled frames from 50 races kept (3 races in the Trentino region left out, possibly the
     same slopes as Ski 2DPose videos). Each epoch: all 1,194 real images plus as many pseudo frames; otherwise E2's
     recipe, 2 seeds.
-  \item What ``lite'' leaves out (chosen for time): no flip-averaged teacher (2 predictions per point, not 4); no
-    image-level near-duplicate check against val/test/follow-cam (the guard is event metadata: no Ski 2DPose event
-    among the 53 races); one round only (the student does not become the next teacher); about 1 in 10 eligible
-    frames sampled (110k frames available).
+  \item What ``lite'' leaves out (chosen for time): no flip-averaged teacher (2 predictions per point, not 4); one
+    round only (the student does not become the next teacher); about 1 in 10 eligible frames sampled (110k frames
+    available). The leakage guard is event metadata (no Ski 2DPose event among the 53 races).
+  \item Leakage check afterwards (post hoc, rule fixed first; \texttt{results/step6b/near\_duplicates/}): a perceptual
+    image hash of every frame of the 50 races (106k) vs all val/test/follow-cam images was inconclusive: different
+    SkiTB races are themselves as close (median 12 of 64 bits) as any match (val/test median 14), and follow-cam, a
+    camera setup SkiTB does not contain, gets equally small distances. The four closest val matches, inspected, are
+    different broadcasts (Universiade vs World Cup/Olympics); test matches were not inspected.
   \item Val (primary, fixed in advance): ski +1.6 [0.1, 3.6], small.
   \item Test, other events: ski 81.2 $\to$ 89.3 (+8.1 [3.2, 13.9]), body +6.0 [2.0, 11.1]; under tracker crops
     after refinement +5.5 [0.5, 10.6]. Training-event video: $-0.9$ [$-1.4$, $-0.5$]. All test: +0.8 [$-0.2$, 2.0]
     (80\% of the test ski labels come from the training event). Follow-cam: $-0.9$ [$-3.8$, 1.1], no gain (rear
     views; SkiTB is front and side broadcast footage).
-  \item Per joint (descriptive): ski tips, toes and heels gain; the ski tails get worse (test right tail 92.6
-    $\to$ 86.9, val left tail 84.8 $\to$ 78.3), and they are the joints the filter kept least (left tail in 834
-    frames, most body joints in 4,000--6,000). Your interpretation.
+  \item Per joint (descriptive, post hoc; \texttt{results/step6b/per\_joint/}): on the other-event test videos every
+    body and ski joint gains or stays level, the ski tails included (right +3.2, left +8.5; both intervals include 0).
+    The ski tails lose elsewhere: on the training-event video (right 95.6 $\to$ 88.4, $-7.3$ [$-10.3$, $-3.8$]), on
+    val (left 84.8 $\to$ 78.3, $-6.5$ [$-12.9$, $-0.4$]) and on follow-cam (right 71.5 $\to$ 63.2, $-8.3$ [$-14.5$,
+    $-3.3$]). They are the joints the filter kept least (left tail in 834 frames, most body joints in 4,000--6,000).
+    Examples of kept and dropped points: Figure~\ref{fig:pseudo} (appendix). Your interpretation.
   \item Caveats: other-event test is 2 videos / 76 images; val picked the checkpoint, the filter and hosted the
     primary comparison; the student gets about twice E2's optimizer steps (E2's best epochs were 112 and 87 of 153,
     so more steps on real data alone are unlikely to explain it).
@@ -414,7 +421,7 @@ Table~\ref{tab:pose}. Facts:
     replay misses its ski-end target on test; broadcast footage only. The STARK experiment was chosen after seeing
     the main test result (SiamFC's drift), and the pseudo-label experiment after the cross-event breakdown of test,
     so both are reported separately and chose nothing in the main system. The pseudo-label leakage guard is event
-    metadata only (no image-level near-duplicate check), and its other-event gain rests on 2 test videos.
+    metadata (an image-hash check could not tell broadcasts apart), and its other-event gain rests on 2 test videos.
   \item Qualitative examples: Figure~\ref{fig:qualitative} (val). (a) IoU 0.24: the tracker crop is far too large
     and the skis are missed (0/8); refinement tightens it (7/8). (b) IoU 0.20: 4/8 $\to$ 7/8. (c) the tracker has
     drifted to the snow spray (IoU 0.00); pass 1 sees no skier, so the refined box follows it (0/8).
@@ -435,8 +442,9 @@ Table~\ref{tab:pose}. Facts:
   \item Future work: a tracker fine-tuned on skiing (off-the-shelf STARK already closes most of the gap,
     Table~\ref{tab:stark}; the SkiTB paper's STARK variants fine-tuned on skiing reach F 0.875--0.882~\cite{dunnhofer2024tracking}), rear-view (follow-cam) training data for the ski ends, poles inside the crop box, temporal
     smoothing of landmarks, amateur footage, technique feedback on top of the landmarks. The full pseudo-label
-    version (Table~\ref{tab:pseudo} is the lite one): all 110k SkiTB training frames, a flip-averaged teacher, an
-    image-level near-duplicate check, the student as the next teacher, and a filter that keeps more ski tails.
+    version (Table~\ref{tab:pseudo} is the lite one): all 110k SkiTB training frames, a flip-averaged teacher, a
+    near-duplicate check that can tell broadcasts apart, the student as the next teacher, and a filter that keeps more
+    ski tails.
 \end{itemize}}
 
 Code is available at: \url{https://github.com/RichardZRC/skier_project}. Both trackers are included and selected
@@ -573,6 +581,16 @@ table needs one sentence of text from you.}
   81.3 vs 90.9; replay box containment 0.943 vs 0.992. STARK's confidence threshold (0.33 on its probability) was
   chosen on val by the rule of Table~\ref{tab:choices}.}
   \label{fig:stark_success}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\linewidth]{figures/pseudo_examples.png}
+  \caption{Extra experiment (Table~\ref{tab:pseudo}): pseudo-labels on six SkiTB training frames, one per race,
+  picked at random with a fixed seed. Filled points and lines: joints kept by the filter, the student's training
+  targets; hollow: the teacher's other body (blue) and ski (orange) points, dropped. Frames from
+  SkiTB~\cite{dunnhofer2024tracking} (CC BY-NC 4.0).}
+  \label{fig:pseudo}
 \end{figure}
 
 \end{document}
