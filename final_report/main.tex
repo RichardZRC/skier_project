@@ -278,57 +278,32 @@ smaller gains at IoU $\ge0.5$ (90.5$\to$94.9). At IoU $<0.1$, accuracy rises fro
 
 \subsection{Extra experiments after the test freeze: a stronger tracker and pseudo-labels}
 \label{sec:extra}\label{sec:extra_pl}
-\outline{Budget $\approx$230 words. Table~\ref{tab:extras}. Say clearly that both were decided after the main test
-result (STARK after SiamFC's drift, pseudo-labels after the cross-event breakdown), each was fixed on val and run once
-on test, and neither replaces Tables~\ref{tab:pose}--\ref{tab:system}. Facts, (a) first:
-\begin{itemize}
-  \item (a) Off-the-shelf STARK-ST50~\cite{yan2021learning} (not fine-tuned on skiing) replaces SiamFC; nothing else
-    changes. Only its confidence threshold is re-derived on val by the same rule (its score is a probability, SiamFC's
-    is not). Val first, then one test run regardless of the val result (2026-11-15, commit \texttt{86dd90c}).
-  \item (a) Val showed the same direction: SkiTB IoU 0.668 vs 0.363; E2 tracker-crop ski 88.0 vs 75.4 (+12.6 [7.1,
-    20.2]). Toolkit F-score on test 0.677 vs 0.406, close to the SkiTB paper's off-the-shelf STARK (0.671,
-    \cite{dunnhofer2024tracking}); failure episodes 258 $\to$ 66.
-  \item (a) No test label is lost any more (IoU $<0.1$: 50 $\to$ 0 frames); IoU $\ge0.5$: 131 $\to$ 262 of 317.
-    Tracker-crop body 78.9 $\to$ 96.5. The tracker crop still costs 9.2 ski points [4.9, 15.2] vs the reference
-    crop; refinement recovers 5.6 [2.7, 9.0] of them, with no body change ($-0.1$ [$-0.9$, 0.7]).
-  \item (a) The replay keeps 99.8\% of ski ends in view (meets the 95\% target that SiamFC missed), with a smaller
-    crop (0.43 vs 0.48 of the frame), but it moves more (acceleration 1.69 vs 1.38; on val it did not, $-0.18$
-    [$-0.65$, 0.22]). Your interpretation.
-  \item (b) Idea (a lite form of Noisy Student self-training~\cite{xie2020self}): the two E2 models label frames from SkiTB's training races (World Cup and
-    Olympic races at 31 venues, 2014/15--2021/22; skier boxes, no landmarks); a student \texttt{PL} trains on real
-    plus filtered pseudo-labels. Rules written down before any label (commit \texttt{23eb8a7}); val first, then one
-    test run regardless of the val result (commit \texttt{624b1a4}).
-  \item Teacher: pass 1 on the SkiTB box $\times1.1$, pass 2 on the refined crop (as in Methods); the pseudo point is
-    the mean of the two models. A joint is kept only if both models score it $\ge0.7$ and agree within 2\% of the box
-    diagonal; poles never; a frame needs $\ge8$ kept joints and trains on its kept joints only.
-  \item The filter was chosen on val labels by a fixed rule: kept points are 95.8\% (body) / 95.2\% (ski) correct
-    at PCK@0.05, vs 88.5 / 84.0 with no filter.
-  \item Data: 6,307 of 7,997 sampled frames from 50 races kept (3 races in the Trentino region left out, possibly the
-    same slopes as Ski 2DPose videos). Each epoch: all 1,194 real images plus as many pseudo frames; otherwise E2's
-    recipe, 2 seeds.
-  \item What ``lite'' leaves out (chosen for time): no flip-averaged teacher (2 predictions per point, not 4); one
-    round only (the student does not become the next teacher); about 1 in 10 eligible frames sampled (110k frames
-    available). The leakage guard is event metadata (no Ski 2DPose event among the 53 races).
-  \item (If space; else one clause.) Leakage check afterwards (post hoc, rule fixed first; \texttt{results/step6b/near\_duplicates/}): a perceptual
-    image hash of every frame of the 50 races (106k) vs all val/test/follow-cam images was inconclusive: different
-    SkiTB races are themselves as close (median 12 of 64 bits) as any match (val/test median 14), and follow-cam, a
-    camera setup SkiTB does not contain, gets equally small distances. The four closest val matches, inspected, are
-    different broadcasts (Universiade vs World Cup/Olympics); test matches were not inspected.
-  \item Val (primary, fixed in advance): ski +1.6 [0.1, 3.6], small.
-  \item Test, other events: ski 81.2 $\to$ 89.3 (+8.1 [3.2, 13.9]), body +6.0 [2.0, 11.1]; under tracker crops
-    after refinement +5.5 [0.5, 10.6] (all test: +0.6 [$-0.4$, 1.6]). Training-event video: $-0.9$ [$-1.4$,
-    $-0.5$]. All test: +0.8 [$-0.2$, 2.0] (80\% of the test ski labels come from the training event). Follow-cam: $-0.9$ [$-3.8$, 1.1], no gain (rear
-    views; SkiTB is front and side broadcast footage).
-  \item (If space.) Per joint (descriptive, post hoc; \texttt{results/step6b/per\_joint/}): on the other-event test videos every
-    body and ski joint gains or stays level, the ski tails included (right +3.2, left +8.5; both intervals include 0).
-    The ski tails lose elsewhere: on the training-event video (right 95.6 $\to$ 88.4, $-7.3$ [$-10.3$, $-3.8$]), on
-    val (left 84.8 $\to$ 78.3, $-6.5$ [$-12.9$, $-0.4$]) and on follow-cam (right 71.5 $\to$ 63.2, $-8.3$ [$-14.5$,
-    $-3.3$]). They are the joints the filter kept least (left tail in 834 frames, most body joints in 4,000--6,000).
-    Examples of kept and dropped points: Figure~\ref{fig:pseudo} (appendix). Your interpretation.
-  \item Caveats: other-event test is 2 videos / 76 images; val picked the checkpoint, the filter and hosted the
-    primary comparison; the student gets about twice E2's optimizer steps (E2's best epochs were 112 and 87 of 153,
-    so more steps on real data alone are unlikely to explain it).
-\end{itemize}}
+% Ruichao's text (2026-11-18), proofread; optional addition 1 (the filter's validation precision) added, as agreed.
+% The per-joint ski-tail facts moved to the Analysis outline.
+Decided after the main test result---STARK following SiamFC's drift, pseudo-labels following the event
+breakdown---both experiments were fixed on validation and tested once, are reported separately, and leave
+Tables~\ref{tab:pose}--\ref{tab:system} unchanged.
+
+Off-the-shelf STARK-ST50~\cite{yan2021learning} replaces SiamFC without fine-tuning on skiing; only its
+probability-based confidence threshold is recalibrated using the same rule. Testing followed validation regardless of
+its outcome (2026-11-15, commit \texttt{86dd90c}). Table~\ref{tab:extras}(a) shows SkiTB IoU 0.404$\to$0.679,
+tracker-crop ski 67.7$\to$86.5 and refined ski 77.0$\to$92.1; failure episodes fall from 258 to 66. Its toolkit
+F-score of 0.677 is close to the 0.671 the SkiTB authors report for off-the-shelf STARK~\cite{dunnhofer2024tracking}.
+Refinement still adds 5.6 ski points [2.7, 9.0]. Replay retains 99.8\% of ski ends, meeting the 95\% target with
+smaller windows (0.48$\to$0.43 of the frame), but with higher acceleration (1.38$\to$1.69).
+
+The pseudo-label student (PL) trains on real images plus SkiTB training frames labeled by E2, using a lite form of
+Noisy Student~\cite{xie2020self}: one round, no flip averaging, and about 10\% of eligible frames. The two E2
+teachers' two-pass predictions are averaged; a non-pole joint is kept only if both scores are $\ge0.7$ and the two
+models agree within 2\% of the box diagonal, and a frame needs $\ge8$ kept joints. On validation, kept points are over
+95\% correct at PCK@0.05 (84--89\% unfiltered). Rules were committed before labeling (\texttt{23eb8a7}); testing
+followed validation (\texttt{624b1a4}). After excluding three Trentino-region races, 6,307 frames from 50 races are
+kept. Each epoch mixes the 1,194 real images with 1,194 pseudo-labeled frames, using E2's recipe and two seeds.
+Table~\ref{tab:extras}(b) shows a modest primary validation gain ($+1.6$ [0.1, 3.6]) and a larger other-event test
+gain (81.2$\to$89.3; $+8.1$ [3.2, 13.9]), without clear overall-test or follow-cam gains. The leakage guard is event
+metadata; the post-hoc image-hash check was inconclusive. Limitations include only two other-event test videos (76
+images), validation reused for the filter, checkpoint selection and the comparison, and doubled optimizer steps,
+although E2's best checkpoints came before the end of its schedule (epochs 112 and 87 of 153).
 
 \begin{table}[h]
   \centering
@@ -383,6 +358,13 @@ on test, and neither replaces Tables~\ref{tab:pose}--\ref{tab:system}. Facts, (a
     \emph{ends}: E2 tips 57--60, tails 66--72, while boots (toes, heels) stay at 90--95 and body at 97.5; on val the
     same ski points reach 85--97. From behind, the skis point away from the camera (foreshortened, tips hidden by the
     legs). Crop jitter lifts the tails by 14--16 points (E1 52--56 $\to$ E2 66--72), most of E2's +4.6.
+  \item (If space; moved from 5.4.) Pseudo-labels, per joint (descriptive, post hoc;
+    \texttt{results/step6b/per\_joint/}): on the other-event test videos every body and ski joint gains or stays level,
+    the ski tails included (right +3.2, left +8.5; both intervals include 0). The ski tails lose elsewhere: on the
+    training-event video (right 95.6 $\to$ 88.4, $-7.3$ [$-10.3$, $-3.8$]), on val (left 84.8 $\to$ 78.3, $-6.5$
+    [$-12.9$, $-0.4$]) and on follow-cam (right 71.5 $\to$ 63.2, $-8.3$ [$-14.5$, $-3.3$]). They are the joints the
+    filter kept least (left tail in 834 frames, most body joints in 4,000--6,000). Examples of kept and dropped
+    points: Figure~\ref{fig:pseudo} (appendix). Your interpretation.
   \item Two kinds of generalization gap: new \emph{events} (other-event test 81.2, val 93.1 vs 98.1 on the training
     event; Table~\ref{tab:extras}(b), E2 column) and a new \emph{viewpoint} (follow-cam: rear views, ski tips/tails
     57--72). More broadcast data from other events addresses the first; only rear-view training data addresses the
