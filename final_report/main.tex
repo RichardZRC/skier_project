@@ -413,18 +413,16 @@ broadcasts and follow-cam training runs, not recreational skiing.
 \end{figure}
 
 \section{Conclusion, Future Work and Code}
-\outline{Budget $\approx$100 words. \begin{itemize}
-  \item Summary and which parts worked best, and why (your interpretation).
-  \item Future work: a tracker fine-tuned on skiing (off-the-shelf STARK already closes most of the gap,
-    Table~\ref{tab:extras}(a); the SkiTB paper's STARK variants fine-tuned on skiing reach F 0.875--0.882~\cite{dunnhofer2024tracking}), rear-view (follow-cam) training data for the ski ends, poles inside the crop box, temporal
-    smoothing of landmarks, amateur footage, technique feedback on top of the landmarks. The full pseudo-label
-    version (Table~\ref{tab:extras}(b) is the lite one): all 110k SkiTB training frames, a flip-averaged teacher, a
-    near-duplicate check that can tell broadcasts apart, the student as the next teacher, and a filter that keeps more
-    ski tails.
-\end{itemize}}
+% Ruichao's text (2026-11-18), proofread; the full pseudo-label version added to the future-work list, as agreed.
+Our results identify tracking as the main bottleneck. The post-freeze STARK swap produced the largest single gain by
+improving crops while keeping the pose model fixed. Refinement corrected framing and recovered about a third of
+tracking's ski cost without labels or retraining.
 
-Code is available at: \url{https://github.com/RichardZRC/skier_project}. Both trackers are included and selected
-with \texttt{--tracker siamfc|stark} (SiamFC is the default); the README lists the commands for both.
+With more time, we would prioritize trackers fine-tuned on skiing~\cite{dunnhofer2024tracking}, rear-view training
+examples, crops that include poles, the full pseudo-label version, and more seeds to assess reproducibility.
+
+Code is available at \url{https://github.com/RichardZRC/skier_project}. Both trackers are supported through
+\texttt{--tracker siamfc|stark}, with SiamFC as the default; the README provides their commands.
 \tbd{Before submitting: check whether the repo is private; if so, add your assigned CA as a collaborator.}
 
 \section{Contributions}
