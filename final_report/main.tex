@@ -42,18 +42,17 @@
 \maketitle
 
 \begin{abstract}
-\outline{One paragraph, $\approx$150 words.
-\begin{itemize}
-  \item Motivation: video review of ski runs; long-term goal of technique feedback; COCO pose models have no skis.
-  \item Method: fixed SiamFC tracker $\to$ COCO-pretrained HRNet-W32 fine-tuned to 24 body/ski/pole landmarks on
-    crops around the tracker box $\to$ pose-guided crop refinement (a second pass) $\to$ smoothed skier-centered
-    replay.
-  \item Results (test, E2): ski PCK@0.1 94.8\% on well-framed crops; tracker crops cost 28.0 ski points;
-    refinement recovers 9.3 of them (a third) without retraining; the replay keeps 93.7\% of ski ends in view.
-  \item Takeaway: the pose model is accurate on well-framed crops; tracker drift is the bottleneck.
-  \item Optional clause on the extras: a stronger off-the-shelf tracker removes most of the tracking loss (ski 67.7
-    $\to$ 86.5), and pseudo-labels from unlabeled races lift other-event ski 81.2 $\to$ 89.3.
-\end{itemize}}
+% Ruichao's text (2026-11-18), proofread; the optional clause on the perception layer added, as agreed.
+Reviewing ski runs on video is difficult, motivating automatic technique feedback; we build the tracking and landmark
+layer it needs. COCO-trained pose models omit ski landmarks, and generic trackers drift on broadcast footage. We
+combine a fixed SiamFC tracker, crops around its boxes, a COCO-pretrained HRNet-W32 fine-tuned to 24 body, ski and
+pole landmarks, pose-guided refinement through a second pass on the same frame, and a smoothed, skier-centered
+replay. A validation rule fixed in advance selects crop jitter from our augmentation study of jitter, blur and
+occlusion. Test ski landmark accuracy (PCK@0.1) reaches 94.8\% on well-framed crops, but 81.2\% on videos from events
+absent from training. In a paired evaluation, tracker crops cost 28.0 ski points; refinement recovers 9.3, about a
+third, without labels or retraining. Crop jitter adds 4.6 points on follow-camera footage; the replay keeps 93.7\% of
+ski ends visible, missing its 95\% target. After the test freeze, off-the-shelf STARK raises ski accuracy on tracker
+crops from 67.7\% to 86.5\%, supporting tracking as the main bottleneck.
 \end{abstract}
 
 \section{Introduction}
