@@ -57,22 +57,29 @@
 \end{abstract}
 
 \section{Introduction}
-\outline{Budget $\approx$220 words. \begin{itemize}
-  \item Motivation: reviewing a run on video is hard (broadcast cameras pan and zoom, the skier is small and hidden
-    by gates, skis are thin, fast and overlapping). The long-term goal is automatic technique feedback; the
-    datasets have no expert annotations, so this project builds the tracking and pose layer it would rest on.
-  \item Why existing tools are not enough: COCO-trained pose models predict no ski landmarks; generic trackers drift
-    on broadcast skiing (SkiTB~\cite{dunnhofer2024tracking}); SkiTB also shows better trackers give better poses.
-  \item Explicit input/output (required by the template): the input is a single-camera skiing video and a box around
-    the skier in the first frame; a CNN (HRNet-W32) outputs 24 2D landmarks per frame (14 body, 8 ski, 2 pole), and
-    a geometric controller outputs a smooth, skier-centered replay with the skeleton drawn on it (Figure~\ref{fig:pipeline}).
-  \item Core ideas / contributions: (1) tracker-aware training: a controlled augmentation study (crop jitter,
-    blur, occlusion) with paired seeds and a selection rule fixed in advance; (2) pose-guided crop refinement;
-    (3) a paired measurement of how much tracking error costs pose accuracy at each level of tracker overlap.
-  \item Main results (test): 94.8\% ski / 95.9\% body PCK@0.1 on reference crops; tracker crops cost 28.0 ski
-    points; refinement +9.3 ski [6.7, 12.1] and +3.5 body [1.3, 6.0]; crop jitter +4.6 ski on the follow-cam set.
-  \item Not shared with another class (the template asks to say so if it were).
-\end{itemize}}
+% Ruichao's text (2026-11-18), proofread; the three optional additions applied, as agreed.
+Reviewing a ski run on video is difficult: broadcast cameras pan and zoom, the skier is small and often obscured by
+gates, and thin, fast-moving skis overlap. Our long-term goal is automatic technique feedback, but the datasets lack
+expert technique annotations. We therefore build the tracking and landmark-estimation layer such feedback would
+require. COCO-trained pose models predict no ski landmarks, while generic trackers drift on broadcast
+skiing~\cite{dunnhofer2024tracking}. SkiTB also shows that better tracking improves pose estimation.
+
+Our input is a single-camera skiing video and a box around the skier in its first frame. The pipeline
+(Figure~\ref{fig:pipeline}) combines a fixed tracker, a crop, a fine-tuned HRNet-W32 CNN, and a pose-guided second
+pass. It outputs 24 2D landmarks per frame (14 body, 8 ski, 2 pole) and a smooth, skier-centered 16:9 replay with a
+skeleton overlay.
+
+We contribute a controlled tracker-aware augmentation study---crop jitter, blur and occlusion---with paired seeds and
+a selection rule fixed in advance; a simple same-frame pose-guided re-crop without labels or retraining; and paired
+measurements of tracking's pose-accuracy cost across tracker-overlap levels.
+
+On test reference crops, our selected model, E2 (with crop jitter), reaches 95.9\% body and 94.8\% ski PCK@0.1, but
+only 81.2\% ski on other-event test videos; training-event footage dominates the overall score. In the paired tracking
+evaluation, tracker crops cost 28.0 ski points. Refinement recovers $+9.3$ ski [6.7, 12.1] and $+3.5$ body [1.3, 6.0]
+points. Crop jitter adds 4.6 ski points on follow-cam. Two experiments after the test freeze, a stronger off-the-shelf
+tracker and pseudo-labels from unlabeled races, are reported separately (Section~\ref{sec:extra}).
+
+This project is not shared with another class.
 
 \begin{figure}[h]
   \centering
