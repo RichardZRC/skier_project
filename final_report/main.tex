@@ -231,6 +231,7 @@ remain uncertain.
 \end{table}
 
 \subsection{Integrated system}
+\label{sec:system}
 % Ruichao's text (2026-11-18), proofread; the tracker paragraph moved first and "(smoother)" added, as agreed.
 On 471 SkiTB test clips, SiamFC achieves mean IoU 0.404 [0.380, 0.428] and toolkit F-score 0.406 [0.387, 0.428], with
 258 failure episodes (IoU $<0.1$ for $\ge0.5$\,s) across 234 clips. Replay box containment is 0.963 [0.951, 0.973].
@@ -342,44 +343,54 @@ although E2's best checkpoints came before the end of its schedule (epochs 112 a
 \end{table}
 
 \subsection{Analysis}
-\outline{Budget $\approx$220 words; pick the bullets that carry your interpretation. \begin{itemize}
-  \item Where it fails, and why: the skier lost (IoU $<0.1$) cannot be fixed by refinement; SiamFC drifts to
-    spectators and locks onto on-screen graphics, and its box can grow 8--10$\times$ too large (Step 7 failure review).
-  \item Poles: PCK 4--8\% per basket because 48\% of visible basket labels lie outside the body + ski crop
-    (val 224/466), so they are also half-unsupervised in training; future work: include them in the crop box.
-  \item A val pattern that did not replicate: on val, E2's lead over E1 shrank after refinement (+2.4 $\to$ +1.3),
-    suggesting the two overlap; on test it does not (+1.6 $\to$ +1.9). The milestone's claim should not be repeated.
-  \item Crop jitter helps most where crops differ from training: under tracker crops (+1.6) and on follow-cam
-    (+4.6), not on clean test crops (+0.7, no clear difference). Your interpretation. The numbers are already in
-    5.2 and 5.3, so refer back to them rather than repeating them.
-  \item Why follow-cam is weak on skis (moved from 5.2): a viewpoint the model never saw
-    (\texttt{results/step8/followcam\_views.txt}, from the dataset's view flags). Every follow-cam image includes a back
-    view and 46\% are back-only, vs 14\% with any back view and 1\% back-only in training. The loss sits at the ski
-    \emph{ends}: E2 tips 57--60, tails 66--72, while boots (toes, heels) stay at 90--95 and body at 97.5; on val the
-    same ski points reach 85--97. From behind, the skis point away from the camera (foreshortened, tips hidden by the
-    legs). Crop jitter lifts the tails by 14--16 points (E1 52--56 $\to$ E2 66--72), most of E2's +4.6.
-  \item (If space; moved from 5.4.) Pseudo-labels, per joint (descriptive, post hoc;
-    \texttt{results/step6b/per\_joint/}): on the other-event test videos every body and ski joint gains or stays level,
-    the ski tails included (right +3.2, left +8.5; both intervals include 0). The ski tails lose elsewhere: on the
-    training-event video (right 95.6 $\to$ 88.4, $-7.3$ [$-10.3$, $-3.8$]), on val (left 84.8 $\to$ 78.3, $-6.5$
-    [$-12.9$, $-0.4$]) and on follow-cam (right 71.5 $\to$ 63.2, $-8.3$ [$-14.5$, $-3.3$]). They are the joints the
-    filter kept least (left tail in 834 frames, most body joints in 4,000--6,000). Examples of kept and dropped
-    points: Figure~\ref{fig:pseudo} (appendix). Your interpretation.
-  \item Two kinds of generalization gap: new \emph{events} (other-event test 81.2, val 93.1 vs 98.1 on the training
-    event; Table~\ref{tab:extras}(b), E2 column) and a new \emph{viewpoint} (follow-cam: rear views, ski tips/tails
-    57--72). More broadcast data from other events addresses the first; only rear-view training data addresses the
-    second. The pseudo-label extra fits this: other-event test ski +8.1, follow-cam no change ($-0.9$).
-  \item Limitations: \tbd{SINGLE-EVENT: training from one event, test dominated by a video from that event (Dataset
-    section).} Few videos (test 3, one dominant; val 3; 6 SkiTB val sequences); intervals are conditional on
-    these videos; val also chose epochs and every setting; $k_{\mathrm{ref}}=1.3$ is the largest value tried; the
-    replay misses its ski-end target on test; broadcast footage only. The STARK experiment was chosen after seeing
-    the main test result (SiamFC's drift), and the pseudo-label experiment after the cross-event breakdown of test,
-    so both are reported separately and chose nothing in the main system. The pseudo-label leakage guard is event
-    metadata (an image-hash check could not tell broadcasts apart), and its other-event gain rests on 2 test videos.
-  \item Qualitative examples: Figure~\ref{fig:qualitative} (val). (a) IoU 0.24: the tracker crop is far too large
-    and the skis are missed (0/8); refinement tightens it (7/8). (b) IoU 0.20: 4/8 $\to$ 7/8. (c) the tracker has
-    drifted to the snow spray (IoU 0.00); pass 1 sees no skier, so the refined box follows it (0/8).
-\end{itemize}}
+% Ruichao's text (2026-11-18, revised version), proofread; "we" as in the rest of the report; the first sentence
+% compares with the largest recipe difference (2.5), as agreed. Facts left out (the pseudo-label ski tails, the val
+% pattern that did not replicate) are in results/step6b/per_joint/ and docs/decisions.md (D29, D30).
+Tracking is the main bottleneck in the pipeline we evaluated: its 28.0-point ski penalty is much larger than any
+recipe difference in the augmentation study (at most 2.5 points; Sections~\ref{sec:pose_alone}--\ref{sec:system}).
+SiamFC can drift to spectators or on-screen graphics, while oversized boxes reduce the skier's resolution after
+resizing. Figure~\ref{fig:qualitative} illustrates both recoverable framing errors and refinement's limits. The
+selected validation examples in (a--b) improve from 0/8 and 4/8 correct ski landmarks to 7/8; in (c), both passes
+score 0/8 because both crops follow the snow spray. These examples were selected for large gains or tracker loss, so
+they illustrate mechanisms rather than typical outcomes. Refinement depends on usable first-pass predictions. STARK's
+gains with E2 unchanged strengthen the attribution to tracking, although its remaining gap to reference crops (9.2 ski
+points; Section~\ref{sec:extra}) shows that tracker localization is still imperfect.
+
+Crop jitter directly addresses variation in crop position and scale, making its benefit under tracking consistent
+with its design. Follow-cam, however, is evaluated on reference crops: its improvement cannot specifically demonstrate
+tolerance to tracker error. That gain may reflect broader regularization, but the experiment does not isolate its
+mechanism, and the mixed cross-event results limit claims of general transfer.
+
+A bias--variance framing helps interpret the generalization pattern. E2 reaches 99.8\% ski PCK@0.1 on training
+images, arguing against substantial underfitting at this threshold. The unseen Almaty test video reaches 98.1\%,
+suggesting a small within-event generalization gap. However, it only approximates a train-dev set: it is one video
+with different footage, identified post hoc. The larger drops on other-event validation and test data, to 93.1\% and
+81.2\%, are consistent with distribution mismatch. This is a diagnostic pattern, not a clean separation of variance
+and mismatch. When we added pseudo-labels to training (PL, Section~\ref{sec:extra}), the model improved on other-event
+test videos, supporting broader training coverage as a promising direction. However, the additional training steps
+mean we cannot attribute the gain solely to data diversity.
+
+Follow-cam exposes a further viewpoint gap. Every follow-cam image includes a back view, compared with 14\% in
+training; 46\% are back-only, compared with 1\%. Errors concentrate at the ski ends: E2's tips reach 57--60\% and
+tails 66--72\%, while boots remain at 90--95\%. Rear-view foreshortening and overlapping skis could make endpoints
+harder to locate, while boots retain nearby body cues. These explanations remain hypotheses because the view flags do
+not isolate viewpoint from other differences between the sets. We found no clear follow-cam gain from pseudo-labeling,
+suggesting that more front/side broadcast races do not adequately address this missing coverage.
+
+Training variability also limits confidence in the comparisons. E2's validation seed spread is 1.2 points, equal to
+its mean advantage over E1. PL has a 2.8-point spread, exceeding its 1.6-point validation gain. Both comparisons
+favor E2 and PL in each reported seed, but their magnitudes vary. We computed bootstrap intervals by resampling
+segments and videos while holding the trained models fixed, so these intervals do not capture training randomness.
+More seeds are needed to assess reproducibility. The small number of videos further limits the generality of these
+conclusions, and our use of validation to select every setting may make validation performance optimistic.
+
+Pole baskets expose a structural crop limitation: E2 reaches only 5.0\% basket PCK@0.1 on test and 6.4\% on
+validation, while 48\% of visible validation basket labels lie outside the body-and-ski crop. Out-of-crop labels also
+receive no training gradient. Poor basket performance therefore cannot be attributed to model capacity alone;
+improving pole coverage is a natural next experiment. Other design choices remain incompletely explored: we selected
+the largest refinement scale tested, $k_{\mathrm{ref}}=1.3$, on validation, and did not evaluate larger scales. The
+main replay configuration also missed its test ski-end visibility target, and evaluation covers only elite race
+broadcasts and follow-cam training runs, not recreational skiing.
 
 \begin{figure}[h]
   \centering
