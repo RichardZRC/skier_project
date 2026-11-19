@@ -93,27 +93,31 @@ This project is not shared with another class.
 \end{figure}
 
 \section{Related work}
-\outline{Budget $\approx$200 words. Group by approach; for each: what it does, strengths/weaknesses, how we relate and differ.
-All entries below are checked and in \texttt{references.bib}.
-\begin{itemize}
-  \item \emph{Skiing datasets and analysis.} Ski 2DPose~\cite{bachmann2019motion}: 24 landmarks incl.\ skis and
-    poles on broadcast footage (used for 3D motion capture from pan-tilt cameras). SkiTB~\cite{dunnhofer2024tracking}:
-    skier tracking benchmark; fine-tunes AlphaPose on Ski 2DPose and shows tracker quality changes pose accuracy
-    (their Sec.~6.2, Table~6, PCK at 50\% of head--neck). We differ: skis as landmarks in the same model, tracker-aware
-    training, refinement, paired per-overlap measurement. SkiTechCoach~\cite{hirano2025skitechcoach}: indoor ski
-    simulator sequences with 3D poses, sole pressure, FIS points and expert coaching feedback; baselines for FIS
-    point estimation and LLM-generated coaching, i.e.\ our long-term goal, on lab data rather than broadcast video.
-  \item \emph{Top-down 2D pose estimation.} HRNet~\cite{sun2019deep} (keeps a high-resolution branch; heatmaps),
-    trained on COCO~\cite{lin2014microsoft}, via MMPose~\cite{mmpose2020}. Simple Baselines~\cite{xiao2018simple}
-    (deconvolution head on a ResNet). Strength: accurate on well-framed person crops; weakness: they depend on the person box.
-  \item \emph{Single-object tracking.} SiamFC~\cite{bertinetto2016fully} (implementation and weights
-    \cite{huang2019siamfcpytorch}; GOT-10k~\cite{huang2019got}); transformer trackers such as STARK~\cite{yan2021learning}
-    are stronger. We keep SiamFC fixed and measure its effect instead of improving it.
-  \item \emph{Coupling tracking and pose.} Xiao et al.~\cite{xiao2018simple} (Sec.~3.1) move the previous frame's
-    predicted joints to the next frame with optical flow and use a box around them (enlarged 15\%) to complement
-    detector boxes. Our refinement is a second pass on the same frame that corrects a tracker crop.
-    Box jitter during training mimics detector error.
-\end{itemize}}
+% Ruichao's text (2026-11-18), proofread; all 12 Related work citations verified (references.bib header).
+Ski 2DPose~\cite{bachmann2019motion} provides 24 body, ski and pole landmarks on broadcast footage, built for 3D
+motion capture from pan-tilt cameras. SkiTB~\cite{dunnhofer2024tracking}, a skier-tracking benchmark, fine-tunes
+AlphaPose on Ski 2DPose and links tracking quality to pose accuracy; its PCK uses half the head--neck length,
+preventing direct comparison with our scores. SkiTechCoach~\cite{hirano2025skitechcoach} combines simulator 3D poses,
+sole pressure, FIS points and expert feedback, with performance-estimation and LLM-coaching baselines. We pursue the
+perception layer for such feedback on broadcast video.
+
+HRNet~\cite{sun2019deep} repeatedly fuses high- and low-resolution branches, while Simple
+Baselines~\cite{xiao2018simple} uses deconvolution layers on a ResNet backbone; both depend on well-framed person
+crops. We adapt MMPose's COCO-pretrained HRNet-W32~\cite{mmpose2020}, extending beyond COCO's 17 body-only
+keypoints~\cite{lin2014microsoft}. Our crop jitter imitates tracker error, and our paired evaluation measures accuracy
+by tracker overlap.
+
+SiamFC~\cite{bertinetto2016fully} cross-correlates a first-frame template with search regions. We use the released
+siamfc-pytorch weights~\cite{huang2019siamfcpytorch}, whose training script uses GOT-10k~\cite{huang2019got}.
+STARK~\cite{yan2021learning} combines transformer-based box prediction with template updates. SiamFC remains our fixed
+main tracker; off-the-shelf STARK is a post-freeze extra (Section~\ref{sec:extra}).
+
+Xiao et al.~\cite{xiao2018simple} propagate joints through optical flow and build next-frame boxes around them,
+enlarged by 15\%, to complement detections. Our refinement instead re-crops the same frame from its own first-pass
+landmarks, without labels or retraining.
+
+Noisy Student~\cite{xie2020self} iteratively trains larger, noised models on labeled and teacher-pseudo-labeled data.
+Our lightweight pose variant uses one round and agreement between two teacher models to filter uncertain labels.
 
 \section{Dataset}
 % Ruichao's text (2026-11-16), proofread; the per-video accuracies moved to Section 5.2.
