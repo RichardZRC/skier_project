@@ -126,6 +126,7 @@ def propagation_strata(strata: list[dict], path: Path, run: str = "E2") -> Path:
     PCK@0.1)."""
     plt = _plt()
     order = ["iou>=0.5", "0.1<=iou<0.5", "iou<0.1"]
+    names = {"iou>=0.5": "≥ 0.5", "0.1<=iou<0.5": "0.1–0.5", "iou<0.1": "< 0.1"}
     rows = {s["value"]: s for s in strata if s["stratum"] == "tracker_iou" and s["run"] == run}
     vals = [v for v in order if v in rows]
     crops = [("reference", "reference crop", "#999999"), ("tracked", "tracker crop", RECIPE_COLORS[run])]
@@ -138,9 +139,11 @@ def propagation_strata(strata: list[dict], path: Path, run: str = "E2") -> Path:
         for i, (crop, label, color) in enumerate(crops):
             ax.bar(x + (i - (len(crops) - 1) / 2) * width, [rows[v][f"{crop}_{g}"] for v in vals], width, label=label,
                    color=color)
-        ax.set_xticks(x, [f"{v}\n(n={rows[v]['n_images']})" for v in vals])
+        ax.set_xticks(x, [f"{names[v]}\n(n={rows[v]['n_images']})" for v in vals])
         ax.set_ylim(0, 100)
-        ax.set_title(f"{run}: {g} PCK@0.1 by tracker IoU")
+        ax.set_ylabel("PCK@0.1 (%)")
+        ax.set_xlabel("tracker IoU")
+        ax.set_title(f"{run}: {g}")
         ax.grid(axis="y", alpha=0.3)
     fig.legend(*axes[0].get_legend_handles_labels(), loc="upper center", ncol=len(crops), frameon=False)
     fig.tight_layout(rect=(0, 0, 1, 0.93))  # the legend sits above the panels, clear of the bars

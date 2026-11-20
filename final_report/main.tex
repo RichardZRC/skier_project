@@ -23,7 +23,7 @@
 % LENGTH (course rule): at most \pagelimit{} pages, excluding references, contributions, AI disclosure and the
 % appendix; TAs may not read the appendix. The outline budgets add up to about 2,100 words of prose next to the
 % 6 floats of the main text (figures 1--3, tables 1--3).
-% DRAFTING AIDS, to be removed before submission (search for \outline and \tbd):
+% DRAFTING AIDS (none left in the text since 2026-11-19; the macros stay defined, unused):
 %   \outline{...}  blue: Claude's outline of the facts a section needs. Replace it with your own prose.
 %   \tbd{...}      red: a number or item still to come (test numbers arrive with the Step 8 test run).
 \newcommand{\outline}[1]{{\color{blue!55!black}\small #1}}
@@ -48,11 +48,13 @@ layer it needs. COCO-trained pose models omit ski landmarks, and generic tracker
 combine a fixed SiamFC tracker, crops around its boxes, a COCO-pretrained HRNet-W32 fine-tuned to 24 body, ski and
 pole landmarks, pose-guided refinement through a second pass on the same frame, and a smoothed, skier-centered
 replay. A validation rule fixed in advance selects crop jitter from our augmentation study of jitter, blur and
-occlusion. Test ski landmark accuracy (PCK@0.1) reaches 94.8\% on well-framed crops, but 81.2\% on videos from events
-absent from training. In a paired evaluation, tracker crops cost 28.0 ski points; refinement recovers 9.3, about a
-third, without labels or retraining. Crop jitter adds 4.6 points on follow-camera footage; the replay keeps 93.7\% of
-ski ends visible, missing its 95\% target. After the test freeze, off-the-shelf STARK raises ski accuracy on tracker
-crops from 67.7\% to 86.5\%, supporting tracking as the main bottleneck.
+occlusion. Test ski landmark accuracy (percentage of correct keypoints, PCK@0.1) reaches 94.8\% on well-framed crops,
+but 81.2\% on videos from events absent from training. In a paired evaluation, tracker crops cost 28.0 ski points;
+refinement recovers 9.3, about a third, without labels or retraining. Crop jitter shows no clear gain on well-framed
+test crops, but adds 1.6 ski points on tracker crops and 4.6 on follow-camera footage. The replay keeps 93.7\% of ski
+ends visible, missing its 95\% target. After the test freeze, off-the-shelf STARK raises ski accuracy on tracker crops
+from 67.7\% to 86.5\%, supporting tracking as the main bottleneck, and pseudo-labels from unlabeled races raise the
+other-event score from 81.2\% to 89.3\%.
 \end{abstract}
 
 \section{Introduction}
@@ -60,8 +62,9 @@ crops from 67.7\% to 86.5\%, supporting tracking as the main bottleneck.
 Reviewing a ski run on video is difficult: broadcast cameras pan and zoom, the skier is small and often obscured by
 gates, and thin, fast-moving skis overlap. Our long-term goal is automatic technique feedback, but the datasets lack
 expert technique annotations. We therefore build the tracking and landmark-estimation layer such feedback would
-require. COCO-trained pose models predict no ski landmarks, while generic trackers drift on broadcast
-skiing~\cite{dunnhofer2024tracking}. SkiTB also shows that better tracking improves pose estimation.
+require. COCO-trained pose models predict no ski landmarks, while generic trackers drift on broadcast skiing, as
+the SkiTB skier-tracking benchmark shows~\cite{dunnhofer2024tracking}. SkiTB also shows that better tracking improves
+pose estimation.
 
 Our input is a single-camera skiing video and a box around the skier in its first frame. The pipeline
 (Figure~\ref{fig:pipeline}) combines a fixed tracker, a crop, a fine-tuned HRNet-W32 CNN, and a pose-guided second
@@ -75,7 +78,9 @@ measurements of tracking's pose-accuracy cost across tracker-overlap levels.
 On test reference crops, our selected model, E2 (with crop jitter), reaches 95.9\% body and 94.8\% ski PCK@0.1, but
 only 81.2\% ski on other-event test videos; training-event footage dominates the overall score. In the paired tracking
 evaluation, tracker crops cost 28.0 ski points. Refinement recovers $+9.3$ ski [6.7, 12.1] and $+3.5$ body [1.3, 6.0]
-points. Crop jitter adds 4.6 ski points on follow-cam. Two experiments after the test freeze, a stronger off-the-shelf
+points (95\% confidence intervals in brackets throughout). Crop jitter adds 1.6 ski points on tracker crops and 4.6 on
+follow-camera (follow-cam) footage, but shows no clear gain on test reference crops. Two experiments after the test
+freeze, a stronger off-the-shelf
 tracker and pseudo-labels from unlabeled races, are reported separately (Section~\ref{sec:extra}).
 
 This project is not shared with another class.
@@ -95,7 +100,7 @@ This project is not shared with another class.
 % Ruichao's text (2026-11-18), proofread; all 12 Related work citations verified (references.bib header).
 Ski 2DPose~\cite{bachmann2019motion} provides 24 body, ski and pole landmarks on broadcast footage, built for 3D
 motion capture from pan-tilt cameras. SkiTB~\cite{dunnhofer2024tracking}, a skier-tracking benchmark, fine-tunes
-AlphaPose on Ski 2DPose and links tracking quality to pose accuracy; its PCK uses half the head--neck length,
+AlphaPose~\cite{fang2023alphapose} on Ski 2DPose and links tracking quality to pose accuracy; its PCK uses half the head--neck length,
 preventing direct comparison with our scores. SkiTechCoach~\cite{hirano2025skitechcoach} combines simulator 3D poses,
 sole pressure, FIS points and expert feedback, with performance-estimation and LLM-coaching baselines. We pursue the
 perception layer for such feedback on broadcast video.
@@ -123,7 +128,8 @@ Our lightweight pose variant uses one round and agreement between two teacher mo
 Ski 2DPose~\cite{bachmann2019motion} contains 1,982 images from 16 alpine YouTube videos (Creative Commons),
 sparsely annotated across 158 single-camera segments with 24 visibility-flagged landmarks (14 body, 8 ski, 2 pole).
 To prevent near-duplicate leakage, we split by video: train/val/test contain 4/3/3 videos and 1,194/293/360 images.
-Six follow-cam videos (134 images) provide a separate out-of-distribution evaluation, performed once. One record (one
+Six follow-cam videos (134 images), filmed by a camera following the skier on training runs, provide a separate
+out-of-distribution evaluation, performed once. One record (one
 body point, no ski points) lacks a reference box and is excluded. Only visible labels are supervised and scored. All
 four training videos come from the Almaty 2017 Universiade; validation uses Trentino 2013 and Granada 2015. The Almaty
 giant-slalom test video contributes 80\% of the test ski labels (accuracy by event: Table~\ref{tab:extras}(b),
@@ -160,8 +166,8 @@ size $\times$0.9--1.1); E3 adds motion blur ($p=0.5$, 3--9\,px) and an occluding
 crop); E4 adds all three. A predefined validation rule selects the recipe (Section~\ref{sec:pose_alone}).
 
 SiamFC uses the released siamfc-pytorch weights~\cite{bertinetto2016fully,huang2019siamfcpytorch} and is initialized
-once per clip from the clip's first-frame box. Confidence is the peak of its sum-normalized response map; Youden's $J$
-on the SkiTB validation clips~\cite{youden1950index} sets the threshold (failure: IoU $<0.1$; ROC AUC 0.83).
+once per clip from the clip's first-frame box. Confidence is the peak of its sum-normalized response map; Youden's
+$J$~\cite{youden1950index} on the SkiTB validation clips sets the threshold (failure: IoU $<0.1$; ROC AUC 0.83).
 Off-the-shelf STARK-ST50 can replace SiamFC (Section~\ref{sec:extra}). The tracker box is expanded before standard
 padding. Our geometric refinement constructs $B = k_{\mathrm{ref}}\cdot\operatorname{tight}\{\hat x_j : j \in
 \text{body}\cup\text{ski},\ s_j \ge s_{\min}\}$ from pass-1 predictions $\hat x_j$ and scores $s_j$ (their tight box,
@@ -174,19 +180,24 @@ replay parameters appear in Setup.
 \subsection{Setup}
 \label{sec:setup}
 % Ruichao's text (2026-11-16), proofread.
-All settings were chosen on validation by rules fixed before each run (appendix Table~\ref{tab:choices}). After
+All settings were chosen without test data by rules fixed before each run, except the replay smoothing and width,
+which we set by judgment from the validation trade-off (appendix Table~\ref{tab:choices}). After
 recording split, configuration and checkpoint hashes, the main test evaluation ran once (2026-11-12, commit
 \texttt{bf546e3}); two later runs changed none of the main results (Section~\ref{sec:extra}). The choices were 150
 fine-tune epochs (ski tails unlearned at 50), recipe E2 (Section~\ref{sec:pose_alone}), crop expansion $\times1.1$
-before the $\times1.25$ padding, raw SiamFC confidence (AUC 0.83 versus 0.63 for the relative score), replay
-$\tau=0.2$\,s and width $2.5\times$ the tracker box, and refinement $s_{\min}=0.3$, $k_{\mathrm{ref}}=1.3$.
+before the $\times1.25$ padding, raw SiamFC confidence (AUC 0.83 versus 0.63 for the score divided by its median over
+the clip's first 10 tracked frames), replay $\tau=0.2$\,s and width $2.5\times$ the tracker box, and refinement
+$s_{\min}=0.3$, $k_{\mathrm{ref}}=1.3$ (grids: appendix Table~\ref{tab:grids_val}).
 
 PCK@$t$ is the share of visible landmarks predicted within $t$ times the diagonal of the tight box around the labeled
 body and ski points ($t=0.1$, $0.05$); body and ski are reported separately, poles as a supplement. Tracking uses IoU,
-success AUC, and the SkiTB toolkit's F-score; replay uses box and ski-end containment and acceleration. The 95\%
-cluster-bootstrap intervals~\cite{efron1994introduction} use 10,000 resamples: segments within videos for pose, SkiTB
-sequences for tracking. Pose baselines are E0 (the COCO model, on 10 shared body landmarks) and E1 (plain
-fine-tuning). For the integrated system, tracking starts at each segment's first labeled frame; subsequent labeled
+success AUC, and the SkiTB toolkit's F-score. Replay uses the share of the SkiTB ground-truth box inside the replay
+window, the share of visible Ski 2DPose ski-end labels inside it (target, set in advance: at least 95\%), and the mean
+acceleration of the window center (frame diagonals/s$^2$). The 95\% cluster-bootstrap
+intervals~\cite{efron1994introduction} use 10,000 resamples: segments within videos for pose, SkiTB sequences for
+tracking. Differences are computed before rounding. Pose baselines are E0 (the COCO model, on 10 shared body
+landmarks) and E1 (plain fine-tuning). Pose accuracy under tracking needs landmark labels, so it is measured on the
+Ski 2DPose videos: the tracker starts from the reference box at each segment's first labeled frame, and subsequent labeled
 frames are scored against the same labels using reference (label-dependent upper bound), tracker (baseline), and
 refined crops (Table~\ref{tab:system}; Figure~\ref{fig:strata}).
 
@@ -195,10 +206,10 @@ refined crops (Table~\ref{tab:system}; Figure~\ref{fig:strata}).
 % Ruichao's text (2026-11-16), proofread. The follow-cam viewpoint facts moved to the Analysis outline.
 Table~\ref{tab:pose}'s validation results select E2 under the rule fixed in advance: ski PCK@0.1 is 93.1\%, versus
 91.9/92.0/91.0\% for E1/E3/E4, with no recipe losing body accuracy. E2 $-$ E1 is $+1.2$ points [0.1, 2.3], rising to
-$+2.5$ [1.5, 3.6] under moderate crop error. E3/E4 improve body accuracy ($+1.7$/$+1.9$) but not ski accuracy.
+$+2.5$ [1.5, 3.6] under moderate crop error. E3/E4 improve body accuracy ($+1.7$/$+1.9$) but not ski accuracy (appendix Table~\ref{tab:aug_val}).
 
-Against E0, which predicts no skis, E1 shows no clear difference on the 10 shared body landmarks at PCK@0.1 ($+1.5$
-[$-1.0$, 3.7]) but improves at the stricter PCK@0.05 ($+4.9$ [2.6, 7.0]). On the test set, evaluated once, E2 $-$ E1
+On the test set, evaluated once, E1 shows no clear difference from E0, which predicts no skis, on the 10 shared body
+landmarks at PCK@0.1 ($+1.5$ [$-1.0$, 3.7]) but improves at the stricter PCK@0.05 ($+4.9$ [2.6, 7.0]). E2 $-$ E1
 shows no clear difference for ski PCK@0.1 ($+0.7$ [$-0.3$, 1.5]) or body PCK@0.1 ($-0.5$ [$-1.3$, 0.2]), but gains
 $+1.2$ [0.2, 2.2] at ski PCK@0.05.
 
@@ -206,7 +217,7 @@ However, 80\% of the test ski labels come from the training-event video: E2 scor
 other two videos (Table~\ref{tab:extras}(b), E2 column; Trentino 2013: 62.3\%, Snowplanet 2011: 85.0\%). Thus the
 overall 94.8\% $\approx 0.8\times98.1 + 0.2\times81.2$, and the validation-to-test rise is confounded by event
 composition. Post hoc, E2 $-$ E1 is $+1.4$ [0.8, 2.1] on the training event but $-2.3$ [$-6.4$, 0.9] on the
-other-event test videos (two videos, 76 images).
+other-event test videos (two videos, 76 images; appendix Table~\ref{tab:cross_event}).
 
 Under follow-cam's different camera setup, ski accuracy falls to 73.5\%/78.1\% for E1/E2 (E2 $-$ E1: $+4.6$ [2.9,
 6.7], intervals over its six videos); body stays at 97.4/97.5\%. Crop jitter helps on follow-cam; gains across events
@@ -236,7 +247,7 @@ remain uncertain.
   seed); the rule fixed in advance (highest val ski @0.1, at most 2 points of body loss) picked E2; only E1 and E2
   went to test (360 images, 2,197 ski labels per seed) and the follow-cam set (134 images, 6 videos).
   $^{\dagger}$Boxes shifted by 10\% and rescaled by up to $1.1\times$. $^{*}$10 shared COCO landmarks (E1: 96.2,
-  E2: 95.6).}
+  E2: 95.6). Differences are computed before rounding.}
   \label{tab:pose}
 \end{table}
 
@@ -244,12 +255,14 @@ remain uncertain.
 \label{sec:system}
 % Ruichao's text (2026-11-18), proofread; the tracker paragraph moved first and "(smoother)" added, as agreed.
 On 471 SkiTB test clips, SiamFC achieves mean IoU 0.404 [0.380, 0.428] and toolkit F-score 0.406 [0.387, 0.428], with
-258 failure episodes (IoU $<0.1$ for $\ge0.5$\,s) across 234 clips. Replay box containment is 0.963 [0.951, 0.973].
-Ski-end containment reaches 93.7\% (974/1,040) [86.5, 99.4], missing the 95\% target (validation: 99.4\%).
-Acceleration falls from 4.11 unsmoothed to 1.38, a 3.0-fold reduction (smoother).
+258 failure episodes (IoU $<0.1$ for $\ge0.5$\,s) across 234 clips. On the same clips, replay box containment is
+0.963 [0.951, 0.973], and acceleration falls from 4.11 unsmoothed to 1.38, a 3.0-fold reduction (smoother). On the
+Ski 2DPose test segments, ski-end containment reaches 93.7\% (974/1,040) [86.5, 99.4], missing the 95\% target
+(validation: 99.4\%).
 
 Relative to the label-dependent reference upper bound, tracker crops cost E2 18.1 body and 28.0 ski points at
-PCK@0.1 on test (Table~\ref{tab:system}; ski: 95.7$\to$67.7, interval [19.3, 37.7]), versus 14.8/18.4 on validation.
+PCK@0.1 on test (Table~\ref{tab:system}; ski: 95.7$\to$67.7, interval [19.3, 37.7]), versus 14.8/18.4 on validation (appendix
+Table~\ref{tab:system_val}).
 Refinement adds $+9.3$ ski [6.7, 12.1] and $+3.5$ body [1.3, 6.0] points, recovering 33\% of the ski cost
 (validation: 32\%) and 19\% of the body cost without labels or retraining. E1's gains are similar ($+9.0$ ski/$+3.0$
 body). Ski labels outside the crop fall from 30.5\% to 19.9\%; refinement falls back to pass 1 on 8--10\% of frames.
@@ -275,7 +288,8 @@ smaller gains at IoU $\ge0.5$ (90.5$\to$94.9). At IoU $<0.1$, accuracy rises fro
     \bottomrule
   \end{tabular}
   \caption{Pose under tracking on test, PCK@0.1 (\%) on the same 317 labeled frames (40 segments), seeds pooled.
-  Reference crops need the labels; last row: gain over the tracker crop, 95\% CI.}
+  Reference crops need the labels; last row: gain over the tracker crop, 95\% CI. Differences are computed before
+  rounding.}
   \label{tab:system}
 \end{table}
 
@@ -283,7 +297,7 @@ smaller gains at IoU $\ge0.5$ (90.5$\to$94.9). At IoU $<0.1$, accuracy rises fro
   \centering
   \includegraphics[width=0.5\linewidth]{figures/propagation_strata_test.png}
   \caption{E2 pose accuracy from reference (gray), tracker (orange) and refined (brown) crops on test, by IoU between
-  tracker and reference box.}
+  tracker and reference box; $n$: labeled frames per bin.}
   \label{fig:strata}
 \end{figure}
 
@@ -298,7 +312,8 @@ Tables~\ref{tab:pose}--\ref{tab:system} unchanged.
 Off-the-shelf STARK-ST50~\cite{yan2021learning} replaces SiamFC without fine-tuning on skiing; only its
 probability-based confidence threshold is recalibrated using the same rule. Testing followed validation regardless of
 its outcome (2026-11-15, commit \texttt{86dd90c}). Table~\ref{tab:extras}(a) shows SkiTB IoU 0.404$\to$0.679,
-tracker-crop ski 67.7$\to$86.5 and refined ski 77.0$\to$92.1; failure episodes fall from 258 to 66. Its toolkit
+tracker-crop ski 67.7$\to$86.5 and refined ski 77.0$\to$92.1; failure episodes fall from 258 to 66 (success curves:
+appendix Figure~\ref{fig:stark_success}). Its toolkit
 F-score of 0.677 is close to the 0.671 the SkiTB authors report for off-the-shelf STARK~\cite{dunnhofer2024tracking}.
 Refinement still adds 5.6 ski points [2.7, 9.0]. Replay retains 99.8\% of ski ends, meeting the 95\% target with
 smaller windows (0.48$\to$0.43 of the frame), but with higher acceleration (1.38$\to$1.69).
@@ -309,7 +324,7 @@ teachers' two-pass predictions are averaged; a non-pole joint is kept only if bo
 models agree within 2\% of the box diagonal, and a frame needs $\ge8$ kept joints. On validation, kept points are over
 95\% correct at PCK@0.05 (84--89\% unfiltered). Rules were committed before labeling (\texttt{23eb8a7}); testing
 followed validation (\texttt{624b1a4}). After excluding three Trentino-region races, 6,307 frames from 50 races are
-kept. Each epoch mixes the 1,194 real images with 1,194 pseudo-labeled frames, using E2's recipe and two seeds.
+kept (examples: appendix Figure~\ref{fig:pseudo}). Each epoch mixes the 1,194 real images with 1,194 pseudo-labeled frames, using E2's recipe and two seeds.
 Table~\ref{tab:extras}(b) shows a modest primary validation gain ($+1.6$ [0.1, 3.6]) and a larger other-event test
 gain (81.2$\to$89.3; $+8.1$ [3.2, 13.9]), without clear overall-test or follow-cam gains. The leakage guard is event
 metadata; the post-hoc image-hash check was inconclusive. Limitations include only two other-event test videos (76
@@ -348,7 +363,7 @@ although E2's best checkpoints came before the end of its schedule (epochs 112 a
   pass a filter chosen on val; the student PL trains like E2 on real plus pseudo-labeled frames. The E2 column of (b)
   is also the cross-event breakdown: all training videos and one test video come from one event (Almaty 2017).
   PCK (\%), seeds pooled, reference crops unless noted; paired 95\% CI over SkiTB sequences or segments within videos
-  (follow-cam: its videos).}
+  (follow-cam: its videos). Differences are computed before rounding.}
   \label{tab:extras}
 \end{table}
 
@@ -422,14 +437,12 @@ examples, crops that include poles, the full pseudo-label version, and more seed
 
 Code is available at \url{https://github.com/RichardZRC/skier_project}. Both trackers are supported through
 \texttt{--tracker siamfc|stark}, with SiamFC as the default; the README provides their commands.
-\tbd{Before submitting: check whether the repo is private; if so, add your assigned CA as a collaborator.}
 
 \section{Contributions}
 % Drafted by Claude (2026-11-18) at Ruichao's request (outside the page limit; not core analysis). Review it.
-Ruichao Zhang is the sole author: conceived the project, made and approved the design decisions and selection rules
-before each run, directed the experiments, and wrote the report's text. The datasets' authors are cited where the data
-are described. AI assistance is described in the next section.
-\tbd{Acknowledge anyone who advised (for example, your TA mentor), or delete this note.}
+Ruichao Zhang is the sole author. Ruichao conceived the project, made and approved the design decisions and selection
+rules before each run, directed the experiments, and wrote the report's main text. The datasets' authors are cited
+where the data are described. AI assistance is described in the next section.
 
 \section{AI Disclosure}
 % Drafted by Claude (2026-11-18) at Ruichao's request. It is Ruichao's attestation to the course: check every
@@ -438,10 +451,11 @@ We used Claude Code (Anthropic) throughout the project. It wrote and tested most
 integration and the pseudo-label pipeline; ran the experiments on our GPU laptop; debugged; and checked every reference
 against its source. For this report, it prepared the tables, the figures and their captions, and an outline of the
 relevant facts for each section; proofread our prose with minimal edits, suggested wording, checked each number
-against the evidence files, and typeset the text in LaTeX; and drafted the Contributions section and this disclosure.
-The research question, the design decisions and selection rules (each approved before its run), and the report's
-analysis, interpretation and conclusions are our own; we reviewed every AI suggestion and accepted or rejected it.
-\tbd{Add any other AI tool you used (for example, for the milestone or the proofreading audit), or delete this note.}
+against the evidence files, and typeset the text in LaTeX; made clarity edits we requested after reviewing the full
+draft (definitions, dataset and cross-references, corrected claims); and drafted the Contributions section and this
+disclosure. The research question, the design decisions and selection rules (each approved before its run), and the
+report's analysis, interpretation and conclusions are our own; we reviewed every AI suggestion and accepted or
+rejected it.
 
 \section*{References}
 \renewcommand{\bibsection}{}   % the "References" heading is already typeset above
@@ -454,28 +468,27 @@ analysis, interpretation and conclusions are our own; we reviewed every AI sugge
 \appendix
 \section{Appendix}
 \label{sec:appendix}
-\outline{Backup detail only: TAs may not read the appendix, so every important number is also in the main text (the
-picks in Setup, the val selection in Table~\ref{tab:pose}, the cross-event numbers in Table~\ref{tab:extras}(b)).
-Each table needs one sentence of text from you.}
+% Backup detail only: TAs may not read the appendix, so every important number is also in the main text. Each float
+% below is referenced from the section it supports.
 
 \begin{table}[h]
   \centering
   \small
   \begin{tabular}{p{0.21\linewidth}p{0.32\linewidth}p{0.08\linewidth}p{0.25\linewidth}}
     \toprule
-    Choice & Values tried (val) & Picked & How \\
+    Choice & Values tried & Picked & How \\
     \midrule
-    Fine-tune epochs & 50, 150 & 150 & ski tails unlearned at 50 \\
+    Fine-tune epochs & 50, 150 & 150 & rule (ski tails learned on training images) \\
     Augmentation recipe & E1--E4, 2 seeds each & E2 & pre-registered rule \\
     Pose crop factor & 1.0, 1.1, 1.2, 1.35, 1.5 & 1.1 & rule (best tracked PCK) \\
     Confidence signal & raw score, relative score (AUC 0.83 / 0.63) & raw & rule (higher AUC) \\
-    Replay $\tau$ (s) $\times$ width $k$ & \{0, 0.1, 0.2, 0.4\} $\times$ \{1.5, 2, 2.5, 3\} & 0.2, 2.5 & trade-off on val \\
+    Replay $\tau$ (s) $\times$ width $k$ & \{0, 0.1, 0.2, 0.4\} $\times$ \{1.5, 2, 2.5, 3\} & 0.2, 2.5 & judgment (val trade-off) \\
     Replay zoom-out gating & on, off & on & rule (containment) \\
     Refinement $s_{\min} \times k_{\mathrm{ref}}$ & \{0.1, 0.2, 0.3, 0.5\} $\times$ \{1.0, 1.15, 1.3\} & 0.3, 1.3 & rule + gate \\
     \bottomrule
   \end{tabular}
-  \caption{Hyperparameters and design choices explored, all on val. Architecture (HRNet-W32), learning rates and the
-  schedule were fixed, not searched.}
+  \caption{Hyperparameters and design choices explored before the test run, on val (the epoch check: on training
+  images). Architecture (HRNet-W32) and learning rates were fixed, not searched; the schedule changed only in length.}
   \label{tab:choices}
 \end{table}
 
@@ -501,7 +514,8 @@ Each table needs one sentence of text from you.}
   \end{tabular}
   \caption{Augmentation study on val (293 images; 3,759 body / 1,752 ski labels per seed), PCK (\%), mean of two
   seeds; differences with 95\% CI. Ski @0.05 (E1--E4): 82.9 / 84.3 / 82.0 / 78.8. The rule fixed in advance (highest ski @0.1, at most 2 points of body loss)
-  picks E2. $^{\dagger}$Boxes shifted by 10\% and rescaled by up to $1.1\times$.}
+  picks E2. $^{\dagger}$Boxes shifted by 10\% and rescaled by up to $1.1\times$. Differences are computed before
+  rounding.}
   \label{tab:aug_val}
 \end{table}
 
@@ -521,7 +535,7 @@ Each table needs one sentence of text from you.}
   \end{tabular}
   \caption{Pose under tracking on val, PCK@0.1 (\%) on the same 261 labeled frames (31 segments), seeds pooled.
   SiamFC on the 75 SkiTB val clips: mean IoU 0.363 [0.299, 0.453], toolkit F-score 0.384; the replay keeps
-  99.4\% of ski ends in view.}
+  99.4\% of ski ends in view. Differences are computed before rounding.}
   \label{tab:system_val}
 \end{table}
 
