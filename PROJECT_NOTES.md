@@ -2,29 +2,181 @@
 
 Running record of decisions and open items for the CS230 skier project.
 Read this first when resuming work in a new environment.
-Companion docs: `README.md` (setup and commands), `CLAUDE.md` (rules for Claude sessions),
+Companion docs: `README.md` (setup and commands), `CLAUDE.md` (rules for AI-assistant sessions; the file name comes from Claude Code, but the rules apply to any assistant),
 `skier_proposal.pdf`, `skier_implementation_plan.md` (status table at the top), `skier_step_1_guide.md`,
 `skier_step_1_code_spec.md`, `docs/decisions.md`.
 
-Last updated: 2026-11-16
+Last updated: 2026-11-19
 
 ---
 
-## Handoff: where things stand (2026-10-26)
+## Handoff: where things stand (updated 2026-11-19)
 
-Start here in a new session, on any machine. Claude's own notes stay on the machine they were written on, so everything a new session needs is in the repo: this section, `CLAUDE.md`, the decisions log and the plan's status table.
+Start here in a new session, on any machine and with any AI assistant. An assistant's own memory stays with the tool and machine it ran on, so everything a new session needs is in the repo: this section, `CLAUDE.md`, the decisions log and the plan's status table.
 
-**Final report limit (course rule, Ruichao 2026-11-16):** at most 5 pages, excluding references, contributions and
-the appendix. TAs may not look at the appendix, so every important result must be in the main text.
-- **Layout for 5 pages (2026-11-16):**
-  - Main-text floats: 3 figures (pipeline, strata, qualitative) and 3 tables:
-    - `tab:pose`: E0–E4 with the val selection, test and follow-cam;
-    - `tab:system`;
-    - `tab:extras`: (a) STARK, (b) PL, whose E2 column is the cross-event breakdown.
-  - The choices table and the val tables are appendix backup; their picks are stated in Setup.
-  - Each section's outline has a word budget; they total about 2,140 words.
-  - Test with every outline replaced by dummy text of its budget: the main text ends on page 5 up to +20%
-    (2,568 words) and spills at +30%.
+**Assistants:** the work so far was done with Claude Code, so these notes and `CLAUDE.md` say "Claude". Read that as
+"the AI assistant": the same rules apply to whichever assistant comes next. `AGENTS.md` points other tools here.
+
+### 2026-11-19: the final report, its state and how to continue (read this first)
+**Deadline: Fri 2026-11-20 (D14).** All experiments are finished (D1–D30). What remains is the final report in
+`final_report/` (CS230, NeurIPS 2026 style; Ruichao compiles and submits it through Overleaf). A new session on
+another machine: `git pull` on `main`, read `CLAUDE.md`, then this subsection.
+
+**Page limit (course rule, Ruichao 2026-11-16):** at most 5 pages, excluding references, Contributions, AI
+Disclosure and the appendix. TAs may not read the appendix, so every important result must be in the main text.
+
+**State of `final_report/main.tex`:**
+- Every section has prose. Ruichao wrote Abstract through Conclusion; Claude proofread each section and
+  typeset it. Claude drafted Contributions and AI Disclosure at Ruichao's request (2026-11-18); Ruichao still has
+  to check them. No drafting notes (`\outline`, `\tbd`) are left; the macros stay defined, unused.
+- References: 17 entries, all verified against their sources (the header of `references.bib` says how).
+- **Main text: 5.50 pages** (measured with `final_report/tools/measure.sh`). It was 6.77 before the 2026-11-19 trim.
+- Main-text floats, in order:
+  - Figure 1 `fig:pipeline`: the pipeline diagram, at the bottom of page 1. This needs `[hb]` and the page-1 room
+    left below the Introduction (105 pt now; the figure needs about 100 pt). A longer abstract or introduction
+    pushes it to page 2.
+  - Figure 2 `fig:hrnet`: the HRNet diagram, with Methods.
+  - Table 1 `tab:pose`: E0–E4, val selection, test, follow-cam.
+  - Table 2 `tab:system`: reference / tracker / refined crops on test.
+  - Figure 3 `fig:strata`: accuracy by tracker IoU. Ruichao wants to keep it in the main text (2026-11-19).
+  - Figure 4 `fig:qualitative`: val examples. Its PNG is gitignored.
+- Appendix, every float referenced from the main text:
+  - Table 3 `tab:extras`: STARK and PL, moved there 2026-11-19. Section 5.4's text carries its key numbers.
+  - `tab:choices`, `tab:aug_val`, `tab:system_val`, `tab:grids_val`, `tab:cross_event`.
+  - `fig:stark_success`, and `fig:pseudo` (its PNG is gitignored).
+- `\makeatletter\global\@topnum\z@\makeatother` before `\maketitle` keeps floats from appearing above the title.
+
+**To do, in this order:**
+1. **The Conclusion addition (Ruichao writes it).** The course guidelines ask which method worked best and why.
+   The current Conclusion covers only tracking. Pointers to offer, but not the wording:
+   - Why did crop jitter help where it did? Tracker crops +1.6, follow-cam +4.6, no clear gain on clean test crops.
+   - What does the event gap say about the training data? Training-event video 98.1 vs other events 81.2, and the
+     pseudo-label student's +8.1.
+
+   Expect it to add about 50 words.
+2. **The final trim, 5.50 → 5.0 pages.** That is about 0.5 page plus whatever the Conclusion adds; one page holds
+   about 750 words here. Run `measure.sh` first. Known options:
+   - **Two cheap lines:** the 5.2 paragraphs "However, 80% of the test ski labels…" and "On follow-cam, ski
+     accuracy…" each end with one word on their last line. Cutting 2–3 words from each saves a line apiece.
+     `measure.sh` lists short last lines like these.
+   - **Figure 3 to the appendix:** −0.17 page. Ruichao declined this on 2026-11-19; ask again only if needed.
+   - **Prose**, words per section on 2026-11-19:
+
+     | Section | Words |
+     |---|---|
+     | Abstract | 171 |
+     | Introduction | 184 |
+     | Related work | 187 |
+     | Dataset | 181 |
+     | Methods | 281 |
+     | Setup | 272 |
+     | 5.2 | 201 |
+     | 5.3 | 210 |
+     | 5.4 | 265 |
+     | Analysis | 478 |
+     | Conclusion | 89 |
+
+     Cut repetition first: numbers stated twice, and pointers.
+   - **How it was done on 2026-11-19:**
+     - Claude proposed cuts, each with its measured saving; Ruichao chose.
+     - Claude applied the cuts, rebuilt, re-measured, and listed every change so Ruichao could restore any of them.
+     - Negative or trade-off results stayed in (for example STARK's higher replay acceleration). So did every
+       hedge and limitation.
+3. **Ruichao's checks:**
+   - Is the GitHub repo private? If so, add the CA as a collaborator.
+   - Add an acknowledgment to Contributions (for example a TA mentor), if wanted.
+   - Was any AI tool used besides Claude Code? That includes the milestone proofreading audit and **any assistant
+     used for the remaining report work**. If so, add it to the AI Disclosure, which currently names only Claude
+     Code.
+   - Read the AI Disclosure's clause "made clarity edits we requested after reviewing the full draft".
+4. **Overleaf uploads:**
+   - from git: `main.tex`, `references.bib`, `figures/propagation_strata_test.png` (redrawn 2026-11-19),
+     `figures/pipeline.pdf`, `figures/hrnet.pdf`, `figures/tracker_success_test.png`;
+   - the gitignored `figures/qualitative_val.png` and `figures/pseudo_examples.png`. These exist only in the
+     laptop's Windows clone (`OneDrive\Desktop\skier_project\final_report\figures\`) and in Overleaf.
+5. **Final read of the PDF, then submit.**
+
+**How we work on the report (Ruichao's rules and the course AI policy):**
+- **Who writes:** Ruichao writes the prose. The assistant:
+  - proofreads with minimal edits and lists every change;
+  - reviews each number against the evidence files, and checks for overreach, missing points and length;
+  - typesets the text in LaTeX;
+  - rebuilds the preview after every change: `final_report_preview.pdf` at the repo root, gitignored. Ruichao,
+    2026-11-16: "always compile and show me in this repo".
+- **What the assistant doesn't write:** the core analysis, interpretation of results, or conclusions. When Ruichao
+  asks (as on 2026-11-19), it may make clarity edits, add definitions and cross-references, correct claims and trim
+  Ruichao's text. Each such change is listed for review.
+- **The course AI policy** (Ed reminder, pasted by Ruichao; keep verbatim): "Permitted Uses: Coding and debugging;
+  Literature search and research assistance; Brainstorming and outlining; Improving grammar, clarity,
+  organization, and style; Technical explanations and troubleshooting. Original Work: AI tools should assist
+  rather than replace your authorship. They must not be used to generate the report in its entirety. The core
+  analysis, interpretation of results, and conclusions must reflect your team's own work and understanding."
+- **Conventions:**
+  - The pronoun is "we".
+  - Accuracy drops are a "cost", not a "loss" (loss means the training loss).
+  - Differences are computed before rounding, so a displayed difference can be 0.1 off the displayed cells.
+  - Brackets are 95% cluster-bootstrap intervals (defined in Setup).
+- **Evidence files for checking numbers:**
+  - `results/step8/{test,val,followcam}/tables.md`, `results/step8/cross_event/`;
+  - `results/step7b/` (STARK), `results/step6b/` (PL);
+  - `docs/decisions.md`.
+- **Commits:** only when Ruichao asks. Commit messages say whose text a change is. Never commit Ruichao's untracked
+  files in the Windows clone root (`Milestone_Proofreading_and_Reference_Audit.docx` and the PDFs).
+
+**Building and measuring** (needs TeX Live and python3):
+- `bash final_report/tools/build.sh` builds the preview.
+- `bash final_report/tools/measure.sh` reports:
+  - where the main text ends, in pages;
+  - each main-text float's height;
+  - the room on page 1 below the Introduction;
+  - the last-line fill of every paragraph;
+  - words per section.
+- Both scripts work in a temporary copy. Missing gitignored figures are replaced by gray placeholders of the
+  recorded pixel size, so the layout is unchanged.
+- **On the laptop:** TeX Live is in WSL. From Windows, run
+  `wsl -d Ubuntu-22.04 -- bash /mnt/c/Users/zhang/OneDrive/Desktop/skier_project/final_report/tools/build.sh`.
+- **On the Mac:** D13 forbids installs. If `pdflatex` isn't already there, Ruichao compiles in Overleaf, and the
+  tools can't run.
+- **Redrawing Figure 3:** call `skier.report.figures.propagation_strata` on `results/step8/test/tables.json` inside
+  `plt.rc_context({"font.size": 16})`. The figure is printed at half the text width.
+- **Laptop shell gotchas:**
+  - Git Bash heredocs turn `\\` into `\`, so write files with a file-editing tool, or use `chr(92)` in Python.
+  - PowerShell has no `tail`.
+  - Put multi-line WSL commands in a script file.
+
+**The 2026-11-19 trim (6.77 → 5.50 pages), so any cut can be restored** (the commit diff has the details):
+- **Moved, not cut:** Table 3 went to the appendix; the PL filter thresholds went into its caption.
+- **Structure:**
+  - The Introduction's results paragraph is removed; the abstract carries those numbers.
+  - The old two-part Figure 1 is split into Figure 1 (pipeline, on page 1) and Figure 2 (HRNet, with Methods).
+- **Prose:** every section was shortened. The Analysis kept all its claims and hedges.
+- **The same day, before the trim:** the review fixes in commit `2a47d1b`:
+  - claims corrected;
+  - definitions added (follow-cam, the relative score, acceleration units, the 95% target);
+  - the AlphaPose citation;
+  - Figure 3 redrawn.
+
+**Key numbers, for checking prose:**
+
+| Topic | Numbers |
+|---|---|
+| Data | Ski 2DPose: 16 videos, 1,982 images; split 4/3/3 videos, 1,194/293/360 images. Follow-cam: 6 videos, 134 images. SkiTB: 100 sequences, split 53/6/41; 75 val and 471 test clips. |
+| Val (ski @0.1) | E1 91.9, E2 93.1, E3 92.0, E4 91.0. E2 − E1 +1.2 [0.1, 2.3]; under crop error +2.5 [1.5, 3.6]. |
+| Test (reference crops) | E2: body 95.9, ski 94.8. E1: 96.3 / 94.1. E2 − E1 ski +0.7 [−0.3, 1.5]; at @0.05 +1.2 [0.2, 2.2]. |
+| Follow-cam (ski) | E1 73.5, E2 78.1; +4.6 [2.9, 6.7]. |
+| By event (E2 ski) | Training images 99.8. Training-event test video 98.1 (it holds 80% of the test ski labels). Other-event test 81.2 (2 videos, 76 images). |
+| System (test; 317 frames, 40 segments) | E2 ski: reference 95.7, tracker 67.7, refined 77.0. Tracking cost 28.0 [19.3, 37.7]. Refinement +9.3 [6.7, 12.1], a third of the cost; body +3.5 [1.3, 6.0]. E2 − E1 on tracker crops +1.6 [0.8, 2.5]. |
+| SiamFC and replay (test) | IoU 0.404 [0.380, 0.428], toolkit F 0.406. Replay box containment 0.963. Ski ends in view 93.7% (target 95%). Acceleration 4.11 → 1.38. |
+| STARK (test) | IoU 0.679. Tracker-crop ski 86.5, +18.8 [11.1, 27.8]. Refined 92.1. F 0.677 (SkiTB reports 0.671). Ski ends 99.8%. Acceleration 1.69. |
+| PL − E2 | Val +1.6 [0.1, 3.6]. Other-event test +8.1 [3.2, 13.9]. All test +0.8 [−0.2, 2.0]. Follow-cam −0.9 [−3.8, 1.1]. Training-event video −0.9 [−1.4, −0.5]. Labels: 6,307 frames from 50 races. |
+| Seeds (val ski, seed 230 / 231) | E1 92.2 / 91.6. E2 92.5 / 93.7. PL 93.3 / 96.1. |
+| Poles | Basket PCK@0.1: 5.0 test, 6.4 val. 48% (224/466) of visible val baskets lie outside the crop. |
+
+**Project development:** the code is done.
+- Each test evaluation has run its one time (the main run at `bf546e3`, STARK at `86dd90c`, PL at `624b1a4`), and
+  each test stage refuses to run again. Any new experiment would be val-only and labeled as such.
+- 381 tests pass on the laptop. Still open: the Mac light-test check (17 skips expected) and optional README polish.
+- The demo clips are in `$SKIER_RESULTS` on the laptop (see the 2026-11-15 notes below).
 
 ### 2026-11-14: Step 7b, STARK-ST50 as a labeled post-freeze extra (D28), merged into `main` 2026-11-15
 - **Branch:** Ruichao asked to "branch out" for STARK (2026-11-12), so this work was done on `stark` (from `main` @

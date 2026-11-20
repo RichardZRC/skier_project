@@ -1,0 +1,2 @@
+# The report tools are run with bash from the Windows clone too (via WSL); keep them LF on every checkout.
+final_report/tools/*.sh text eol=lf

@@ -1,10 +1,12 @@
 # CLAUDE.md
 
+**For any AI assistant, not only Claude.** The file name comes from Claude Code, which was used so far. Read "Claude" below as "the AI assistant": the rules apply to whichever assistant works on this repo.
+
 CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/ski/pole landmarks. The learning component is fine-tuning COCO HRNet-W32 plus an augmentation study (decision D1).
 
 **Deadline: Fri 2026-11-20** (D14; plan §4). If the schedule slips, cut stretch goals first, then extra seeds, then E2/E3.
 
-**Read first:** `PROJECT_NOTES.md` (start with its **Handoff** section: machine state, what's waiting, AWS lessons; then status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D30; append only).
+**Read first:** `PROJECT_NOTES.md` (start with its **Handoff** section, whose first subsection, "2026-11-19: the final report", is the current state and to-do list; then machine state, what's waiting, AWS lessons, status, next steps, working rules) → `skier_implementation_plan.md` (the plan; each step has a status note) → `docs/decisions.md` (D1–D30; append only).
 
 ## Working rules (Ruichao's instructions; follow them exactly)
 
@@ -18,6 +20,15 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
   - Never browse test images. Tune on **val** only. Evaluate **test once** (Step 8).
   - The split manifest is frozen: `make_pose_split.py` refuses to overwrite it without `--force` and a recorded reason.
 - **Record as you go.** Each new decision goes into `docs/decisions.md`. After each step, update the status in `PROJECT_NOTES.md` and the step's status note in the plan. Knowledge a later session needs goes into the repo (the Handoff section), because Claude's own notes stay on the machine where they were written.
+- **The final report (`final_report/`):**
+  - Ruichao writes the prose. Claude proofreads with minimal edits and lists every change; checks each number
+    against the evidence files; typesets the text in LaTeX.
+  - Claude rebuilds the preview after every change (`bash final_report/tools/build.sh` →
+    `final_report_preview.pdf`, gitignored).
+  - The core analysis, interpretation and conclusions must be Ruichao's (course AI policy, quoted in the
+    PROJECT_NOTES handoff). Any edit Claude makes at Ruichao's request (clarity, definitions, trims) is listed for
+    review.
+  - The limit is 5 pages for the main text (`bash final_report/tools/measure.sh` measures it).
 - **Working style:**
   - Give step-by-step walkthroughs for console and infrastructure tasks. Ruichao runs commands on the other machines and pastes the output.
   - Run a cheap trial before any compute-heavy work.
@@ -101,3 +112,4 @@ CS230 project (Ruichao Zhang): skier tracking, a centered replay, and 24 body/sk
 | Metrics | `eval/pose_metrics.py`, `eval/track_metrics.py`, `eval/replay_metrics.py`, `eval/bootstrap.py` (D25), `eval/skitb_official.py` (the toolkit's F/Pr/Re/GSR, ported) |
 | Report (Step 8) | `report/tables.py` (`make_tables.py`), `report/figures.py` (`make_figures.py`), `report/compare_trackers.py` (`compare_trackers.py`, D28), `report/events.py` (same-event / other-event grouping), `report/compare_pseudo.py` (`compare_pseudo.py`, D29); the frozen run is `results/step8/run_final.sh`, the STARK extra `results/step7b/run_stark.sh`, the pseudo-label extra `results/step6b/run_pseudo.sh` |
 | Tools | `envcheck.py`, `io_utils.py`, `paths.py` |
+| Final report | `final_report/main.tex`, `references.bib`, `figures/` (two PNGs are gitignored: they show dataset frames); `final_report/tools/`: `build.sh` (preview), `measure.sh` (pages, float heights, last-line fill, words), `placeholders.py` (same-size stand-ins for the gitignored PNGs) |
